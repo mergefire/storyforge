@@ -40,9 +40,10 @@ interface Props {
   template: PromptTemplate | null
   onChanged: () => void
   onDeleted: () => void
+  onSelected?: (id: number) => void
 }
 
-export default function PromptTemplateEditor({ template, onChanged, onDeleted }: Props) {
+export default function PromptTemplateEditor({ template, onChanged, onDeleted, onSelected }: Props) {
   const dialog = useDialog()
   const toast = useToast()
   const saveTemplate = usePromptStore(s => s.saveTemplate)
@@ -95,6 +96,7 @@ export default function PromptTemplateEditor({ template, onChanged, onDeleted }:
   const handleClone = async () => {
     if (!draft.id) return
     const newId = await cloneTemplate(draft.id)
+    onSelected?.(newId)
     onChanged()
     toast.success(`已克隆为「我的」模板（id=${newId}），请在左侧列表中查看。`)
   }
@@ -103,6 +105,45 @@ export default function PromptTemplateEditor({ template, onChanged, onDeleted }:
     if (!draft.id) return
     await setActive(draft.id)
     onChanged()
+  }
+
+  const handleExamplesChange = async (examples: PromptTemplate['examples']) => {
+    if (!isSystem) {
+      update({ examples })
+      return
+    }
+
+    if (!draft.id) {
+      toast.error('Cannot create an editable copy for a system template without an id.')
+      return
+    }
+
+    try {
+      const now = Date.now()
+      const { id: _drop, ...rest } = draft
+      void _drop
+      const editableCopy: PromptTemplate = {
+        ...rest,
+        scope: 'user',
+        name: `${draft.name} (copy)`,
+        parentId: draft.id,
+        isActive: false,
+        examples,
+        createdAt: now,
+        updatedAt: now,
+      }
+      const newId = await saveTemplate(editableCopy)
+      if (draft.isActive) {
+        await setActive(newId)
+      }
+      setDraft({ ...editableCopy, id: newId, isActive: draft.isActive })
+      setDirty(false)
+      onSelected?.(newId)
+      onChanged()
+      toast.success('已复制为「我的」模板并保存示例修改')
+    } catch (e) {
+      toast.error(`保存示例修改失败：${e instanceof Error ? e.message : String(e)}`)
+    }
   }
 
   const handleDelete = async () => {
@@ -313,8 +354,8 @@ export default function PromptTemplateEditor({ template, onChanged, onDeleted }:
       {/* 示例 / 反例 (P15) */}
       <PromptExamplesEditor
         template={draft}
-        onChange={(examples) => update({ examples })}
-        readOnly={isSystem}
+        onChange={(examples) => { void handleExamplesChange(examples) }}
+        readOnly={false}
       />
 
       {/* 变量列表 */}

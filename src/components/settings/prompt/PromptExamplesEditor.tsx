@@ -190,8 +190,11 @@ ${template.systemPrompt}
                     </span>
                     {!readOnly && (
                       <button
+                        type="button"
                         onClick={() => remove(kind, ex.id)}
-                        className="p-0.5 text-text-muted hover:text-error"
+                        className="p-0.5 text-text-muted hover:text-error hover:bg-error/10 rounded"
+                        aria-label={`delete ${kind} prompt example`}
+                        title={kind === 'good' ? '删除好示例' : '删除反例'}
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>

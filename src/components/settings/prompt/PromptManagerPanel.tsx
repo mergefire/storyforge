@@ -287,6 +287,7 @@ function PromptTemplatesView({
             template={selected ?? null}
             onChanged={() => reload()}
             onDeleted={() => setSelectedId(null)}
+            onSelected={setSelectedId}
           />
         </div>
       </div>
