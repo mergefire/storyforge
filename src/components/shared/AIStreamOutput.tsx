@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Square, Check, RotateCcw, Loader2, ThumbsUp, ThumbsDown, Braces, ChevronDown, ChevronRight, X } from 'lucide-react'
+import { Square, Check, RotateCcw, Loader2, ThumbsUp, ThumbsDown, Braces, ChevronDown, ChevronRight, ChevronUp, X, Brain } from 'lucide-react'
 import { usePromptStore } from '../../stores/prompt'
 import type { PromptModuleKey, PromptExample } from '../../lib/types/prompt'
 import type { TokenUsage } from '../../lib/ai/logger'
 
 interface AIStreamOutputProps {
-  /** 流式输出的文本 */
+  /** 流式输出的文本（正文，不含思考过程） */
   output: string
+  /** AI 思考过程文本（仅展示用；非思考模型为空） */
+  reasoning?: string
   /** 是否正在生成 */
   isStreaming: boolean
   /** 错误信息 */
@@ -30,9 +32,11 @@ interface AIStreamOutputProps {
 /**
  * AI 流式输出展示组件
  * 显示 AI 生成的文字 + 操作按钮（停止/采纳/重试）
+ * 可选展示思考过程（reasoning）—— 仅在有内容时挂载，非思考模型不会出现空块
  */
 export default function AIStreamOutput({
   output,
+  reasoning = '',
   isStreaming,
   error,
   onStop,
@@ -44,10 +48,13 @@ export default function AIStreamOutput({
   tokenUsage,
 }: AIStreamOutputProps) {
   const hasOutput = output.length > 0
+  const hasReasoning = reasoning.length > 0
   const [marked, setMarked] = useState<'good' | 'bad' | null>(null)
   const [showRaw, setShowRaw] = useState(false)
+  // 思考过程折叠状态：默认展开（流式时让用户看到正在思考），结束后也保持展开（用户可手动收起）
+  const [reasoningCollapsed, setReasoningCollapsed] = useState(false)
 
-  // 检测是否结构化输出（JSON）——这类内容是给程序解析的，不该让用户直接读原始 JSON
+  // 检测是否结构化输出（JSON）——只看正文 channel，思考过程不参与判断
   const trimmed = output.trimStart()
   const isStructured = hasOutput && (
     trimmed.startsWith('{') || trimmed.startsWith('[') || /^```(?:json)?\s*[[{]/.test(trimmed)
@@ -80,6 +87,35 @@ export default function AIStreamOutput({
 
   return (
     <div className="border border-border rounded-lg overflow-hidden border-l-2 border-l-accent">
+      {/* 思考过程区域 —— 仅在有内容时挂载，非思考模型不会出现空块 */}
+      {hasReasoning && (
+        <div className="border-b border-border bg-bg-elevated/50">
+          <button
+            onClick={() => setReasoningCollapsed(v => !v)}
+            className="flex items-center gap-1.5 w-full px-4 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <Brain className="w-3.5 h-3.5 text-accent shrink-0" />
+            <span className="flex items-center gap-1.5">
+              思考过程
+              {isStreaming && !hasOutput && (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              )}
+            </span>
+            <span className="ml-auto">
+              {reasoningCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+            </span>
+          </button>
+          {!reasoningCollapsed && (
+            <div className="px-4 pb-3 max-h-60 overflow-y-auto text-xs text-text-muted leading-relaxed whitespace-pre-wrap">
+              {reasoning}
+              {isStreaming && !hasOutput && (
+                <span className="inline-block w-1 h-3 bg-text-muted ml-0.5 animate-pulse" />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 输出区域 */}
       <div className="min-h-[200px] max-h-[500px] overflow-y-auto p-4 bg-accent-soft">
         {error ? (

@@ -184,7 +184,7 @@ export default function StoryArcPanel({ project }: Props) {
       {(ai.output || ai.isStreaming || ai.error) && (
         <div className="mb-4">
           <AIStreamOutput
-            output={ai.output}
+            output={ai.output} reasoning={ai.reasoning}
             isStreaming={ai.isStreaming}
             error={ai.error}
             tokenUsage={ai.tokenUsage}

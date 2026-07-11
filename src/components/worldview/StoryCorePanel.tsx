@@ -243,7 +243,7 @@ function FieldEditor({
 
         {(ai.output || ai.isStreaming || ai.error) && (
           <AIStreamOutput
-            output={ai.output}
+            output={ai.output} reasoning={ai.reasoning}
             isStreaming={ai.isStreaming}
             error={ai.error}
             tokenUsage={ai.tokenUsage}

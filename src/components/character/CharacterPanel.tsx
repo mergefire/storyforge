@@ -294,7 +294,7 @@ export default function CharacterPanel({ project, view = 'generator' }: Props) {
       {/* AI 输出 */}
       {view === 'generator' && (ai.output || ai.isStreaming || ai.error) && (
         <AIStreamOutput
-          output={ai.output}
+          output={ai.output} reasoning={ai.reasoning}
           isStreaming={ai.isStreaming}
           error={ai.error} tokenUsage={ai.tokenUsage}
           onStop={ai.stop}

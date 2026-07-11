@@ -824,7 +824,7 @@ export default function HistoryPanel({ project }: Props) {
                                   <ShieldCheck className="w-3 h-3" /> 历史考据 agent
                                 </p>
                                 <AIStreamOutput
-                                  output={consultAI.output}
+                                  output={consultAI.output} reasoning={consultAI.reasoning}
                                   isStreaming={consultAI.isStreaming}
                                   error={consultAI.error}
                                   tokenUsage={consultAI.tokenUsage}
@@ -842,7 +842,7 @@ export default function HistoryPanel({ project }: Props) {
                                   <Sparkles className="w-3 h-3" /> 头脑风暴 agent
                                 </p>
                                 <AIStreamOutput
-                                  output={stormAI.output}
+                                  output={stormAI.output} reasoning={stormAI.reasoning}
                                   isStreaming={stormAI.isStreaming}
                                   error={stormAI.error}
                                   tokenUsage={stormAI.tokenUsage}
@@ -1256,7 +1256,7 @@ export default function HistoryPanel({ project }: Props) {
                                 <ShieldCheck className="w-3 h-3" /> 历史考据 agent
                               </p>
                               <AIStreamOutput
-                                output={consultAI.output}
+                                output={consultAI.output} reasoning={consultAI.reasoning}
                                 isStreaming={consultAI.isStreaming}
                                 error={consultAI.error}
                                 tokenUsage={consultAI.tokenUsage}
@@ -1274,7 +1274,7 @@ export default function HistoryPanel({ project }: Props) {
                                 <Sparkles className="w-3 h-3" /> 头脑风暴 agent
                               </p>
                               <AIStreamOutput
-                                output={stormAI.output}
+                                output={stormAI.output} reasoning={stormAI.reasoning}
                                 isStreaming={stormAI.isStreaming}
                                 error={stormAI.error}
                                 tokenUsage={stormAI.tokenUsage}

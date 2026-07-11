@@ -17,6 +17,11 @@ export interface StreamResult {
   usage?: TokenUsage
 }
 
+/** 流式 chunk 标记：思考过程 vs 正文内容 */
+export type AIStreamChunk =
+  | { kind: 'reasoning'; text: string }
+  | { kind: 'content'; text: string }
+
 /** 可变容器，chat 写入非流式调用返回的真实 token 用量。 */
 export interface ChatResult {
   usage?: TokenUsage
@@ -85,7 +90,7 @@ function buildRequest(config: AIConfig, messages: ChatMessage[], stream: boolean
 
 /**
  * 统一的流式聊天接口
- * 使用 AsyncGenerator 逐块 yield 文本内容
+ * 使用 AsyncGenerator 逐块 yield 带类型标记的 chunk（reasoning 或 content）
  */
 export async function* streamChat(
   messages: ChatMessage[],
@@ -93,7 +98,7 @@ export async function* streamChat(
   signal?: AbortSignal,
   result?: StreamResult,
   meta?: AICallMeta,
-): AsyncGenerator<string> {
+): AsyncGenerator<AIStreamChunk> {
   const trimmed = trimMessagesToFit(messages, config.provider, config.model, config.maxTokens, config.contextWindow)
   if (trimmed.trimmed) {
     console.warn(`[AI] request messages trimmed to fit context window: ${trimmed.totalInputTokens}/${trimmed.inputBudget} tokens`)
@@ -171,8 +176,16 @@ export async function* streamChat(
           }
           try {
             const json = JSON.parse(data)
-            const content = json.choices?.[0]?.delta?.content
-            if (content) yield content
+            const delta = json.choices?.[0]?.delta
+            if (delta) {
+              // 思考过程字段（DeepSeek/智谱 GLM/Qwen/LongCat 等用 reasoning_content；
+              // 部分模型/代理也用 thinking 或 reasoning；都做兼容捕获）
+              const reasoning: string | undefined =
+                delta.reasoning_content ?? delta.thinking ?? delta.reasoning
+              if (reasoning) yield { kind: 'reasoning', text: reasoning }
+              const content: string | undefined = delta.content
+              if (content) yield { kind: 'content', text: content }
+            }
             // 提取 token 用量（通常在最后一个 chunk 中）
             if (json.usage) {
               usage = {

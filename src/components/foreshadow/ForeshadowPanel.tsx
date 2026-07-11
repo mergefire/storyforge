@@ -352,7 +352,7 @@ export default function ForeshadowPanel({ project }: Props) {
             )}
             {adoptMsg && <div className="text-xs text-text-muted">{adoptMsg}</div>}
             <AIStreamOutput
-              output={ai.output}
+              output={ai.output} reasoning={ai.reasoning}
               isStreaming={ai.isStreaming}
               error={ai.error} tokenUsage={ai.tokenUsage}
               onStop={ai.stop}

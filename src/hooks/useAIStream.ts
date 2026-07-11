@@ -10,8 +10,10 @@ import type { AIConfig, ChatMessage } from '../lib/types'
 import type { TokenUsage } from '../lib/ai/logger'
 
 export interface UseAIStreamReturn {
-  /** 当前累积的输出文本 */
+  /** 当前累积的输出文本（正文，不含思考过程） */
   output: string
+  /** AI 思考过程累积文本（仅展示用；非思考模型为空） */
+  reasoning: string
   /** 是否正在生成 */
   isStreaming: boolean
   /** 错误信息 */
@@ -45,6 +47,7 @@ const sharedAbortControllers = new Map<string, AbortController>()
  */
 export function useAIStream(sessionKey?: string): UseAIStreamReturn {
   const [output, setOutput] = useState('')
+  const [reasoning, setReasoning] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tokenUsage, setTokenUsage] = useState<TokenUsage | null>(null)
@@ -53,6 +56,7 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
   const sharedSession = useAIGenerationSessionStore(selectAIGenerationSession(sessionKey))
 
   const currentOutput = sessionKey ? sharedSession.output : output
+  const currentReasoning = sessionKey ? sharedSession.reasoning : reasoning
   const currentIsStreaming = sessionKey ? sharedSession.isStreaming : isStreaming
   const currentError = sessionKey ? sharedSession.error : error
   const currentTokenUsage = sessionKey ? sharedSession.tokenUsage : tokenUsage
@@ -81,6 +85,7 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
       return
     }
     setOutput('')
+    setReasoning('')
     setError(null)
     setTokenUsage(null)
     setLocalOperation(null)
@@ -102,9 +107,10 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
     // 重置状态
     if (sessionKey) {
       sharedAbortControllers.get(sessionKey)?.abort()
-      patchShared({ output: '', error: null, tokenUsage: null, isStreaming: true })
+      patchShared({ output: '', reasoning: '', error: null, tokenUsage: null, isStreaming: true })
     } else {
       setOutput('')
+      setReasoning('')
       setError(null)
       setTokenUsage(null)
       setIsStreaming(true)
@@ -133,18 +139,29 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
     }
 
     let accumulated = ''
+    let accumulatedReasoning = ''
     const streamResult: StreamResult = {}
 
     try {
       const stream = streamChat(messages, config, controller.signal, streamResult, meta)
       for await (const chunk of stream) {
         if (controller.signal.aborted) break
-        accumulated += chunk
-        if (sessionKey) {
-          if (sharedAbortControllers.get(sessionKey) !== controller) break
-          patchShared({ output: accumulated })
-        } else {
-          setOutput(accumulated)
+        if (chunk.kind === 'content') {
+          accumulated += chunk.text
+          if (sessionKey) {
+            if (sharedAbortControllers.get(sessionKey) !== controller) break
+            patchShared({ output: accumulated })
+          } else {
+            setOutput(accumulated)
+          }
+        } else if (chunk.kind === 'reasoning') {
+          accumulatedReasoning += chunk.text
+          if (sessionKey) {
+            if (sharedAbortControllers.get(sessionKey) !== controller) break
+            patchShared({ reasoning: accumulatedReasoning })
+          } else {
+            setReasoning(accumulatedReasoning)
+          }
         }
       }
     } catch (err: unknown) {
@@ -181,6 +198,7 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
   return useMemo(
     () => ({
       output: currentOutput,
+      reasoning: currentReasoning,
       isStreaming: currentIsStreaming,
       error: currentError,
       tokenUsage: currentTokenUsage,
@@ -192,6 +210,7 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
     }),
     [
       currentOutput,
+      currentReasoning,
       currentIsStreaming,
       currentError,
       currentTokenUsage,

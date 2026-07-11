@@ -1072,7 +1072,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
 
       {(ai.output || ai.isStreaming || ai.error) && (
         <div className="mb-3">
-          <AIStreamOutput output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
+          <AIStreamOutput output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
             onStop={ai.stop} onAccept={handleAcceptAI}
             onDismiss={ai.reset}
             onRetry={() => {

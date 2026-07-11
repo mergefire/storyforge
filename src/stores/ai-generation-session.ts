@@ -3,6 +3,8 @@ import type { TokenUsage } from '../lib/ai/logger'
 
 export interface AIGenerationSession {
   output: string
+  /** AI 思考过程（reasoning）累积文本，仅展示用，不写回 DB */
+  reasoning: string
   isStreaming: boolean
   error: string | null
   tokenUsage: TokenUsage | null
@@ -12,6 +14,7 @@ export interface AIGenerationSession {
 
 const EMPTY_SESSION: AIGenerationSession = {
   output: '',
+  reasoning: '',
   isStreaming: false,
   error: null,
   tokenUsage: null,

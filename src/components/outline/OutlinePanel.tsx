@@ -816,7 +816,7 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
 
         {/* AI 输出（就地显示） */}
         {(ai.output || ai.isStreaming || ai.error) && (
-          <AIStreamOutput output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
+          <AIStreamOutput output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
             onStop={ai.stop}
             onAccept={handlePreviewAccept}
             onRetry={handleRetryGeneration}
