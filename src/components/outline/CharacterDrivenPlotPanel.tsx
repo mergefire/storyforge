@@ -334,7 +334,7 @@ export default function CharacterDrivenPlotPanel({ project }: Props) {
         {(ai.output || ai.isStreaming || ai.error) && (
           <section>
             <AIStreamOutput
-              output={ai.output}
+              output={ai.output} reasoning={ai.reasoning}
               isStreaming={ai.isStreaming}
               error={ai.error}
               tokenUsage={ai.tokenUsage}

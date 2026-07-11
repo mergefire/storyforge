@@ -319,7 +319,7 @@ function TextFieldEditor({
         onUserOverrideChange={setUserOverride} />
 
       {(ai.output || ai.isStreaming || ai.error) && (
-        <AIStreamOutput output={ai.output} isStreaming={ai.isStreaming} error={ai.error}
+        <AIStreamOutput output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error}
           tokenUsage={ai.tokenUsage} onStop={ai.stop}
           onAccept={(text: string) => { onChange(text); ai.reset() }}
           onRetry={handleGenerate} moduleKey="worldview.dimension" />
@@ -409,7 +409,8 @@ function DivineFieldEditor({
       let accumulated = ''
       const stream = streamChat(splitMessages, config, new AbortController().signal, {}, { category: 'worldview.divine.split', projectId: project.id! })
       for await (const chunk of stream) {
-        accumulated += chunk
+        // 仅拼接正文 channel；思考过程不参与 JSON 解析
+        if (chunk.kind === 'content') accumulated += chunk.text
       }
       // 解析 JSON
       const cleaned = accumulated.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?\s*```\s*$/i, '').trim()
@@ -518,7 +519,7 @@ function DivineFieldEditor({
       )}
 
       {(ai.output || ai.isStreaming || ai.error) && (
-        <AIStreamOutput output={ai.output} isStreaming={ai.isStreaming} error={ai.error}
+        <AIStreamOutput output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error}
           tokenUsage={ai.tokenUsage} onStop={ai.stop}
           onAccept={handleAccept}
           onRetry={handleGenerate} moduleKey="worldview.dimension" />

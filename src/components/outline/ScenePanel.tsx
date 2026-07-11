@@ -146,7 +146,7 @@ export default function ScenePanel({ projectId, outlineNodeId, chapterTitle, cha
           {/* AI 输出 */}
           {(ai.output || ai.isStreaming || ai.error) && (
             <AIStreamOutput
-              output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
+              output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
               onStop={ai.stop}
               onAccept={async (text) => {
                 try {

@@ -153,7 +153,7 @@ export default function SceneVerifyPanel({ project }: Props) {
       {/* AI 输出（考证结果是 Markdown 散文，直接展示） */}
       {(ai.output || ai.isStreaming || ai.error) && (
         <AIStreamOutput
-          output={ai.output}
+          output={ai.output} reasoning={ai.reasoning}
           isStreaming={ai.isStreaming}
           error={ai.error}
           tokenUsage={ai.tokenUsage}

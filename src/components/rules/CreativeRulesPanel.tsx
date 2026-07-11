@@ -209,7 +209,7 @@ export default function CreativeRulesPanel({ project }: Props) {
         {currentAITarget === 'writingStyle' && (ai.output || ai.isStreaming || ai.error) && (
           <div className="mt-2">
             <AIStreamOutput
-              output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
+              output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
               onStop={ai.stop} onAccept={acceptAi}
               onRetry={() => generateField('writingStyle')}
             />
@@ -263,7 +263,7 @@ export default function CreativeRulesPanel({ project }: Props) {
         {currentAITarget === 'toneAndMood' && (ai.output || ai.isStreaming || ai.error) && (
           <div className="mt-2">
             <AIStreamOutput
-              output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
+              output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
               onStop={ai.stop} onAccept={acceptAi}
               onRetry={() => generateField('toneAndMood')}
             />
@@ -364,7 +364,7 @@ export default function CreativeRulesPanel({ project }: Props) {
         {currentAITarget === 'specialRequirements' && (ai.output || ai.isStreaming || ai.error) && (
           <div className="mt-2">
             <AIStreamOutput
-              output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
+              output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
               onStop={ai.stop} onAccept={acceptAi}
               onRetry={() => generateField('specialRequirements')}
             />

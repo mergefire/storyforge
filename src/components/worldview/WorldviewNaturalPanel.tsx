@@ -297,7 +297,7 @@ function SimpleFieldEditor({ field, value, onChange, project, contextSummary, on
         onUserOverrideChange={setUserOverride} />
 
       {(ai.output || ai.isStreaming || ai.error) && (
-        <AIStreamOutput output={ai.output} isStreaming={ai.isStreaming} error={ai.error}
+        <AIStreamOutput output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error}
           tokenUsage={ai.tokenUsage} onStop={ai.stop}
           onAccept={(text: string) => { onChange(text); ai.reset() }}
           onRetry={handleGenerate} moduleKey="worldview.dimension" />

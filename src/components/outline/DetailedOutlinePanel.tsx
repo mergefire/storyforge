@@ -440,7 +440,7 @@ export default function DetailedOutlinePanel({ project }: Props) {
             {(ai.output || ai.isStreaming || ai.error) && (
               <div className="mb-4">
                 <AIStreamOutput
-                  output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
+                  output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
                   onStop={ai.stop}
                   onAccept={async (text) => {
                     // AI 输出粘贴到第一个场景的备注里，让用户参考着手动拆
@@ -480,7 +480,7 @@ export default function DetailedOutlinePanel({ project }: Props) {
             {(enhanceAI.output || enhanceAI.isStreaming || enhanceAI.error) && (
               <div className="mb-4">
                 <AIStreamOutput
-                  output={enhanceAI.output} isStreaming={enhanceAI.isStreaming} error={enhanceAI.error} tokenUsage={enhanceAI.tokenUsage}
+                  output={enhanceAI.output} reasoning={enhanceAI.reasoning} isStreaming={enhanceAI.isStreaming} error={enhanceAI.error} tokenUsage={enhanceAI.tokenUsage}
                   onStop={enhanceAI.stop}
                   onAccept={handleAcceptEnhanced}
                   onRetry={handleEnhancedGenerate}
