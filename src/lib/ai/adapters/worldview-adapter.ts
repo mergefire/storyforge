@@ -60,6 +60,9 @@ export function buildWorldviewPrompt(
   const tpl = usePromptStore.getState().getActive('worldview.dimension')
   const label = DIMENSION_LABELS[dimension] || dimension
   const boundary = getWorldviewFieldBoundary(dimension)
+  const worldRulesContext = typeof options?.parameterValues?.worldRulesContext === 'string'
+    ? options.parameterValues.worldRulesContext
+    : ''
   const effectiveHint = [boundary, composeFieldGenerationHint(userHint, currentValue, mode)]
     .filter(Boolean)
     .join('\n\n')
@@ -70,6 +73,7 @@ export function buildWorldviewPrompt(
     worldContext: existingContext,
     currentValue: currentValue || '',
     generationMode: mode,
+    worldRulesContext,
     userHint: effectiveHint,
     isSummary: dimension === 'summary' ? '1' : '',
   }, options)

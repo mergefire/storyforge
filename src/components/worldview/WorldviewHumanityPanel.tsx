@@ -13,6 +13,7 @@ import PromptRunPanel from '../shared/PromptRunPanel'
 import AIFieldModeTabs from '../shared/AIFieldModeTabs'
 import type { Project } from '../../lib/types'
 import type { FieldGenerationMode } from '../../lib/ai/field-generation-context'
+import { buildHumanityEnvironmentContext } from '../../lib/worldview-humanity-context'
 
 async function buildRulesSourceContext(projectId: number, worldGroupId: number | null): Promise<string> {
   return (await assembleContext({ projectId, worldGroupId, sourceKeys: ['worldRules'] })).text
@@ -88,26 +89,9 @@ export default function WorldviewHumanityPanel({ project }: Props) {
   const save = (fieldName: string, v: string) =>
     saveWorldview({ projectId: project.id!, [fieldName]: v })
 
-  /** 拼其他字段（含世界起源 + 自然环境的关键值）做 AI 上下文 */
-  const buildCtx = useCallback((skipKey: string): string => {
-    const parts: string[] = []
-    if (worldview?.worldOrigin) parts.push(`【世界起源】${worldview.worldOrigin.slice(0, 200)}`)
-    if (worldview?.powerHierarchy) parts.push(`【力量体系】${worldview.powerHierarchy.slice(0, 150)}`)
-    if (worldview?.continentLayout) parts.push(`【大陆分布】${worldview.continentLayout.slice(0, 150)}`)
-    const map: [string, string, string][] = [
-      ['history',   '世界历史线',   values.history || ''],
-      ['events',    '世界大事记',   values.events || ''],
-      ['races',     '种族与民族',   values.races || ''],
-      ['factions',  '势力分布',     values.factions || ''],
-      ['pec',       '政治经济文化', values.pec || ''],
-      ['conflicts', '矛盾冲突',     values.conflicts || ''],
-      ['items',     '道具与器物',   values.items || ''],
-    ]
-    for (const [k, label, val] of map) {
-      if (k !== skipKey && val) parts.push(`【${label}】${val.slice(0, 150)}`)
-    }
-    return parts.join('\n')
-  }, [worldview, values])
+  const buildCtx = useCallback((skipKey: string): string =>
+    buildHumanityEnvironmentContext({ worldview, values, skipKey }),
+  [worldview, values])
 
   const handleStreamingChange = useCallback((key: string, streaming: boolean) => {
     setStreamingKeys(prev => {

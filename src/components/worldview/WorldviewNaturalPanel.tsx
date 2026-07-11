@@ -15,6 +15,7 @@ import PromptRunPanel from '../shared/PromptRunPanel'
 import AIFieldModeTabs from '../shared/AIFieldModeTabs'
 import type { Project, NaturalResources } from '../../lib/types'
 import type { FieldGenerationMode } from '../../lib/ai/field-generation-context'
+import { buildNaturalEnvironmentContext } from '../../lib/worldview-natural-context'
 
 async function buildRulesSourceContext(projectId: number, worldGroupId: number | null): Promise<string> {
   return (await assembleContext({ projectId, worldGroupId, sourceKeys: ['worldRules'] })).text
@@ -80,23 +81,9 @@ export default function WorldviewNaturalPanel({ project }: Props) {
   const save = (patch: Partial<typeof worldview>) =>
     saveWorldview({ projectId: project.id!, ...patch })
 
-  const buildCtx = useCallback((skipCtxKey: string): string => {
-    const parts: string[] = []
-    // ── 世界起源面板关键字段 ──
-    if (worldview?.worldOrigin)    parts.push(`【世界来源】${worldview.worldOrigin.slice(0, 200)}`)
-    if (worldview?.powerHierarchy) parts.push(`【力量体系】${worldview.powerHierarchy.slice(0, 150)}`)
-    // ── 本面板内互参 ──
-    for (const f of FIELDS) {
-      if (f.ctxKey !== skipCtxKey && values[f.key]) {
-        parts.push(`【${f.ctxLabel}】${values[f.key].slice(0, 150)}`)
-      }
-    }
-    // ── 人文环境面板关键字段 ──
-    if (worldview?.historyLine)   parts.push(`【世界历史线】${worldview.historyLine.slice(0, 150)}`)
-    if (worldview?.races)         parts.push(`【种族与民族】${worldview.races.slice(0, 100)}`)
-    if (worldview?.factionLayout) parts.push(`【势力分布】${worldview.factionLayout.slice(0, 100)}`)
-    return parts.join('\n')
-  }, [worldview, values])
+  const buildCtx = useCallback((skipKey: string): string =>
+    buildNaturalEnvironmentContext({ worldview, values, naturalResources, skipKey }),
+  [worldview, values, naturalResources])
 
   const handleStreamingChange = useCallback((key: string, streaming: boolean) => {
     setStreamingKeys(prev => {
@@ -172,7 +159,7 @@ export default function WorldviewNaturalPanel({ project }: Props) {
                   save({ [f.key]: v })
                 }}
                 project={project}
-                contextSummary={buildCtx(f.ctxKey)}
+                contextSummary={buildCtx(f.key)}
                 onStreamingChange={streaming => handleStreamingChange(f.key, streaming)}
               />
               {/* 全貌之下:本方面的专属词条(只显示对应那一类) */}
@@ -200,7 +187,7 @@ export default function WorldviewNaturalPanel({ project }: Props) {
                 save({ naturalResourceOverview: v })
               }}
               project={project}
-              contextSummary={buildCtx('resources')}
+              contextSummary={buildCtx('naturalResourceOverview')}
               onStreamingChange={streaming => handleStreamingChange('naturalResources', streaming)}
             />
             {/* 自然资源:矿物/草药/异兽 三类词条 */}

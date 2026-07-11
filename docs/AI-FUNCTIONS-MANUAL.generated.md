@@ -159,12 +159,12 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `rules.generate` | `src/components/rules/CreativeRulesPanel.tsx:80` |
 | `scene.verify` | `src/components/scene/SceneVerifyPanel.tsx:81` |
 | `story-arc.generate` | `src/components/outline/StoryArcPanel.tsx:84` |
-| `story.generate` | `src/components/worldview/StoryCorePanel.tsx:193` |
+| `story.generate` | `src/components/worldview/StoryCorePanel.tsx:184` |
 | `story.timeline` | `src/components/timeline/StoryTimelinePanel.tsx:83` |
 | `style.learn` | `src/components/style/StyleLearningPanel.tsx:76` |
 | `world-group.expand` | `src/components/world-group/WorldGroupDetail.tsx:98` |
 | `world-group.suggest` | `src/components/world-group/WorldGroupOverview.tsx:57` |
-| `worldview.dimension` | `src/components/worldview/WorldviewHumanityPanel.tsx:252`<br/>`src/components/worldview/WorldviewNaturalPanel.tsx:282`<br/>`src/components/worldview/WorldviewOriginPanel.tsx:287` |
+| `worldview.dimension` | `src/components/worldview/WorldviewHumanityPanel.tsx:236`<br/>`src/components/worldview/WorldviewNaturalPanel.tsx:269`<br/>`src/components/worldview/WorldviewOriginPanel.tsx:287` |
 | `worldview.divine` | `src/components/worldview/WorldviewOriginPanel.tsx:386` |
 | `worldview.divine.split` | `src/components/worldview/WorldviewOriginPanel.tsx:410` |
 
@@ -176,4 +176,4 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 
 ---
 
-生成时间基准:commit `69c1fb2`
+生成时间基准:commit `619756a`
