@@ -57,6 +57,8 @@ export default function WorldviewNaturalPanel({ project }: Props) {
   })
   const [activeKey, setActiveKey] = useState<FieldKey>('worldStructure')
   const [streamingKeys, setStreamingKeys] = useState<Set<string>>(new Set())
+  // B方案：追踪过期字段（某字段被保存时,标记其他兄弟字段为 stale）
+  const [staleFields, setStaleFields] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     loadAll(project.id!, project.enableMultiWorld ? activeGroupId : null)
@@ -80,6 +82,29 @@ export default function WorldviewNaturalPanel({ project }: Props) {
 
   const save = (patch: Partial<typeof worldview>) =>
     saveWorldview({ projectId: project.id!, ...patch })
+
+  // 标记兄弟字段为过期（某字段内容变化时调用）——只标记有内容的字段
+  const markSiblingsStale = useCallback((changedKey: string) => {
+    const siblings = FIELDS.map(f => f.key).filter(k => k !== changedKey)
+    setStaleFields(prev => {
+      const next = new Set(prev)
+      for (const s of siblings) {
+        // 只标记有实际内容的字段（空字段没东西可适配）
+        if (values[s]?.trim()) next.add(s)
+      }
+      return next
+    })
+  }, [values])
+
+  // 清除某字段的过期标记
+  const clearStale = useCallback((key: string) => {
+    setStaleFields(prev => {
+      if (!prev.has(key)) return prev
+      const next = new Set(prev)
+      next.delete(key)
+      return next
+    })
+  }, [])
 
   const buildCtx = useCallback((skipKey: string): string =>
     buildNaturalEnvironmentContext({ worldview, values, naturalResources, skipKey }),
@@ -128,6 +153,7 @@ export default function WorldviewNaturalPanel({ project }: Props) {
           ].map(f => {
             const isActive = activeKey === f.key
             const isFieldStreaming = streamingKeys.has(f.key)
+            const isStale = staleFields.has(f.key)
             return (
               <button
                 key={f.key}
@@ -139,6 +165,9 @@ export default function WorldviewNaturalPanel({ project }: Props) {
                 }`}
               >
                 <span className="flex-1">{f.emoji} {f.label}</span>
+                {isStale && !isFieldStreaming && (
+                  <span className="w-2 h-2 rounded-full bg-warning shrink-0" title="内容可能需要适配" />
+                )}
                 {isFieldStreaming && !isActive && (
                   <span className="w-2 h-2 rounded-full bg-accent animate-pulse shrink-0" />
                 )}
@@ -155,12 +184,16 @@ export default function WorldviewNaturalPanel({ project }: Props) {
                 field={f}
                 value={values[f.key] || ''}
                 onChange={v => {
+                  const hadContent = !!values[f.key]?.trim()
                   setValues(prev => ({ ...prev, [f.key]: v }))
                   save({ [f.key]: v })
+                  if (hadContent) markSiblingsStale(f.key)
                 }}
                 project={project}
                 contextSummary={buildCtx(f.key)}
                 onStreamingChange={streaming => handleStreamingChange(f.key, streaming)}
+                isStale={staleFields.has(f.key)}
+                onClearStale={() => clearStale(f.key)}
               />
               {/* 全貌之下:本方面的专属词条(只显示对应那一类) */}
               {NATURAL_CODEX_KEYS[f.key] && (
@@ -227,13 +260,15 @@ export default function WorldviewNaturalPanel({ project }: Props) {
 
 // ── 单字段编辑器（各自独立的 AI 流） ──────────────────────────
 
-function SimpleFieldEditor({ field, value, onChange, project, contextSummary, onStreamingChange }: {
+function SimpleFieldEditor({ field, value, onChange, project, contextSummary, onStreamingChange, isStale, onClearStale }: {
   field: { key: string; emoji: string; label: string; desc: string }
   value: string
   onChange: (v: string) => void
   project: Project
   contextSummary: string
   onStreamingChange: (streaming: boolean) => void
+  isStale?: boolean
+  onClearStale?: () => void
 }) {
   const [hint, setHint] = useState('')
   const [parameterValues, setParameterValues] = useState<Record<string, unknown>>({})
@@ -251,7 +286,8 @@ function SimpleFieldEditor({ field, value, onChange, project, contextSummary, on
     onStreamingChange(ai.isStreaming)
   }, [ai.isStreaming, onStreamingChange])
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (overrideMode?: FieldGenerationMode) => {
+    const effectiveMode = overrideMode ?? mode
     const rulesCtx = await buildRulesSourceContext(project.id!, project.enableMultiWorld ? activeGroupId : null)
     const opts = {
       parameterValues: {
@@ -264,7 +300,7 @@ function SimpleFieldEditor({ field, value, onChange, project, contextSummary, on
       } : undefined,
     }
     const messages = buildWorldviewPrompt(
-      field.label, project.name, project.genre || '', contextSummary, hint, opts, value, mode,
+      field.label, project.name, project.genre || '', contextSummary, hint, opts, value, effectiveMode,
     )
     ai.start(messages, undefined, { category: 'worldview.dimension', projectId: project.id! })
   }
@@ -276,6 +312,26 @@ function SimpleFieldEditor({ field, value, onChange, project, contextSummary, on
         <p className="mt-1 text-sm text-text-muted">{field.desc}</p>
       </div>
 
+      {/* B方案：过期提示 + 适配/忽略按钮 */}
+      {isStale && value && !ai.isStreaming && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-warning/10 border border-warning/30 rounded-lg text-xs">
+          <span className="text-warning">⚠️</span>
+          <span className="text-text-secondary flex-1">其他字段已更新，本字段内容可能需要适配</span>
+          <button
+            onClick={() => onClearStale?.()}
+            className="px-2.5 py-1 rounded bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+          >
+            忽略
+          </button>
+          <button
+            onClick={() => handleGenerate('adapt')}
+            className="px-2.5 py-1 rounded bg-warning/20 text-warning hover:bg-warning/30 transition-colors font-medium"
+          >
+            一键适配
+          </button>
+        </div>
+      )}
+
       <div className="bg-bg-surface border border-border rounded-lg p-4">
         <InlineTextarea value={value} onChange={onChange} placeholder={field.desc} />
       </div>
@@ -285,7 +341,7 @@ function SimpleFieldEditor({ field, value, onChange, project, contextSummary, on
         <input value={hint} onChange={e => setHint(e.target.value)}
           placeholder="给 AI 的补充说明（可选）"
           className="flex-1 px-2 py-1.5 bg-bg-base border border-border rounded text-xs text-text-primary focus:outline-none focus:border-accent" />
-        <button onClick={handleGenerate} disabled={ai.isStreaming}
+        <button onClick={() => handleGenerate()} disabled={ai.isStreaming}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded disabled:opacity-50 shrink-0 bg-accent/10 text-accent hover:bg-accent/20">
           <Sparkles className="w-3.5 h-3.5" /> AI 生成
         </button>
@@ -299,8 +355,8 @@ function SimpleFieldEditor({ field, value, onChange, project, contextSummary, on
       {(ai.output || ai.isStreaming || ai.error) && (
         <AIStreamOutput output={ai.output} reasoning={ai.reasoning} isStreaming={ai.isStreaming} error={ai.error}
           tokenUsage={ai.tokenUsage} onStop={ai.stop}
-          onAccept={(text: string) => { onChange(text); ai.reset() }}
-          onRetry={handleGenerate} moduleKey="worldview.dimension" />
+          onAccept={(text: string) => { onChange(text); onClearStale?.(); ai.reset() }}
+          onRetry={() => handleGenerate()} moduleKey="worldview.dimension" />
       )}
     </div>
   )

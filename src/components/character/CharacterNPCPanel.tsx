@@ -112,7 +112,7 @@ export default function CharacterNPCPanel({ project }: Props) {
               </div>
               {isOpen && (
                 <div className="mt-3 pl-7">
-                  <CharacterDimensionFields character={c} onChange={patch => update(c.id!, patch)} exclude={['shortDescription', 'location']} />
+                  <CharacterDimensionFields character={c} onChange={patch => update(c.id!, patch)} exclude={['shortDescription', 'location']} projectId={project.id!} worldGroupId={c.homeWorldGroupId ?? null} />
                 </div>
               )}
             </div>

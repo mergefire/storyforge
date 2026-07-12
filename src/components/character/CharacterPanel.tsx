@@ -20,7 +20,7 @@ import type {
 } from '../../lib/types'
 import CharacterStatusPanel from './CharacterStatusPanel'
 import CharacterDimensionPicker from './CharacterDimensionPicker'
-import CharacterDimensionFields from './CharacterDimensionFields'
+import CharacterDimensionFields, { CharacterFieldAIEditor } from './CharacterDimensionFields'
 import CharacterSupplementAction from './CharacterSupplementAction'
 import { CHARACTER_DIMENSIONS, type CharacterDimensionKey } from '../../lib/character/character-dimensions'
 import CharacterAxesPicker from './CharacterAxesPicker'
@@ -411,6 +411,7 @@ function CharacterDetailCard({
 }) {
   const { updateCharacter, loadAll } = useCharacterStore()
   const [expanded, setExpanded] = useState(true)
+  const [aiEditKey, setAiEditKey] = useState<'name' | 'shortDescription' | null>(null)
   const glyphColor = GLYPH_COLORS[charIndex % GLYPH_COLORS.length]
 
   return (
@@ -458,30 +459,82 @@ function CharacterDetailCard({
             )}
           </div>
 
-          {/* 名字（可编辑） */}
-          <InlineInput
-            value={char.name}
-            onChange={v => onUpdate('name', v)}
-            className="text-2xl font-bold font-serif text-text-primary"
-          />
+          {/* 名字（可编辑 + AI 修改） */}
+          <div className="flex items-center gap-1.5">
+            <div className="flex-1 min-w-0">
+              <InlineInput
+                value={char.name}
+                onChange={v => onUpdate('name', v)}
+                className="text-2xl font-bold font-serif text-text-primary"
+              />
+            </div>
+            <button
+              onClick={() => setAiEditKey(k => k === 'name' ? null : 'name')}
+              title={`AI 修改「姓名」`}
+              className={`shrink-0 p-1.5 rounded transition-colors ${
+                aiEditKey === 'name' ? 'bg-accent/20 text-accent' : 'text-text-muted hover:text-accent hover:bg-accent/10'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          {aiEditKey === 'name' && (
+            <div className="mt-1.5">
+              <CharacterFieldAIEditor
+                fieldKey="name"
+                fieldLabel="姓名"
+                character={char}
+                projectId={projectId}
+                worldGroupId={char.homeWorldGroupId ?? null}
+                currentValue={char.name}
+                onAccept={text => { onUpdate('name', text.trim()); setAiEditKey(null) }}
+              />
+            </div>
+          )}
 
-          {/* 一句话简介（引号样式） */}
-          {char.shortDescription ? (
-            <InlineInput
-              value={char.shortDescription}
-              onChange={v => onUpdate('shortDescription', v)}
-              className="text-sm text-text-secondary mt-1 italic"
-              prefix={"“"}
-              suffix={"”"}
-              placeholder="点击添加一句话简介…"
-            />
-          ) : (
-            <InlineInput
-              value=""
-              onChange={v => onUpdate('shortDescription', v)}
-              className="text-sm text-text-muted mt-1 italic"
-              placeholder="点击添加一句话简介…"
-            />
+          {/* 一句话简介（引号样式 + AI 修改） */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <div className="flex-1 min-w-0">
+              {char.shortDescription ? (
+                <InlineInput
+                  value={char.shortDescription}
+                  onChange={v => onUpdate('shortDescription', v)}
+                  className="text-sm text-text-secondary italic"
+                  prefix={"“"}
+                  suffix={"”"}
+                  placeholder="点击添加一句话简介…"
+                />
+              ) : (
+                <InlineInput
+                  value=""
+                  onChange={v => onUpdate('shortDescription', v)}
+                  className="text-sm text-text-muted italic"
+                  placeholder="点击添加一句话简介…"
+                />
+              )}
+            </div>
+            <button
+              onClick={() => setAiEditKey(k => k === 'shortDescription' ? null : 'shortDescription')}
+              title={`AI ${char.shortDescription ? '修改' : '生成'}「一句话简介」`}
+              className={`shrink-0 p-1 rounded transition-colors ${
+                aiEditKey === 'shortDescription' ? 'bg-accent/20 text-accent' : 'text-text-muted hover:text-accent hover:bg-accent/10'
+              }`}
+            >
+              <Sparkles className="w-3 h-3" />
+            </button>
+          </div>
+          {aiEditKey === 'shortDescription' && (
+            <div className="mt-1.5">
+              <CharacterFieldAIEditor
+                fieldKey="shortDescription"
+                fieldLabel="一句话简介"
+                character={char}
+                projectId={projectId}
+                worldGroupId={char.homeWorldGroupId ?? null}
+                currentValue={char.shortDescription || ''}
+                onAccept={text => { onUpdate('shortDescription', text.trim()); setAiEditKey(null) }}
+              />
+            </div>
           )}
         </div>
 
@@ -523,6 +576,8 @@ function CharacterDetailCard({
             character={char}
             onChange={patch => { if (char.id) updateCharacter(char.id, patch) }}
             exclude={['shortDescription']}
+            projectId={projectId}
+            worldGroupId={char.homeWorldGroupId ?? null}
           />
           {/* 人物关系非 CHARACTER_DIMENSIONS 成员（由关系网单独管），单列保留，避免丢失 */}
           <div className="flex gap-2">

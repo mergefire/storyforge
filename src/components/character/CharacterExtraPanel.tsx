@@ -161,6 +161,8 @@ export default function CharacterExtraPanel({ project }: Props) {
                             character={c}
                             onChange={patch => update(c.id!, patch)}
                             exclude={TABLE_DIMS}
+                            projectId={project.id!}
+                            worldGroupId={c.homeWorldGroupId ?? null}
                           />
                         </td>
                       </tr>

@@ -42,7 +42,8 @@ const WORLDVIEW_SYSTEM = `你是一位资深的世界设计师，擅长构建宏
 - 使用 Markdown 格式
 - 内容要丰富具体，有画面感
 - 注意与已有世界观设定保持一致{{#if usesDetailLevel}}
-- 详尽度：{{detailLevel}}（简略=300 字内 / 中等=300-800 字 / 详尽=800-1500 字）{{/if}}`
+- 详尽度：{{detailLevel}}（简略=300 字内 / 中等=300-800 字 / 详尽=800-1500 字）{{/if}}{{#if usesThinkingDepth}}
+- 思考深度：{{thinkingDepth}}（快速=直觉判断，不需过多分析 / 标准=分析主要关联和矛盾点 / 深入=系统推理所有关联性、潜在冲突与连锁影响，确保完全自洽）{{/if}}`
 
 const CHARACTER_SYSTEM = `你是一位角色设计大师，擅长创造有深度、有弧光的小说角色。
 
@@ -202,6 +203,9 @@ export const SYSTEM_PROMPT_SEEDS: PromptSeed[] = [
       { key: 'detailLevel', label: '详尽度', type: 'select',
         options: ['简略', '中等', '详尽'],
         default: '中等', description: '影响输出长度', optional: true },
+      { key: 'thinkingDepth', label: '思考深度', type: 'select',
+        options: ['快速', '标准', '深入'],
+        default: '标准', description: '控制 AI 在输出前的分析推理深度', optional: true },
     ],
     isActive: true,
   },
@@ -256,11 +260,13 @@ export const SYSTEM_PROMPT_SEEDS: PromptSeed[] = [
     description: '为指定角色的某个维度（背景/性格/能力等）补充约 200-400 字的细节。',
     systemPrompt: CHARACTER_SYSTEM,
     userPromptTemplate: `角色：{{characterName}}
-已有信息：{{characterInfo}}
+角色其他已有设定（保持一致）：{{characterInfo}}
 世界观：{{worldContext}}
 
-请为这个角色丰富"{{dimension}}"这个维度的描写，要具体生动，约 200-400 字。`,
-    variables: ['characterName', 'characterInfo', 'worldContext', 'dimension'],
+请为角色的"{{dimension}}"这个维度生成/修改内容。{{#if fieldFormat}}{{fieldFormat}}{{/if}}{{#if generationHint}}
+
+{{generationHint}}{{/if}}`,
+    variables: ['characterName', 'characterInfo', 'worldContext', 'dimension', 'generationHint', 'fieldFormat'],
     parameters: [
       { key: 'detailLevel', label: '详尽度', type: 'select',
         options: ['简略', '中等', '详尽'],
