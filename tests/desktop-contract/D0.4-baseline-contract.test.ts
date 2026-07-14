@@ -5,9 +5,13 @@ import { describe, expect, it } from 'vitest'
 import {
   AGGREGATE_MINIMUM_SAMPLES,
   FIXTURE_IDS,
+  LEGACY_PROTOCOL_VERSIONS,
   PERFORMANCE_PASS_REQUIREMENTS,
   PERFORMANCE_SCENARIO_IDS,
+  PROTOCOL_VERSION,
+  REQUIRED_REFERENCE_MODES,
   SECURITY_SCENARIO_IDS,
+  SUPPLEMENTAL_REFERENCE_MODES,
   readDatabaseSchemaVersionFacts,
   readRegistryFacts,
   validateReport,
@@ -79,8 +83,8 @@ function makeFullyMeasuredReport(): {
   report.comparison = {
     status: 'COMPLETE',
     reasonCode: null,
-    referenceModes: ['web-tab', 'installed-pwa'],
-    referenceReportIds: ['web-baseline', 'pwa-baseline'],
+    referenceModes: ['web-tab'],
+    referenceReportIds: ['web-baseline'],
     evidence: ['evidence/comparison.json'],
   }
   report.performance = report.performance.map((scenario: any) => ({
@@ -132,6 +136,37 @@ function makeFullyMeasuredReport(): {
 describe('D0.4 Windows baseline contract', () => {
   it('keeps the checked-in protocol, fixtures, schema and sample coherent', () => {
     expect(validateStaticContract()).toEqual([])
+  })
+
+  it('uses d0.4-v2 while retaining v1 fixture data semantics', () => {
+    const fixtureSpec = readJson(fixtureSpecPath)
+    const sample = readJson(samplePath)
+    const schema = readJson(path.join(
+      root,
+      'docs',
+      'windows-desktop',
+      'schemas',
+      'baseline-report.schema.json',
+    ))
+
+    expect(PROTOCOL_VERSION).toBe('d0.4-v2')
+    expect(LEGACY_PROTOCOL_VERSIONS).toEqual(['d0.4-v1'])
+    expect(fixtureSpec.protocolVersion).toBe(PROTOCOL_VERSION)
+    expect(sample.protocolVersion).toBe(PROTOCOL_VERSION)
+    expect(schema.properties.protocolVersion.const).toBe(PROTOCOL_VERSION)
+    expect(fixtureSpec.fixtureSpecVersion).toBe('d0.4-fixtures-v1')
+    expect(fixtureSpec.determinism.seed).toBe('storyforge-windows-d0.4-v1')
+  })
+
+  it('keeps v1 reports read-only instead of silently accepting them as v2 evidence', () => {
+    const fixtureSpec = readJson(fixtureSpecPath)
+    const registryFacts = readRegistryFacts()
+    const legacyReport = structuredClone(readJson(samplePath))
+    legacyReport.protocolVersion = 'd0.4-v1'
+
+    expect(validateReport(legacyReport, fixtureSpec, registryFacts)).toContain(
+      'protocolVersion d0.4-v1 is legacy read-only; retain the artifact and regenerate it as d0.4-v2',
+    )
   })
 
   it('derives registry facts from PROJECT_TABLES instead of a copied table list', () => {
@@ -252,6 +287,38 @@ describe('D0.4 Windows baseline contract', () => {
     expect(validateReport(report, fixtureSpec, registryFacts)).toEqual([])
   })
 
+  it('requires web-tab and treats installed-pwa as an optional supplemental reference', () => {
+    const { fixtureSpec, registryFacts, report } = makeFullyMeasuredReport()
+
+    expect(REQUIRED_REFERENCE_MODES).toEqual(['web-tab'])
+    expect(SUPPLEMENTAL_REFERENCE_MODES).toEqual(['installed-pwa'])
+    expect(validateReport(report, fixtureSpec, registryFacts)).toEqual([])
+
+    report.comparison.referenceModes.push('installed-pwa')
+    report.comparison.referenceReportIds.push('pwa-baseline')
+    expect(validateReport(report, fixtureSpec, registryFacts)).toEqual([])
+  })
+
+  it('does not let optional PWA absence mark complete web-tab evidence incomplete', () => {
+    const { fixtureSpec, registryFacts, report } = makeFullyMeasuredReport()
+    report.comparison.status = 'INCOMPLETE'
+    report.comparison.reasonCode = 'PWA_REFERENCE_MISSING'
+
+    expect(validateReport(report, fixtureSpec, registryFacts)).toContain(
+      'comparison status must be COMPLETE when web-tab report ID and evidence are present; installed-pwa is optional',
+    )
+  })
+
+  it('does not allow installed-pwa to substitute for the required web-tab reference', () => {
+    const { fixtureSpec, registryFacts, report } = makeFullyMeasuredReport()
+    report.comparison.referenceModes = ['installed-pwa']
+    report.comparison.referenceReportIds = ['pwa-baseline']
+
+    expect(validateReport(report, fixtureSpec, registryFacts)).toContain(
+      'complete comparison requires web-tab report ID and evidence; installed-pwa is optional',
+    )
+  })
+
   it('requires NO_GO when all required gates are measured and any gate fails', () => {
     const { fixtureSpec, registryFacts, report } = makeFullyMeasuredReport()
     report.performance[0].verdict = 'FAIL'
@@ -267,7 +334,7 @@ describe('D0.4 Windows baseline contract', () => {
     expect(validateReport(report, fixtureSpec, registryFacts)).toEqual([])
   })
 
-  it('rejects GO when all scenarios pass but fixtures or comparison evidence are incomplete', () => {
+  it('rejects GO when all scenarios pass but fixtures or required web evidence are incomplete', () => {
     const { fixtureSpec, registryFacts, report } = makeFullyMeasuredReport()
     const requiredFixture = report.fixtures.states.find((fixture: any) => fixture.required)
     requiredFixture.artifactStatus = 'NOT_GENERATED'
@@ -280,9 +347,9 @@ describe('D0.4 Windows baseline contract', () => {
     requiredFixture.artifactStatus = 'GENERATED_VALID'
     requiredFixture.manifestSha256 = '0'.repeat(64)
     report.comparison.status = 'INCOMPLETE'
-    report.comparison.reasonCode = 'PWA_REFERENCE_MISSING'
-    report.comparison.referenceModes = ['web-tab']
-    report.comparison.referenceReportIds = ['web-baseline']
+    report.comparison.reasonCode = 'WEB_REFERENCE_MISSING'
+    report.comparison.referenceModes = []
+    report.comparison.referenceReportIds = []
     report.comparison.evidence = []
 
     expect(validateReport(report, fixtureSpec, registryFacts)).toContain(

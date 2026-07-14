@@ -1,6 +1,6 @@
 {
   "fixtureSpecVersion": "d0.4-fixtures-v1",
-  "protocolVersion": "d0.4-v1",
+  "protocolVersion": "d0.4-v2",
   "registryCoverage": {
     "source": "src/lib/registry/project-tables.ts#PROJECT_TABLES",
     "rule": "At generation time, derive every current project table and its owner/export policy from PROJECT_TABLES. Do not copy a table-name list into this specification.",

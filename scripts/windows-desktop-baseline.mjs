@@ -22,6 +22,15 @@ const paths = {
   databaseSchema: path.join(repoRoot, 'src', 'lib', 'db', 'schema.ts'),
 }
 
+export const PROTOCOL_VERSION = 'd0.4-v2'
+export const LEGACY_PROTOCOL_VERSIONS = Object.freeze(['d0.4-v1'])
+export const REQUIRED_REFERENCE_MODES = Object.freeze(['web-tab'])
+export const SUPPLEMENTAL_REFERENCE_MODES = Object.freeze(['installed-pwa'])
+const ALLOWED_REFERENCE_MODES = Object.freeze([
+  ...REQUIRED_REFERENCE_MODES,
+  ...SUPPLEMENTAL_REFERENCE_MODES,
+])
+
 export const PERFORMANCE_SCENARIO_IDS = Object.freeze([
   'PERF-START-COLD',
   'PERF-START-WARM',
@@ -270,7 +279,14 @@ export function validateReport(report, fixtureSpec, registryFacts) {
   const errors = []
 
   if (report.schemaVersion !== '1.0.0') errors.push('schemaVersion must be 1.0.0')
-  if (report.protocolVersion !== 'd0.4-v1') errors.push('protocolVersion must be d0.4-v1')
+  if (LEGACY_PROTOCOL_VERSIONS.includes(report.protocolVersion)) {
+    errors.push(
+      'protocolVersion ' + report.protocolVersion
+      + ' is legacy read-only; retain the artifact and regenerate it as ' + PROTOCOL_VERSION,
+    )
+  } else if (report.protocolVersion !== PROTOCOL_VERSION) {
+    errors.push('protocolVersion must be ' + PROTOCOL_VERSION)
+  }
   if (!report.reportId) errors.push('reportId is required')
   if (!['STATIC_ONLY', 'FULL_BASELINE'].includes(report.reportKind)) {
     errors.push('reportKind is invalid')
@@ -313,8 +329,6 @@ export function validateReport(report, fixtureSpec, registryFacts) {
   let comparisonComplete = false
   if (!comparison || !['COMPLETE', 'INCOMPLETE'].includes(comparison.status)) {
     errors.push('comparison status is invalid')
-  } else if (comparison.status === 'INCOMPLETE') {
-    if (!comparison.reasonCode) errors.push('incomplete comparison requires reasonCode')
   } else {
     const referenceModes = Array.isArray(comparison.referenceModes)
       ? comparison.referenceModes
@@ -323,13 +337,50 @@ export function validateReport(report, fixtureSpec, registryFacts) {
       ? comparison.referenceReportIds
       : []
     const evidence = Array.isArray(comparison.evidence) ? comparison.evidence : []
-    comparisonComplete = comparison.reasonCode === null
-      && sameMembers(referenceModes, ['web-tab', 'installed-pwa'])
-      && referenceReportIds.length >= 2
+
+    if (!Array.isArray(comparison.referenceModes)) {
+      errors.push('comparison referenceModes must be an array')
+    }
+    if (!Array.isArray(comparison.referenceReportIds)) {
+      errors.push('comparison referenceReportIds must be an array')
+    }
+    if (!Array.isArray(comparison.evidence)) {
+      errors.push('comparison evidence must be an array')
+    }
+    if (new Set(referenceModes).size !== referenceModes.length) {
+      errors.push('comparison referenceModes must be unique')
+    }
+    if (referenceModes.some(mode => !ALLOWED_REFERENCE_MODES.includes(mode))) {
+      errors.push('comparison referenceModes may contain only web-tab and installed-pwa')
+    }
+    if (new Set(referenceReportIds).size !== referenceReportIds.length) {
+      errors.push('comparison referenceReportIds must be unique')
+    }
+
+    const requiredReferenceReady = REQUIRED_REFERENCE_MODES.every(mode => (
+      referenceModes.includes(mode)
+    ))
+      && referenceReportIds.length === referenceModes.length
+      && referenceReportIds.length >= REQUIRED_REFERENCE_MODES.length
+      && new Set(referenceModes).size === referenceModes.length
       && new Set(referenceReportIds).size === referenceReportIds.length
+      && referenceModes.every(mode => ALLOWED_REFERENCE_MODES.includes(mode))
       && evidence.length > 0
-    if (!comparisonComplete) {
-      errors.push('complete comparison requires web-tab and installed-pwa report IDs and evidence')
+
+    if (comparison.status === 'INCOMPLETE') {
+      if (!comparison.reasonCode) errors.push('incomplete comparison requires reasonCode')
+      if (requiredReferenceReady) {
+        errors.push(
+          'comparison status must be COMPLETE when web-tab report ID and evidence are present; installed-pwa is optional',
+        )
+      }
+    } else {
+      comparisonComplete = comparison.reasonCode === null && requiredReferenceReady
+      if (!comparisonComplete) {
+        errors.push(
+          'complete comparison requires web-tab report ID and evidence; installed-pwa is optional',
+        )
+      }
     }
   }
 
@@ -517,12 +568,28 @@ export function validateStaticContract() {
     || legacyMatrix?.expected?.currentlyDetectedRange?.maximum !== databaseSchemaVersions.maximum) {
     errors.push('legacy fixture schema range is stale')
   }
+  if (fixtureSpec.protocolVersion !== PROTOCOL_VERSION) {
+    errors.push('fixture specification protocolVersion must be ' + PROTOCOL_VERSION)
+  }
 
   if (schema.$schema !== 'https://json-schema.org/draft/2020-12/schema') {
     errors.push('report schema must use JSON Schema Draft 2020-12')
   }
-  if (schema.properties?.protocolVersion?.const !== 'd0.4-v1') {
+  if (schema.properties?.protocolVersion?.const !== PROTOCOL_VERSION) {
     errors.push('report schema protocolVersion const is missing')
+  }
+  const comparisonSchema = schema.properties?.comparison
+  const allowedReferenceModes = comparisonSchema?.properties?.referenceModes?.items?.enum || []
+  if (!sameMembers(allowedReferenceModes, ALLOWED_REFERENCE_MODES)) {
+    errors.push('report schema comparison reference modes are stale')
+  }
+  const completeComparisonSchema = comparisonSchema?.allOf?.find(clause => (
+    clause.if?.properties?.status?.const === 'COMPLETE'
+  ))?.then?.properties
+  if (completeComparisonSchema?.referenceModes?.minItems !== REQUIRED_REFERENCE_MODES.length
+    || completeComparisonSchema?.referenceModes?.contains?.const !== REQUIRED_REFERENCE_MODES[0]
+    || completeComparisonSchema?.referenceReportIds?.minItems !== REQUIRED_REFERENCE_MODES.length) {
+    errors.push('report schema must require only the web-tab reference for a complete comparison')
   }
   if (!schema.$defs?.performanceScenario || !schema.$defs?.securityScenario) {
     errors.push('report schema scenario definitions are missing')
@@ -542,7 +609,7 @@ export function validateStaticContract() {
     errors.push('sample report must not claim measured functional parity')
   }
   if (sample.comparison?.status !== 'INCOMPLETE') {
-    errors.push('sample report must not claim complete Web/PWA comparison evidence')
+    errors.push('sample report must not claim complete required web-tab reference evidence')
   }
   if (sample.performance.some(scenario => scenario.status !== 'NOT_MEASURED')) {
     errors.push('sample report must not claim measured performance')
@@ -811,7 +878,7 @@ export function collectStatic(options = {}) {
 
   const environment = {
     schemaVersion: '1.0.0',
-    protocolVersion: 'd0.4-v1',
+    protocolVersion: PROTOCOL_VERSION,
     capturedAt: now.toISOString(),
     captureKind: 'STATIC_ONLY',
     privacy: {

@@ -1,12 +1,16 @@
-# Windows 客户端 Web / PWA 基线协议（D0.4）
+# Windows 客户端 Web 参考基线协议（D0.4）
 
-> 协议版本：`d0.4-v1`  
-> 当前状态：**协议已定义，浏览器与 PWA 实测尚未执行**  
+> 协议版本：`d0.4-v2`
+> 当前状态：**协议已定义，生产 `web-tab` 完整实测尚未完成；installed PWA 仅为可选补充**
 > 适用对象：`web-tab`、`installed-pwa`、`tauri-dev`、`desktop-production`
 
 ## 1. 目标与边界
 
-本协议冻结 StoryForge Windows 客户端的对照口径。D1、D4 只能用相同语义的项目数据、相同操作脚本和同一参考环境与 Web / PWA 基线比较，避免“桌面版能打开”被误当成功能、性能或安全达标。
+本协议冻结 StoryForge Windows 客户端的对照口径。当前生产 `web-tab` 是 D0.4、D0.5、D1 以及后续 Tauri + WebView2 候选的**唯一必需参考基线**。D1、D4 只能用相同语义的项目数据、相同操作脚本和同一参考环境与该基线比较，避免“桌面版能打开”被误当成功能、性能或安全达标。
+
+`installed-pwa` 只用于补充观察独立窗口、Service Worker 与安装态差异；未安装、未测或采集受阻均不得单独阻塞 D0.4、D0.5 或 D1，也不得替代 `web-tab` 证据。该放宽只移除 PWA 作为必需参考的地位，不减少功能、数据哈希、性能、恢复、安全、夹具或报告完整性要求。
+
+协议版本采用只读历史兼容策略：既有 `.qa-reports/**` 中的 `d0.4-v1` 报告原样保留，不得静默改写版本或字段来冒充 v2，也不得计入 `d0.4-v2` 的聚合、比较或 Go / No-Go 裁决。新采集器只生成 `d0.4-v2` 报告；任何需要进入 v2 裁决的 v1 场景都必须按本协议重新采集。
 
 D0.4 只建立可复现协议、固定夹具规格、结果格式和无浏览器静态采集器。它**不等于完成基线实测**，也不授权把任何未采集指标写成估计值。
 
@@ -38,18 +42,18 @@ D0.4 只建立可复现协议、固定夹具规格、结果格式和无浏览器
 
 功能一致性、数据完整性和安全失败是硬门槛。可选健康分不得抵消硬门槛；当任一必需场景未测时，`healthScore` 必须为 `null`。
 
-裁决必须由报告内容唯一推出：任一必需功能门/场景为 `NOT_MEASURED`、`BLOCKED` 或 `INVALID` 时只能 `NOT_ELIGIBLE`；全部为 `MEASURED` 且任一 `FAIL` 时只能 `ELIGIBLE_NO_GO`；全部 `PASS` 后仍须完整参考环境、已解析 source commit、全部必需夹具有效，以及 Web 标签页与 installed PWA 两份引用报告/证据齐全，才可 `ELIGIBLE_GO`。
+裁决必须由报告内容唯一推出：任一必需功能门/场景为 `NOT_MEASURED`、`BLOCKED` 或 `INVALID` 时只能 `NOT_ELIGIBLE`；全部为 `MEASURED` 且任一 `FAIL` 时只能 `ELIGIBLE_NO_GO`；全部 `PASS` 后仍须完整参考环境、已解析 source commit、全部必需夹具有效，以及生产 `web-tab` 引用报告/证据齐全，才可 `ELIGIBLE_GO`。可选 `installed-pwa` 证据缺失或未测不改变裁决；一旦采集，其失败必须如实记录，但不能替代或放宽任一必需门。
 
 ## 3. 四种候选模式
 
 | 模式 | 定义 | 用途 |
 | --- | --- | --- |
-| `web-tab` | 支持的 Edge / Chrome 普通标签页 | 当前真实用户路径 |
-| `installed-pwa` | 从同一生产构建安装的 PWA 独立窗口 | Windows 无原生壳对照 |
+| `web-tab` | 支持的 Edge / Chrome 普通标签页 | 当前真实用户路径；唯一必需参考基线 |
+| `installed-pwa` | 从同一生产构建安装的 PWA 独立窗口 | 可选补充；观察安装态、独立窗口和 Service Worker 差异 |
 | `tauri-dev` | 开发构建；只用于诊断 | 不参与发布 Go / No-Go |
 | `desktop-production` | 签名候选安装包或等价 release 构建 | D1 / D4 被测对象 |
 
-Web 与 PWA 必须来自同一构建产物和同一源提交。桌面候选必须记录壳、WebView2、前端资源和迁移器版本。
+`web-tab` 必须绑定当前生产构建及可解析源提交。若采集 `installed-pwa`，它必须与 `web-tab` 来自同一构建产物和同一源提交。桌面候选必须记录壳、WebView2、前端资源和迁移器版本。
 
 ## 4. 参考环境冻结
 
@@ -136,7 +140,9 @@ D0.4 不复制专项规划 §5 的聚合 FP 矩阵，也不抢先建立 D0.5 的
 - 当前人工基线：`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md` §5；
 - D0.5 计划事实源：`docs/windows-desktop/feature-parity-baseline.json`。
 
-在相同 `small-v1` / `large-synthetic-v1` 夹具上，Web 标签页与 installed PWA 至少要验证入口可达、动作完成、业务数据语义、重启持久化和失败恢复。D0.5 动作清单未冻结前，`actionCount` 必须为 `null`；未执行 Web/PWA 基线时，功能状态必须为 `NOT_MEASURED`，总体不得为 `ELIGIBLE_GO`。
+在相同 `small-v1` / `large-synthetic-v1` 夹具上，生产 `web-tab` 必须验证入口可达、动作完成、业务数据语义、规范化数据哈希、浏览器关闭后重开持久化和失败恢复。D0.5 动作清单未冻结前，`actionCount` 必须为 `null`；未完成 `web-tab` 基线时，功能状态必须为 `NOT_MEASURED`，总体不得为 `ELIGIBLE_GO`。
+
+若采集 `installed-pwa`，应复用同一夹具和操作脚本并单独报告，但它是补充证据。后续 `tauri-dev` / `desktop-production` 必须逐项与冻结的 `web-tab` 参考报告比较；任一功能缺失、隐藏、置灰、要求回浏览器、业务语义或规范化数据哈希不一致、重启持久化不同、失败恢复退化，均直接使候选总体裁决失败。
 
 聚合功能基线不能代替 D0.5 的逐 actionId 证明。后续候选的任一功能缺失、隐藏、置灰、要求回浏览器或持久化语义不同，均直接使总体裁决失败；性能分和健康分不能抵消。
 
@@ -162,13 +168,13 @@ D0.4 不复制专项规划 §5 的聚合 FP 矩阵，也不抢先建立 D0.5 的
 
 ### 8.1 冻结阈值
 
-这些阈值在 Web / PWA 实测前被冻结；如需变更必须提升协议版本并说明原因，不能为某个候选追改：
+这些阈值在生产 `web-tab` 实测前被冻结；如需变更必须提升协议版本并说明原因，不能为某个候选追改：
 
-- 冷启动：参考机 p95 ≤ 3000 ms，且桌面候选不高于 PWA p95 的 120%。
-- 热启动和打开大项目：桌面候选 p95 不高于 PWA p95 的 120%。
+- 冷启动：参考机 p95 ≤ 3000 ms，且桌面候选不高于 `web-tab` p95 的 120%。
+- 热启动和打开大项目：桌面候选 p95 不高于 `web-tab` p95 的 120%。
 - 编辑输入：p95 < 100 ms，固定脚本后文本规范化哈希完全一致，无未解释长任务。
 - 自动保存：固定更改 100% 落盘，重启后哈希一致；数据丢失一次即失败。
-- AI mock：输出哈希一致；取消 p95 ≤ 250 ms；首块 p95 不高于 PWA 的 120%。
+- AI mock：输出哈希一致；取消 p95 ≤ 250 ms；首块 p95 不高于 `web-tab` 的 120%。
 - 内存：最后 15 分钟 private-bytes 线性斜率 ≤ 2 MiB/min；结束后 5 分钟空闲值须回到工作负载前基线的 `max(15%, 128 MiB)` 范围内。
 - 视频：编辑或 AI 场景的丢帧率相对 idle 增量 ≤ 1.0 个百分点，且无持续音画失步。
 - Blob：所有尺寸均不得 OOM/崩溃，导入导出字节 SHA-256 完全相同。
@@ -205,7 +211,8 @@ D0.4 不复制专项规划 §5 的聚合 FP 矩阵，也不抢先建立 D0.5 的
 ```
 
 - `summary.json` 必须符合 `schemas/baseline-report.schema.json`。
-- `comparison` 必须同时引用 `web-tab` 与 `installed-pwa` 的报告 ID 和证据；缺任一项即为 `INCOMPLETE`。
+- D0.4 参考报告的 `comparison` 必须引用 `web-tab` 报告 ID 和证据；`installed-pwa` 可选。缺少 `web-tab` 时为 `INCOMPLETE`，只缺少 `installed-pwa` 不得据此判为 `INCOMPLETE`。
+- D1 / D4 桌面候选报告必须引用同一冻结 `web-tab` 的报告 ID 和证据，并覆盖功能、规范化数据哈希、性能、恢复与安全；缺任一必需维度即为 `INCOMPLETE`。
 - `samples.ndjson` 一行一个原始样本；没有应用测量时必须是空文件。
 - `process-record.json` 只记录本轮启动的进程；静态采集写 `NO_APPLICATION_LAUNCHED`。
 - 截图、视频、系统跟踪或日志若产生，放在报告目录子目录并在摘要中用相对路径引用。
@@ -231,8 +238,8 @@ npm.cmd run baseline:collect-static -- --output .qa-reports/windows-desktop/<rep
 
 1. 参考环境所有强制字段冻结；
 2. 必需夹具实际生成并通过哈希、引用和导入导出断言；
-3. Web 与 installed PWA 的聚合功能基线和所有必需性能场景按本协议采集；
+3. 生产 `web-tab` 的聚合功能基线和所有必需性能场景按本协议采集；`installed-pwa` 仅为可选补充；
 4. 所有必需安全场景有可复核证据；
 5. 报告 Schema 校验通过且功能门及必需场景不存在 `NOT_MEASURED` 项。
 
-当前不满足上述条件，因此 D0.4 仍为 **IN PROGRESS / NOT_ELIGIBLE**。
+以上 PASS 条件除移除 installed PWA 的必需参考地位外均未放宽。当前仍缺完整夹具与生产 `web-tab` 的功能、性能、恢复、安全实测，因此 D0.4 仍为 **IN PROGRESS / NOT_ELIGIBLE**。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "protocolVersion": "d0.4-v1",
+  "protocolVersion": "d0.4-v2",
   "reportId": "sample-not-measured",
   "reportKind": "STATIC_ONLY",
   "generatedAt": "2026-07-14T00:00:00.000Z",
@@ -70,7 +70,7 @@
     "baselineSource": "docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md",
     "futureManifest": "docs/windows-desktop/feature-parity-baseline.json",
     "status": "NOT_MEASURED",
-    "reasonCode": "D0_5_ACTION_BASELINE_NOT_FROZEN_AND_WEB_PWA_NOT_EXECUTED",
+    "reasonCode": "D0_5_ACTION_BASELINE_NOT_FROZEN_AND_WEB_REFERENCE_NOT_EXECUTED",
     "verdict": "NOT_EVALUATED",
     "aggregateRowCount": null,
     "actionCount": null,
@@ -78,7 +78,7 @@
   },
   "comparison": {
     "status": "INCOMPLETE",
-    "reasonCode": "WEB_PWA_REFERENCE_REPORTS_NOT_COLLECTED",
+    "reasonCode": "WEB_REFERENCE_REPORT_NOT_COLLECTED",
     "referenceModes": [],
     "referenceReportIds": [],
     "evidence": []
@@ -103,7 +103,7 @@
       },
       "thresholds": [
         "p95 <= 3000 ms",
-        "desktop p95 <= 120% of installed-pwa p95"
+        "desktop p95 <= 120% of web-tab p95"
       ],
       "rawSamplesPath": null,
       "evidence": []
@@ -126,7 +126,7 @@
         "standardDeviation": null
       },
       "thresholds": [
-        "desktop p95 <= 120% of installed-pwa p95"
+        "desktop p95 <= 120% of web-tab p95"
       ],
       "rawSamplesPath": null,
       "evidence": []
@@ -149,7 +149,7 @@
         "standardDeviation": null
       },
       "thresholds": [
-        "desktop p95 <= 120% of installed-pwa p95"
+        "desktop p95 <= 120% of web-tab p95"
       ],
       "rawSamplesPath": null,
       "evidence": []
@@ -220,7 +220,7 @@
       },
       "thresholds": [
         "cancel p95 <= 250 ms",
-        "first chunk p95 <= 120% of installed-pwa p95",
+        "first chunk p95 <= 120% of web-tab p95",
         "mock output hash exact"
       ],
       "rawSamplesPath": null,

@@ -72,7 +72,7 @@
 1. **当前功能的定义**：以 D0.5 冻结 commit 中生产构建实际可达的路由、侧栏模块、面板、对话框、快捷键和后台任务为准；代码事实优先于可能滞后的功能说明。
 2. **等价的定义**：入口可达、操作可完成、数据语义一致、保存后可重开、错误与取消可恢复、相关导入/导出/AI/备份链路仍可用。仅“页面能打开”不算等价。
 3. **完成的定义**：功能等价清单中的每个动作均有 Windows 客户端证据，状态为 PASS；不得存在 UNKNOWN、BLOCKED 或未经作者明确批准的范围变更。
-4. **Web 不回归**：共享前端改造必须继续通过 Web/PWA 回归；不能为了桌面版破坏现有网页版。
+4. **Web 不回归**：共享前端改造必须继续通过当前生产 `web-tab` 回归；不能为了桌面版破坏现有网页版。D0.4～D1 的 installed PWA 实测仅为可选补充，不替代 Web 证据，也不因缺失而阻塞开发。
 5. **用户不补工程缺口**：不得把缺失功能改写成“回浏览器完成”“手工搬文件”“手工改库”或“先用命令行代替”。旧数据迁移由 Codex 执行；用户只处理操作系统或第三方服务无法代理的授权确认。
 
 允许的差异仅限于具有同等或更强结果的桌面适配：
@@ -288,7 +288,7 @@ flowchart LR
 | AI | 真实或受控 Provider 的流式首块、完成、取消、超时、断流、结构化输出、审阅与采纳链路 |
 | FILE | 文件类型、内容、中文路径、大文件、取消、权限拒绝、磁盘满与原子写入 |
 | RECOVERY | 失败注入后可重试、恢复且不破坏源数据或最后健康状态 |
-| WEB | 同一共享改动通过现有 Web/PWA 功能与构建回归 |
+| WEB | 同一共享改动通过当前生产 `web-tab` 功能与构建回归；D0.4～D1 的 installed PWA 实测为可选补充 |
 | REAL | 在 production desktop build、正式 profile 策略和真实 WebView2 中执行，不以浏览器开发服务器代替 |
 
 覆盖规则：
@@ -415,6 +415,8 @@ flowchart LR
 - beta/stable 前：在发布矩阵上重复全部高风险和受系统影响的动作；所有行仍为 PASS，并完成 Web/PWA 回归。
 - 任何新增功能都必须同步 manifest 和对应 FP 行；桌面版不能永远晚于 Web 版，发布时两端共享功能基线必须一致。
 
+beta/stable 的 PWA 回归是 D4/D5 发布阶段的独立质量要求，不把 installed PWA 重新变成 D0.4、D0.5 或 D1 的必需参考基线。
+
 ---
 
 ## 6. D0 · 治理、契约与基线
@@ -530,7 +532,7 @@ interface RuntimeAdapter {
 
 - Fake RuntimeAdapter 可在 Vitest 中覆盖成功、取消、超时和权限拒绝。
 - 架构检查禁止业务目录导入 Tauri API。
-- Web adapter 接入后现有 Web/PWA 行为和 npm run ci 不回归。
+- Web adapter 接入后当前生产 `web-tab` 行为、Web/PWA 构建契约和 npm run ci 不回归；installed PWA 动态实测为可选补充。
 
 **完成判据**
 
@@ -551,14 +553,17 @@ interface RuntimeAdapter {
 
 **改法**
 
-记录 Web 标签页与安装版 PWA 的当前基线：
+以当前生产 `web-tab` 记录唯一必需参考基线；installed PWA 只在不拖延主线时采集为补充观察：
 
 - 冷启动、热启动和打开最大项目耗时。
 - 编辑器输入延迟、自动保存耗时和长任务。
 - 30 分钟内存增长。
-- 1080p60 视频单独播放、视频 + Web、视频 + PWA 的 dropped frames。
+- 1080p60 视频单独播放与视频 + Web 的 dropped frames；视频 + installed PWA 为可选补充。
 - AI 流式首 chunk、取消和持续输出。
 - 10MB、100MB、500MB、1GB Blob/迁移档位。
+- 在冻结夹具上记录功能结果、规范化业务数据 hash、浏览器关闭后重开持久化和失败恢复。
+
+未安装、未测或无法自动化 installed PWA 不阻塞 D0.4 PASS、D0.5 开始或 D1 推进；它也不能替代生产 `web-tab` 的任一必需证据。除移除 PWA 的必需参考地位外，D0.4 的夹具、功能、性能、恢复、安全、原始样本和报告完整性要求均不放宽。
 
 同时冻结最坏安全场景：
 
@@ -575,7 +580,7 @@ interface RuntimeAdapter {
 
 **完成判据**
 
-D1/D4 能与固定基线比较，并有明确 Go/No-Go 数据。
+D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前实测未齐，不得标 PASS。
 
 ---
 
@@ -691,7 +696,7 @@ D1/D4 能与固定基线比较，并有明确 Go/No-Go 数据。
 
 - 首页、设置页、项目页直接启动与重启都不白屏。
 - Desktop 不请求 /storyforge/assets 或 /storyforge/sw.js。
-- Web manifest、PWA 安装和线上路由不回归。
+- Web manifest、Service Worker 构建契约和线上 `web-tab` 路由不回归；installed PWA 安装态 smoke 在 D1 为可选补充，不阻塞 D1。
 
 **完成判据**
 
@@ -787,10 +792,11 @@ UI → Adapter → IPC → Rust → 副作用 → UI 的整条链路可测试且
 - mock AI 流式、断流、取消。
 - 对第 5 节每个 ADAPTED/REAUTHORIZE/DESKTOP_REPLACEMENT 行运行最短能力探针；尚未在 D1 完整实现的行也必须证明存在可行的 RuntimeAdapter/IPC 路径。
 - Edge 播放 1080p60 视频，同时进行空闲、编辑和流式操作。
+- 按 D0.4 `d0.4-v2` 对同一夹具逐项比较 WebView2 与冻结生产 `web-tab` 的功能结果、规范化数据 hash、性能、重启/失败恢复和安全证据；installed PWA 缺失不阻塞 G1。
 
 **建议门槛**
 
-- 冷启动到可交互不超过 3 秒；若参考机器较慢，以 PWA 基线 + 20% 为上限。
+- 冷启动到可交互不超过 3 秒；若参考机器较慢，以生产 `web-tab` 基线 + 20% 为上限。
 - 编辑输入响应 p95 小于 100ms。
 - 视频 dropped frames 相对“仅视频”增加不超过 1 个百分点。
 - 30 分钟稳定负载无持续内存增长，停止任务后工作集能够回落。
@@ -802,7 +808,7 @@ UI → Adapter → IPC → Rust → 副作用 → UI 的整条链路可测试且
 - 必需编辑器、Worker、流式或文件能力出现无法绕过的 WebView2 缺陷。
 - 任一当前功能只能隐藏、置灰、回浏览器完成或依赖 Vite/Node/手工代理。
 - 任一生产入口未登记、没有 Desktop 实现路径，或无法给出可执行验收方法。
-- 性能在完成一次针对性优化后仍明显劣于现有 Web/PWA。
+- 性能在完成一次针对性优化后仍明显劣于冻结的生产 `web-tab` 必需基线；若有 installed PWA 样本，仅作为补充对照单列。
 - 修复核心兼容问题预计超过切换 Electron 的成本。
 
 **完成判据**
@@ -1799,11 +1805,12 @@ Windows package smoke
 
 1. 任意生产可达路由、SidebarModule、对话框动作和后台任务都恰好映射到一个 actionId 和 FP ID。
 2. 新增可达入口而未更新 manifest 时 CI 必须失败；删除或隐藏已登记入口而无作者批准的范围变更时 CI 必须失败。
-3. 对相同冻结夹具执行相同业务动作，Web 与 Desktop 的持久化业务结果语义等价；运行时元数据差异除外。
+3. 对相同冻结夹具执行相同业务动作，生产 `web-tab` 与 Desktop 的持久化业务结果语义及规范化数据 hash 等价；运行时元数据差异除外。
 4. 任意成功写操作在真实客户端重启后仍成立；任意失败/取消操作不产生不可见的半成品状态。
 5. 一个聚合 FP 行只有在其全部 actionId 通过后才能 PASS；通过比例或健康分数不能抵消一个功能缺失。
 6. REAUTHORIZE 只能改变首次外部授权步骤，不能减少数据、配置项、Provider、备份目标或后续能力。
-7. Desktop 适配不得使同一共享功能的 Web/PWA 行为回归。
+7. Tauri + WebView2 候选必须与冻结的生产 `web-tab` 比较功能、规范化数据 hash、性能、恢复与安全，任一必需维度缺证据或退化均不得通过对应闸门。
+8. Desktop 适配不得使同一共享功能的生产 `web-tab` 行为回归；installed PWA 若被采集也不得隐瞒已发现的回归，但其缺失不阻塞 D0.4～D1。
 
 ---
 
@@ -1862,7 +1869,7 @@ Windows package smoke
 6. 测试命令和结果。
 7. 数据迁移/更新任务的失败注入证据。
 8. UI 或桌面行为的 Windows smoke 记录。
-9. 触达的 FP ID/actionId、改动前后状态、Desktop 证据和对应 Web/PWA 回归。
+9. 触达的 FP ID/actionId、改动前后状态、Desktop 证据和对应生产 `web-tab` 回归；installed PWA 按阶段要求或作为补充列出。
 10. 风险、回滚方法和未验证项；未验证项不得标 PASS。
 11. 对 MASTER-BLUEPRINT、ROADMAP、CHANGELOG 的同步情况。
 
@@ -1886,7 +1893,7 @@ Windows package smoke
 1. D0.1：纳入 MASTER-BLUEPRINT 并完成 Claude 审查。
 2. D0.2：冻结正式/开发 identity 和 UDF。
 3. D0.3：RuntimeAdapter 契约。
-4. D0.4：Web/PWA 性能与安全基线。
+4. D0.4：生产 `web-tab` 必需功能/数据 hash/性能/恢复/安全基线；installed PWA 可选补充。
 5. D0.5：冻结动作级功能等价 manifest，建立自动覆盖检查。
 6. D1：只用假数据完成 Tauri vertical slice 和全功能可实现性探针。
 7. G1：逐 FP 行书面决定继续 Tauri 或转 Electron。

@@ -25,7 +25,7 @@
       "const": "1.0.0"
     },
     "protocolVersion": {
-      "const": "d0.4-v1"
+      "const": "d0.4-v2"
     },
     "reportId": {
       "type": "string",
@@ -376,13 +376,13 @@
                 "type": "null"
               },
               "referenceModes": {
-                "minItems": 2,
+                "minItems": 1,
                 "contains": {
                   "const": "web-tab"
                 }
               },
               "referenceReportIds": {
-                "minItems": 2
+                "minItems": 1
               },
               "evidence": {
                 "minItems": 1
