@@ -10,6 +10,9 @@ import { BIOMES } from '../../lib/world-map/engine/climate'
 import type {
   MapGenConfig, VoronoiMapData, MapStylePreset, LayerVisibility,
 } from '../../lib/world-map/engine'
+import { getRuntime } from '../../runtime'
+import { runtimeSafeSuggestedName } from '../../lib/runtime-file'
+import { useToast } from '../shared/Toast'
 
 interface Props {
   config?: Partial<MapGenConfig>
@@ -32,6 +35,7 @@ const LAYER_LABELS: Record<keyof LayerVisibility, string> = {
 }
 
 export default function WorldMapVoronoi({ config, onMapGenerated }: Props) {
+  const toast = useToast()
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
@@ -267,15 +271,27 @@ export default function WorldMapVoronoi({ config, onMapGenerated }: Props) {
         })
         exportCanvas.toBlob((blob) => {
           if (!blob) { setExporting(false); return }
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `${mapData.name || 'map'}_${mapData.width * 5}x${mapData.height * 5}.png`
-          a.click(); URL.revokeObjectURL(url); setExporting(false)
+          void (async () => {
+            try {
+              const bytes = new Uint8Array(await blob.arrayBuffer())
+              const outcome = await getRuntime().files.save({
+                purpose: 'world-map-png',
+                suggestedName: runtimeSafeSuggestedName(
+                  `${mapData.name || 'map'}_${mapData.width * 5}x${mapData.height * 5}.png`,
+                ),
+                content: { kind: 'bytes', bytes },
+              })
+              if (outcome.status === 'completed') toast.success('高清地图已导出')
+            } catch (err) {
+              toast.error(`地图导出失败：${err instanceof Error ? err.message : String(err)}`)
+            } finally {
+              setExporting(false)
+            }
+          })()
         }, 'image/png')
       } catch { setExporting(false) }
     }, 50))
-  }, [mapData, exporting])
+  }, [mapData, exporting, toast])
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[400px] bg-[#1a1f2e] overflow-hidden">

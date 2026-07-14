@@ -1,108 +1,123 @@
-/**
- * R-FOLDER · 本地文件夹持久层（FB-11 数据持久）
- *
- * ① 句柄持久化:存进独立 IndexedDB 后能读回、能清除（绑定跨刷新/更新不丢）。
- * ② 写盘 + 回读往返:把项目写成 JSON 落到（假）文件夹 → 读回 → 导入成新项目,数据一致。
- *
- * File System Access API 在 jsdom 不存在,这里用「假目录句柄」模拟其行为
- * （getFileHandle/createWritable/entries），覆盖 folder-backup 的纯逻辑。
- */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+/** R-FOLDER · folder backup orchestration through opaque RuntimeAdapter bindings. */
+import { act, createElement } from 'react'
+import { createRoot } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '../../src/lib/db/schema'
 import {
-  saveFolderHandle, loadFolderHandle, clearFolderHandle, projFolderKey,
-} from '../../src/lib/storage/folder-handle-store'
-import {
-  writeProjectJSONToFolder, readStoryforgeBackups, backupFilename,
+  backupFilename,
+  projectBackupBindingId,
+  readStoryforgeBackups,
+  writeProjectJSONToFolder,
 } from '../../src/lib/storage/folder-backup'
 import { importProjectJSON } from '../../src/lib/export/json-export'
+import { createFakeRuntime, type FakeRuntimeAdapter } from '../../src/runtime/fake'
+import { getRuntime, setRuntimeAdapter } from '../../src/runtime'
+import { FOLDER_AUTO_INTERVAL, useFolderAutoBackup } from '../../src/hooks/useFolderAutoBackup'
 
-// ── 假的 FileSystemDirectoryHandle（内存版）──
-function makeFakeDir(name = 'BackupDir') {
-  const files = new Map<string, string>()
-  const dir: any = {
-    name,
-    kind: 'directory',
-    async getFileHandle(fname: string, _opts?: { create?: boolean }) {
-      return {
-        async createWritable() {
-          let buf = ''
-          return {
-            async write(chunk: string) { buf += chunk },
-            async close() { files.set(fname, buf) },
-          }
-        },
-      }
-    },
-    async *entries() {
-      for (const [fname, content] of files) {
-        yield [fname, {
-          kind: 'file',
-          async getFile() { return { async text() { return content } } },
-        }]
-      }
-    },
-    _files: files,
-  }
-  return dir
-}
+const originalRuntime = getRuntime()
+let runtime: FakeRuntimeAdapter
 
-describe('R-FOLDER · 本地文件夹持久层', () => {
-  beforeEach(async () => { await db.delete(); await db.open() })
-  afterEach(async () => { db.close() })
-
-  it('句柄持久化:存→读→清（绑定跨刷新不丢）', async () => {
-    // 真实 FileSystemDirectoryHandle 是可结构化克隆的宿主对象;jsdom/fake-indexeddb
-    // 无法克隆带方法的假对象,故此用例用纯可克隆对象验证「存/读/清」往返本身。
-    const handle = { name: '我的备份盘', kind: 'directory' as const }
-    const key = projFolderKey(7)
-    await saveFolderHandle(key, handle as any)
-
-    const got = await loadFolderHandle(key)
-    expect(got).toBeTruthy()
-    expect((got as any).name).toBe('我的备份盘')
-
-    await clearFolderHandle(key)
-    expect(await loadFolderHandle(key)).toBeNull()
+describe('R-FOLDER · opaque directory backup', () => {
+  beforeEach(async () => {
+    ;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await db.delete()
+    await db.open()
+    runtime = createFakeRuntime()
+    setRuntimeAdapter(runtime)
   })
 
-  it('写盘 → 回读 → 导入往返,数据一致', async () => {
+  afterEach(() => {
+    delete (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+    setRuntimeAdapter(originalRuntime)
+    db.close()
+  })
+
+  it('bind → inspect → clear never exposes a directory handle or path', async () => {
+    const bindingId = projectBackupBindingId(7)
+    const bound = await runtime.files.bindBackupDirectory(bindingId)
+    expect(bound.status).toBe('completed')
+    expect(await runtime.files.inspectBackupBinding(bindingId)).toMatchObject({
+      bindingId,
+      permission: 'granted',
+    })
+
+    await runtime.files.clearBackupBinding(bindingId)
+    expect(await runtime.files.inspectBackupBinding(bindingId)).toEqual({
+      bindingId,
+      label: '',
+      permission: 'missing',
+    })
+  })
+
+  it('keeps the timer armed so a binding created in the current workspace is detected', async () => {
+    vi.useFakeTimers()
+    const inspect = vi.spyOn(runtime.files, 'inspectBackupBinding')
+    const bindingId = projectBackupBindingId(91)
+    const host = document.createElement('div')
+    const root = createRoot(host)
+    const Harness = () => {
+      useFolderAutoBackup(91)
+      return null
+    }
+
+    await act(async () => { root.render(createElement(Harness)) })
+    expect(inspect).toHaveBeenCalledTimes(1)
+    await runtime.files.bindBackupDirectory(bindingId)
+
+    await act(async () => {
+      vi.advanceTimersByTime(FOLDER_AUTO_INTERVAL)
+      await Promise.resolve()
+    })
+    expect(inspect).toHaveBeenCalledTimes(2)
+    act(() => root.unmount())
+  })
+
+  it('write → read → import roundtrip preserves project data', async () => {
     const now = Date.now()
     const pid = await db.projects.add({
       name: '盘里的书', genre: '', description: '', targetWordCount: 0,
       enableMultiWorld: false, createdAt: now, updatedAt: now,
     } as any) as number
-    await db.characters.add({ projectId: pid, name: '盘中角色', role: 'protagonist', createdAt: now, updatedAt: now } as any)
+    await db.characters.add({
+      projectId: pid, name: '盘中角色', role: 'protagonist', createdAt: now, updatedAt: now,
+    } as any)
 
-    const dir = makeFakeDir()
-    // 写盘:文件名按书名生成
-    const wrote = await writeProjectJSONToFolder(dir as any, pid)
-    expect(wrote).toBe(true)
-    expect(dir._files.has(backupFilename('盘里的书'))).toBe(true)
+    const bindingId = projectBackupBindingId(pid)
+    await runtime.files.bindBackupDirectory(bindingId)
+    expect(await writeProjectJSONToFolder(bindingId, pid)).toBe(true)
+    expect(runtime.state.bindingFiles.get(bindingId)?.has(backupFilename('盘里的书'))).toBe(true)
 
-    // 模拟"数据重置":删掉项目
     await db.projects.delete(pid)
     await db.characters.where('projectId').equals(pid).delete()
-    expect(await db.projects.count()).toBe(0)
 
-    // 回读 + 导入
-    const backups = await readStoryforgeBackups(dir as any)
+    const backups = await readStoryforgeBackups(bindingId)
     expect(backups).toHaveLength(1)
     const newId = await importProjectJSON(backups[0].data)
-    expect(newId).toBeGreaterThan(0)
-    const restored = await db.projects.get(newId)
-    expect(restored?.name).toContain('盘里的书')
-    const chars = await db.characters.where('projectId').equals(newId).toArray()
-    expect(chars.map(c => c.name)).toContain('盘中角色')
+    expect((await db.projects.get(newId))?.name).toContain('盘里的书')
+    expect(
+      (await db.characters.where('projectId').equals(newId).toArray()).map(character => character.name),
+    ).toContain('盘中角色')
   })
 
-  it('回读忽略非 storyforge 文件 + 解析失败的文件', async () => {
-    const dir = makeFakeDir()
-    dir._files.set('storyforge-好书.json', JSON.stringify({ version: 3, exportedAt: 1, project: { name: '好书' }, worldviews: [], storyCores: [], powerSystems: [], characters: [], outlineNodes: [], chapters: [], foreshadows: [], geographies: [], histories: [], creativeRules: [], characterRelations: [] }))
-    dir._files.set('readme.txt', '不是备份')
-    dir._files.set('storyforge-坏文件.json', '{坏 JSON')
+  it('read skips one corrupt backup without blocking valid files', async () => {
+    const bindingId = projectBackupBindingId(9)
+    await runtime.files.bindBackupDirectory(bindingId)
+    const files = runtime.state.bindingFiles.get(bindingId)!
+    const encode = (value: string) => new TextEncoder().encode(value)
+    files.set('storyforge-好书.json', encode(JSON.stringify({
+      version: 3,
+      exportedAt: 1,
+      project: { name: '好书' },
+      worldviews: [], storyCores: [], powerSystems: [], characters: [], outlineNodes: [],
+      chapters: [], foreshadows: [], geographies: [], histories: [], creativeRules: [],
+      characterRelations: [],
+    })))
+    files.set('storyforge-坏文件.json', encode('{坏 JSON'))
 
-    const backups = await readStoryforgeBackups(dir as any)
-    expect(backups.map(b => b.name)).toEqual(['storyforge-好书.json'])
+    expect((await readStoryforgeBackups(bindingId)).map(file => file.name)).toEqual([
+      'storyforge-好书.json',
+    ])
   })
 })

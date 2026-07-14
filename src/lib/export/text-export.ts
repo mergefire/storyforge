@@ -2,6 +2,7 @@ import { db } from '../db/schema'
 import type { OutlineNode, Chapter } from '../types'
 import { isHtml, htmlToPlainText } from '../utils/html'
 import { getRuntime } from '../../runtime'
+import { runtimeSafeSuggestedName } from '../runtime-file'
 
 /** HTML → Markdown（简化规则，覆盖 TipTap StarterKit 产出的常见结构） */
 function htmlToMarkdown(html: string): string {
@@ -186,7 +187,7 @@ export function downloadTextFile(
 ) {
   return getRuntime().files.save({
     purpose: mimeType === 'text/markdown' ? 'project-markdown' : 'project-text',
-    suggestedName: filename,
+    suggestedName: runtimeSafeSuggestedName(filename),
     content: { kind: 'text', text: content },
   })
 }

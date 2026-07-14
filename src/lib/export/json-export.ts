@@ -15,6 +15,7 @@ import { deriveExportProjectJSON } from './registry-export'
 import { deriveImportProjectJSON } from './registry-import'
 import type { NestedRefEncoding } from './export-format'
 import { getRuntime } from '../../runtime'
+import { runtimeSafeSuggestedName } from '../runtime-file'
 import type {
   Project, Worldview, StoryCore, PowerSystem,
   Character, OutlineNode, Chapter,
@@ -118,7 +119,7 @@ export async function exportProjectJSON(projectId: number): Promise<ProjectExpor
 export function downloadJSON(data: ProjectExportData, filename: string) {
   return getRuntime().files.save({
     purpose: 'project-json',
-    suggestedName: filename,
+    suggestedName: runtimeSafeSuggestedName(filename),
     content: { kind: 'text', text: JSON.stringify(data, null, 2) },
   })
 }
