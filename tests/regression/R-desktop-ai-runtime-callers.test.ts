@@ -266,31 +266,27 @@ describe('AI callers use RuntimeAdapter without losing protocol semantics', () =
     setRuntimeAdapter(runtime)
 
     for (const key of ['storyforge.ai.primary', 'storyforge.ai.embedding'] as const) {
-      const keyedCredential = await bindAiCredential({ key, apiKey: 'secret' })
+      const endpoint = {
+        provider: 'custom' as const,
+        profileId: key === 'storyforge.ai.primary' ? 'primary' : 'embedding',
+        operation: key.endsWith('embedding') ? 'embeddings' as const : 'chat-completions' as const,
+        configuredBaseUrl: 'http://localhost:11434/v1',
+      }
+      const keyedCredential = await bindAiCredential({ key, apiKey: 'secret', ...endpoint })
       expect(keyedCredential).toBeDefined()
       expect(await runtime.secrets.has(key)).toBe(true)
-      expect(await bindAiCredential({ key, apiKey: '' })).toBeUndefined()
+      expect(await bindAiCredential({ key, apiKey: '', ...endpoint })).toBeUndefined()
       expect(await runtime.secrets.has(key)).toBe(true)
 
       await expect(runtime.ai.execute({
-        endpoint: {
-          provider: 'custom',
-          profileId: key,
-          operation: key.endsWith('embedding') ? 'embeddings' : 'chat-completions',
-          configuredBaseUrl: 'http://localhost:11434/v1',
-        },
+        endpoint,
         credentialId: keyedCredential,
         body: {},
       })).resolves.toMatchObject({ status: 200 })
 
       await runtime.secrets.delete(key)
       await expect(runtime.ai.execute({
-        endpoint: {
-          provider: 'custom',
-          profileId: key,
-          operation: key.endsWith('embedding') ? 'embeddings' : 'chat-completions',
-          configuredBaseUrl: 'http://localhost:11434/v1',
-        },
+        endpoint,
         credentialId: keyedCredential,
         body: {},
       })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' })

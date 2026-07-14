@@ -10,6 +10,7 @@ import { useProjectStore } from '../../stores/project'
 import { ensureChunkEmbeddings, rebuildProjectNarrativeSummaries, rebuildProjectRetrievalChunks } from '../../lib/retrieval/retrieval'
 import { isEmbeddingReady } from '../../lib/ai/adapters/embedding-adapter'
 import type { EmbeddingConfig } from '../../lib/types'
+import { useDialog } from '../shared/Dialog'
 
 // 本地代理 ↔ 直连 地址对（与聊天配置同套路：本地运行用代理绕 CORS，线上部署用直连）。
 const PROXY_PAIRS: Array<{ proxy: string; direct: string }> = [
@@ -30,9 +31,17 @@ const PRESETS: Array<{ label: string; note: string; cfg: Partial<EmbeddingConfig
 
 export default function EmbeddingConfigCard() {
   const { embedding, setEmbeddingConfig } = useAIConfigStore()
+  const dialog = useDialog()
   const currentProjectId = useProjectStore(s => s.currentProjectId)
   const [indexing, setIndexing] = useState(false)
   const [progress, setProgress] = useState('')
+  const updateEmbedding = (partial: Partial<EmbeddingConfig>) => {
+    void setEmbeddingConfig(partial).catch(error => dialog.alert({
+      title: 'Embedding 凭据设置未保存',
+      message: error instanceof Error ? error.message : String(error),
+      tone: 'danger',
+    }))
+  }
   const [msg, setMsg] = useState('')
 
   const buildIndex = async () => {
@@ -73,7 +82,7 @@ export default function EmbeddingConfigCard() {
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-normal">Labs</span>
         </h3>
         <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-          <input type="checkbox" checked={embedding.enabled} onChange={e => setEmbeddingConfig({ enabled: e.target.checked })} className="accent-accent" />
+          <input type="checkbox" checked={embedding.enabled} onChange={e => updateEmbedding({ enabled: e.target.checked })} className="accent-accent" />
           启用
         </label>
       </div>
@@ -99,7 +108,7 @@ export default function EmbeddingConfigCard() {
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {PRESETS.map(p => (
-              <button key={p.label} onClick={() => setEmbeddingConfig(p.cfg)}
+              <button key={p.label} onClick={() => updateEmbedding(p.cfg)}
                 className="text-xs px-2.5 py-1.5 rounded-lg bg-bg-elevated border border-border text-text-secondary hover:text-accent hover:border-accent/50 transition-colors text-left">
                 <div className="font-medium">{p.label}</div>
                 <div className="text-[10px] text-text-muted">{p.note}</div>
@@ -112,19 +121,19 @@ export default function EmbeddingConfigCard() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-text-secondary mb-1">Base URL</label>
-              <input type="text" value={embedding.baseUrl} onChange={e => setEmbeddingConfig({ baseUrl: e.target.value })}
+              <input type="text" value={embedding.baseUrl} onChange={e => updateEmbedding({ baseUrl: e.target.value })}
                 className="w-full px-3 py-1.5 bg-bg-base border border-border rounded text-text-primary text-xs focus:outline-none focus:border-accent" />
               {(() => {
                 const pair = PROXY_PAIRS.find(p => embedding.baseUrl === p.proxy || embedding.baseUrl === p.direct)
                 if (!pair) return null
                 const isProxy = embedding.baseUrl === pair.proxy
                 return isProxy ? (
-                  <button onClick={() => setEmbeddingConfig({ baseUrl: pair.direct })}
+                  <button onClick={() => updateEmbedding({ baseUrl: pair.direct })}
                     className="mt-1 text-[11px] px-2 py-1 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors">
                     🔗 切换到直连(线上部署用)
                   </button>
                 ) : (
-                  <button onClick={() => setEmbeddingConfig({ baseUrl: pair.proxy })}
+                  <button onClick={() => updateEmbedding({ baseUrl: pair.proxy })}
                     className="mt-1 text-[11px] px-2 py-1 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors">
                     🔄 切换到本地代理(本地运行用)
                   </button>
@@ -133,13 +142,13 @@ export default function EmbeddingConfigCard() {
             </div>
             <div>
               <label className="block text-xs text-text-secondary mb-1">嵌入模型</label>
-              <input type="text" value={embedding.model} onChange={e => setEmbeddingConfig({ model: e.target.value })}
+              <input type="text" value={embedding.model} onChange={e => updateEmbedding({ model: e.target.value })}
                 className="w-full px-3 py-1.5 bg-bg-base border border-border rounded text-text-primary text-xs focus:outline-none focus:border-accent" />
             </div>
           </div>
           <div>
             <label className="block text-xs text-text-secondary mb-1">API Key <span className="text-text-muted">(本地 Ollama 可留空)</span></label>
-            <input type="password" value={embedding.apiKey} onChange={e => setEmbeddingConfig({ apiKey: e.target.value })}
+            <input type="password" value={embedding.apiKey} onChange={e => updateEmbedding({ apiKey: e.target.value })}
               placeholder="sk-..." className="w-full px-3 py-1.5 bg-bg-base border border-border rounded text-text-primary text-xs focus:outline-none focus:border-accent" />
           </div>
           <p className="text-[11px] text-text-muted">

@@ -48,12 +48,24 @@ describe('D0.3 RuntimeAdapter contract', () => {
     const runtime = createFakeRuntime({
       aiChunks: [new TextEncoder().encode('data: {"ok":true}\n\n')],
     })
-    const credentialId = await runtime.secrets.put(
-      { key: 'storyforge.github.gist', persistence: 'session' },
+    const gistCredentialId = await runtime.secrets.put(
+      { key: 'storyforge.github.gist', persistence: 'session', scope: { kind: 'github-gist' } },
       'secret-that-must-not-leave-the-vault',
     )
     expect(await runtime.secrets.has('storyforge.github.gist')).toBe(true)
-    expect(await runtime.secrets.reference('storyforge.github.gist')).toBe(credentialId)
+    expect(await runtime.secrets.reference('storyforge.github.gist')).toBe(gistCredentialId)
+
+    const aiCredentialId = await runtime.secrets.put({
+      key: 'storyforge.ai.primary',
+      persistence: 'session',
+      scope: {
+        kind: 'ai',
+        provider: 'deepseek',
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: '/deepseek-proxy/api/v1',
+      },
+    }, 'sk-deepseek')
 
     const aiResponse = await runtime.ai.execute({
       endpoint: {
@@ -62,20 +74,20 @@ describe('D0.3 RuntimeAdapter contract', () => {
         operation: 'chat-completions',
         configuredBaseUrl: '/deepseek-proxy/api/v1',
       },
-      credentialId,
+      credentialId: aiCredentialId,
       body: { model: 'deepseek-chat', messages: [] },
     })
     expect(await collectBytes(aiResponse.body)).toContain('"ok":true')
     expect(runtime.state.aiRequests[0]).not.toHaveProperty('credential')
 
     const gist = await runtime.gist.writeBackup({
-      credentialId,
+      credentialId: gistCredentialId,
       filename: 'storyforge-test.json',
       description: 'backup',
       content: '{"version":3}',
     })
-    expect((await runtime.gist.listBackups(credentialId))[0].gistId).toBe(gist.gistId)
-    expect((await runtime.gist.readBackup(credentialId, gist.gistId)).content).toBe('{"version":3}')
+    expect((await runtime.gist.listBackups(gistCredentialId))[0].gistId).toBe(gist.gistId)
+    expect((await runtime.gist.readBackup(gistCredentialId, gist.gistId)).content).toBe('{"version":3}')
 
     const save = await runtime.files.save({
       purpose: 'project-json',
@@ -98,7 +110,9 @@ describe('D0.3 RuntimeAdapter contract', () => {
       bindingId: 'project-7',
       purpose: 'project-backup',
     })
-    expect(new TextDecoder().decode(backups[0].bytes)).toBe('{"version":3}')
+    const restored = []
+    for await (const backup of backups) restored.push(backup)
+    expect(new TextDecoder().decode(restored[0].bytes)).toBe('{"version":3}')
 
     await runtime.clipboard.writeText('workflow-output', 'result')
     await runtime.external.open({ kind: 'project-repository' })
@@ -111,12 +125,35 @@ describe('D0.3 RuntimeAdapter contract', () => {
 
   it('versions fake credential references and invalidates them on delete', async () => {
     const runtime = createFakeRuntime()
-    const descriptor = { key: 'storyforge.ai.primary' as const, persistence: 'session' as const }
+    const descriptor = {
+      key: 'storyforge.ai.preset.rotated' as const,
+      persistence: 'session' as const,
+      scope: {
+        kind: 'ai' as const,
+        provider: 'custom' as const,
+        profileId: 'rotated',
+        operation: 'chat-completions' as const,
+        configuredBaseUrl: 'https://example.com/v1',
+      },
+    }
     const first = await runtime.secrets.put(descriptor, 'sk-first')
     const second = await runtime.secrets.put(descriptor, 'sk-second')
 
     expect(first).not.toBe(second)
     expect(await runtime.secrets.reference(descriptor.key)).toBe(second)
+
+    const gistCredential = await runtime.secrets.put({
+      key: 'storyforge.github.gist',
+      persistence: 'session',
+      scope: { kind: 'github-gist' },
+    }, 'ghp-test')
+    await expect(runtime.ai.execute({
+      endpoint: descriptor.scope,
+      credentialId: gistCredential,
+      body: {},
+    })).rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
+    await expect(runtime.gist.validateCredential(first))
+      .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
 
     await runtime.secrets.delete(descriptor.key)
     await expect(runtime.ai.execute({

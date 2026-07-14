@@ -51,7 +51,17 @@ describe('D0.3 Web RuntimeAdapter', () => {
     }))
     const runtime = createWebRuntime({ fetch: fetchMock })
     const credentialId = await runtime.secrets.put(
-      { key: 'storyforge.ai.primary', persistence: 'session' },
+      {
+        key: 'storyforge.ai.primary',
+        persistence: 'session',
+        scope: {
+          kind: 'ai',
+          provider: 'deepseek',
+          profileId: 'primary',
+          operation: 'chat-completions',
+          configuredBaseUrl: '/deepseek-proxy/v1',
+        },
+      },
       'sk-private',
     )
 
@@ -75,6 +85,20 @@ describe('D0.3 Web RuntimeAdapter', () => {
     expect(JSON.parse(String(init?.body))).toMatchObject({ model: 'deepseek-chat' })
     expect(await consume(response.body)).toContain('[DONE]')
 
+    const embeddingCredentialId = await runtime.secrets.put(
+      {
+        key: 'storyforge.ai.embedding',
+        persistence: 'session',
+        scope: {
+          kind: 'ai',
+          provider: 'glm',
+          profileId: 'embedding',
+          operation: 'embeddings',
+          configuredBaseUrl: '/glm-proxy/api/paas/v4',
+        },
+      },
+      'sk-private',
+    )
     await runtime.ai.execute({
       endpoint: {
         provider: 'glm',
@@ -82,7 +106,7 @@ describe('D0.3 Web RuntimeAdapter', () => {
         operation: 'embeddings',
         configuredBaseUrl: '/glm-proxy/api/paas/v4',
       },
-      credentialId,
+      credentialId: embeddingCredentialId,
       body: { model: 'embedding-3', input: ['text'] },
     })
     expect(fetchMock.mock.calls[1][0]).toBe('/glm-proxy/api/paas/v4/embeddings')
@@ -92,7 +116,17 @@ describe('D0.3 Web RuntimeAdapter', () => {
   it('binds each credential id to the exact secret value across rotations', async () => {
     const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }))
     const runtime = createWebRuntime({ fetch: fetchMock })
-    const descriptor = { key: 'storyforge.ai.primary' as const, persistence: 'session' as const }
+    const descriptor = {
+      key: 'storyforge.ai.preset.credential-rotation' as const,
+      persistence: 'session' as const,
+      scope: {
+        kind: 'ai' as const,
+        provider: 'custom' as const,
+        profileId: 'credential-rotation',
+        operation: 'chat-completions' as const,
+        configuredBaseUrl: '/openai-proxy/v1',
+      },
+    }
     const firstCredential = await runtime.secrets.put(descriptor, 'sk-first')
     const secondCredential = await runtime.secrets.put(descriptor, 'sk-second')
 
@@ -118,6 +152,50 @@ describe('D0.3 Web RuntimeAdapter', () => {
     await runtime.secrets.delete(descriptor.key)
     await expect(execute(firstCredential))
       .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
+  })
+
+  it('rejects cross-service, cross-profile and cross-origin credential reuse', async () => {
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }))
+    const runtime = createWebRuntime({ fetch: fetchMock })
+    const aiCredential = await runtime.secrets.put({
+      key: 'storyforge.ai.primary',
+      persistence: 'session',
+      scope: {
+        kind: 'ai',
+        provider: 'custom',
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: 'https://trusted.example/v1',
+      },
+    }, 'sk-ai')
+    const gistCredential = await runtime.secrets.put({
+      key: 'storyforge.github.gist',
+      persistence: 'session',
+      scope: { kind: 'github-gist' },
+    }, 'ghp_gist')
+
+    const executeAi = (credentialId: typeof aiCredential, profileId: string, configuredBaseUrl: string) => (
+      runtime.ai.execute({
+        endpoint: {
+          provider: 'custom',
+          profileId,
+          operation: 'chat-completions',
+          configuredBaseUrl,
+        },
+        credentialId,
+        body: {},
+      })
+    )
+
+    await expect(executeAi(gistCredential, 'primary', 'https://trusted.example/v1'))
+      .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
+    await expect(runtime.gist.validateCredential(aiCredential))
+      .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
+    await expect(executeAi(aiCredential, 'other-profile', 'https://trusted.example/v1'))
+      .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
+    await expect(executeAi(aiCredential, 'primary', 'https://attacker.example/v1'))
+      .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -263,6 +341,38 @@ describe('D0.3 Web RuntimeAdapter', () => {
     expect(external).toHaveBeenCalledWith(expect.stringMatching(/^https:\/\/github\.com\/settings\/tokens/))
   })
 
+  it('does not misclassify local TypeErrors as retryable network failures', async () => {
+    const runtime = createWebRuntime({
+      files: {
+        save: async () => { throw new TypeError('local file delegate failed') },
+      },
+      clipboardWriteText: async () => { throw new TypeError('clipboard delegate failed') },
+    })
+
+    await expect(runtime.files.save({
+      purpose: 'project-json',
+      suggestedName: 'storyforge-project.json',
+      content: { kind: 'text', text: '{}' },
+    })).rejects.toMatchObject<Partial<RuntimeError>>({ code: 'UNKNOWN', retryable: false })
+    await expect(runtime.clipboard.writeText('workflow-output', 'result'))
+      .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'UNKNOWN', retryable: false })
+  })
+
+  it('does not report a safe noopener window as blocked when open returns null', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    try {
+      await expect(createWebRuntime().external.open({ kind: 'project-repository' }))
+        .resolves.toBeUndefined()
+      expect(open).toHaveBeenCalledWith(
+        'https://github.com/yuanbw2025/storyforge',
+        '_blank',
+        'noopener,noreferrer',
+      )
+    } finally {
+      open.mockRestore()
+    }
+  })
+
   it('uses fixed Gist endpoints and rejects arbitrary diagnostic fields', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
@@ -275,7 +385,7 @@ describe('D0.3 Web RuntimeAdapter', () => {
     })
     const runtime = createWebRuntime({ fetch: fetchMock })
     const credentialId = await runtime.secrets.put(
-      { key: 'storyforge.github.gist', persistence: 'session' },
+      { key: 'storyforge.github.gist', persistence: 'session', scope: { kind: 'github-gist' } },
       'github-pat',
     )
     expect(await runtime.gist.validateCredential(credentialId)).toEqual({ login: 'author' })
@@ -301,6 +411,37 @@ describe('D0.3 Web RuntimeAdapter', () => {
     } as unknown as DiagnosticEvent
     expect(() => runtime.diagnostics.record(invalidEvent))
       .toThrowError(expect.objectContaining({ code: 'INVALID_INPUT' }))
+
+    const invalidEnum = {
+      kind: 'network-attempt',
+      timestamp: 1,
+      service: 'manuscript-secret',
+      operation: 'chat-completions',
+      outcome: 'completed',
+    } as unknown as DiagnosticEvent
+    expect(() => runtime.diagnostics.record(invalidEnum))
+      .toThrowError(expect.objectContaining({ code: 'INVALID_INPUT' }))
+  })
+
+  it('preserves status, retryability and plain-text details for Gist gateway errors', async () => {
+    const runtime = createWebRuntime({
+      fetch: vi.fn(async () => new Response('upstream temporarily unavailable', { status: 503 })),
+    })
+    const credentialId = await runtime.secrets.put(
+      { key: 'storyforge.github.gist', persistence: 'session', scope: { kind: 'github-gist' } },
+      'github-pat',
+    )
+
+    await expect(runtime.gist.writeBackup({
+      credentialId,
+      filename: 'storyforge-book.json',
+      description: 'backup',
+      content: '{}',
+    })).rejects.toMatchObject<Partial<RuntimeError>>({
+      code: 'REMOTE_ERROR',
+      retryable: true,
+      message: 'upstream temporarily unavailable',
+    })
   })
 
   it.each([307, 308])('blocks %i redirects before an AI request body can reach another origin', async status => {
@@ -421,7 +562,7 @@ describe('D0.3 Web RuntimeAdapter', () => {
     }), { status: 200 }))
     const runtime = createWebRuntime({ fetch: fetchMock })
     const credentialId = await runtime.secrets.put(
-      { key: 'storyforge.github.gist', persistence: 'session' },
+      { key: 'storyforge.github.gist', persistence: 'session', scope: { kind: 'github-gist' } },
       'github-pat',
     )
 
@@ -448,7 +589,7 @@ describe('D0.3 Web RuntimeAdapter', () => {
     })
     const runtime = createWebRuntime({ fetch: fetchMock })
     const credentialId = await runtime.secrets.put(
-      { key: 'storyforge.github.gist', persistence: 'session' },
+      { key: 'storyforge.github.gist', persistence: 'session', scope: { kind: 'github-gist' } },
       'github-pat',
     )
 
@@ -502,6 +643,29 @@ describe('D0.3 Web RuntimeAdapter', () => {
     }
   })
 
+  it('rejects an oversized source document before reading it into memory', async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, 'showOpenFilePicker')
+    const arrayBuffer = vi.fn(async () => new ArrayBuffer(0))
+    const oversizedPdf = {
+      name: 'large.pdf',
+      type: 'application/pdf',
+      size: 20 * 1024 * 1024 + 1,
+      arrayBuffer,
+    } as unknown as File
+    Object.defineProperty(window, 'showOpenFilePicker', {
+      configurable: true,
+      value: async () => [{ getFile: async () => oversizedPdf }],
+    })
+    try {
+      await expect(createWebRuntime().files.open({ purpose: 'source-document' }))
+        .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'INVALID_INPUT' })
+      expect(arrayBuffer).not.toHaveBeenCalled()
+    } finally {
+      if (descriptor) Object.defineProperty(window, 'showOpenFilePicker', descriptor)
+      else Reflect.deleteProperty(window, 'showOpenFilePicker')
+    }
+  })
+
   it('maps fallback input cancellation to cancelled and AbortSignal to ABORTED', async () => {
     const restoreCancelPicker = disableOpenFilePicker()
     const cancelClick = vi.spyOn(HTMLInputElement.prototype, 'click')
@@ -528,6 +692,31 @@ describe('D0.3 Web RuntimeAdapter', () => {
     } finally {
       abortClick.mockRestore()
       restoreAbortPicker()
+    }
+  })
+
+  it('lets a delayed fallback file selection win after window focus returns', async () => {
+    const restorePicker = disableOpenFilePicker()
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click')
+      .mockImplementation(function (this: HTMLInputElement) {
+        window.dispatchEvent(new Event('focus'))
+        window.setTimeout(() => {
+          Object.defineProperty(this, 'files', {
+            configurable: true,
+            value: [new File(['{}'], 'storyforge-project.json', { type: 'application/json' })],
+          })
+          this.dispatchEvent(new Event('change'))
+        }, 10)
+      })
+    try {
+      const outcome = await createWebRuntime().files.open({ purpose: 'project-json' })
+      expect(outcome).toMatchObject({
+        status: 'completed',
+        value: { name: 'storyforge-project.json' },
+      })
+    } finally {
+      click.mockRestore()
+      restorePicker()
     }
   })
 
@@ -573,13 +762,62 @@ describe('D0.3 Web RuntimeAdapter', () => {
       .resolves.toEqual({ status: 'cancelled' })
   })
 
-  it('enforces backup names and preserves a write failure when close also fails', async () => {
+  it('migrates legacy project/last directory handles without forcing a rebind', async () => {
+    const legacyProject = {
+      kind: 'directory' as const,
+      name: 'legacy-project',
+      queryPermission: async () => 'granted' as PermissionState,
+    } as unknown as FileSystemDirectoryHandle
+    const legacyLast = {
+      kind: 'directory' as const,
+      name: 'legacy-last',
+      queryPermission: async () => 'granted' as PermissionState,
+    } as unknown as FileSystemDirectoryHandle
+    const newlyPicked = {
+      kind: 'directory' as const,
+      name: 'new-project',
+      queryPermission: async () => 'granted' as PermissionState,
+    } as unknown as FileSystemDirectoryHandle
+    const handles = new Map<string, FileSystemDirectoryHandle>([
+      ['proj-17', legacyProject],
+      ['last', legacyLast],
+    ])
+    const save = vi.fn(async (key: string, handle: FileSystemDirectoryHandle) => {
+      handles.set(key, handle)
+    })
+    const runtime = createWebRuntime({
+      files: {
+        pickDirectory: async () => newlyPicked,
+        bindingStore: {
+          save,
+          load: async key => handles.get(key) ?? null,
+          delete: async key => { handles.delete(key) },
+        },
+      },
+    })
+
+    await expect(runtime.files.inspectBackupBinding('project-backup-17'))
+      .resolves.toMatchObject({ label: 'legacy-project', permission: 'granted' })
+    await expect(runtime.files.inspectBackupBinding('home-project-restore'))
+      .resolves.toMatchObject({ label: 'legacy-last', permission: 'granted' })
+    expect(handles.get('runtime-binding:project-backup-17')).toBe(legacyProject)
+    expect(handles.get('runtime-binding:home-project-restore')).toBe(legacyLast)
+
+    await expect(runtime.files.bindBackupDirectory('project-backup-8'))
+      .resolves.toMatchObject({ status: 'completed' })
+    expect(handles.get('runtime-binding:project-backup-8')).toBe(newlyPicked)
+    expect(handles.get('proj-8')).toBe(newlyPicked)
+    expect(handles.get('last')).toBe(newlyPicked)
+  })
+
+  it('enforces backup names and aborts instead of committing after a write failure', async () => {
     const primaryError = new RuntimeError('DISK_FULL', 'primary write failed', {
       operation: 'files.writeBackup',
     })
     const writable = {
       write: vi.fn(async () => { throw primaryError }),
       close: vi.fn(async () => { throw new TypeError('secondary close failed') }),
+      abort: vi.fn(async () => { throw new TypeError('secondary abort failed') }),
     }
     const getFileHandle = vi.fn(async () => ({
       kind: 'file' as const,
@@ -608,7 +846,37 @@ describe('D0.3 Web RuntimeAdapter', () => {
       suggestedName: 'storyforge-book.json',
       content: { kind: 'text', text: '{}' },
     })).rejects.toBe(primaryError)
-    expect(writable.close).toHaveBeenCalledTimes(1)
+    expect(writable.abort).toHaveBeenCalledTimes(1)
+    expect(writable.close).not.toHaveBeenCalled()
+  })
+
+  it('rolls back when AbortSignal fires after write and before the commit close', async () => {
+    const controller = new AbortController()
+    const writable = {
+      write: vi.fn(async () => { controller.abort() }),
+      close: vi.fn(async () => undefined),
+      abort: vi.fn(async () => undefined),
+    }
+    const directory = {
+      kind: 'directory' as const,
+      name: 'backups',
+      queryPermission: async () => 'granted' as PermissionState,
+      getFileHandle: async () => ({
+        kind: 'file' as const,
+        name: 'storyforge-book.json',
+        createWritable: async () => writable,
+      } as unknown as FileSystemFileHandle),
+    } as unknown as FileSystemDirectoryHandle
+
+    await expect(runtimeWithDirectory(directory).files.writeBackup({
+      bindingId: 'project-1',
+      purpose: 'project-backup',
+      suggestedName: 'storyforge-book.json',
+      content: { kind: 'text', text: '{}' },
+      signal: controller.signal,
+    })).rejects.toMatchObject<Partial<RuntimeError>>({ code: 'ABORTED' })
+    expect(writable.abort).toHaveBeenCalledTimes(1)
+    expect(writable.close).not.toHaveBeenCalled()
   })
 
   it('checks backup AbortSignal after binding and file reads', async () => {
@@ -661,10 +929,56 @@ describe('D0.3 Web RuntimeAdapter', () => {
       },
     } as unknown as FileSystemDirectoryHandle
 
-    await expect(runtimeWithDirectory(readDirectory).files.readBackups({
+    const backups = await runtimeWithDirectory(readDirectory).files.readBackups({
       bindingId: 'project-1',
       purpose: 'project-backup',
       signal: readController.signal,
-    })).rejects.toMatchObject<Partial<RuntimeError>>({ code: 'ABORTED' })
+    })
+    await expect((async () => {
+      for await (const backup of backups) void backup
+    })()).rejects.toMatchObject<Partial<RuntimeError>>({ code: 'ABORTED' })
+  })
+
+  it('streams backup files lazily and skips an unreadable candidate', async () => {
+    const unreadable = {
+      kind: 'file' as const,
+      name: 'storyforge-bad.json',
+      getFile: async () => { throw new DOMException('disk error', 'NotReadableError') },
+    } as unknown as FileSystemFileHandle
+    const firstRead = vi.fn(async () => new TextEncoder().encode('{"id":1}').buffer)
+    const secondRead = vi.fn(async () => new TextEncoder().encode('{"id":2}').buffer)
+    const readable = (name: string, arrayBuffer: () => Promise<ArrayBuffer>) => ({
+      kind: 'file' as const,
+      name,
+      getFile: async () => ({ arrayBuffer } as unknown as File),
+    }) as unknown as FileSystemFileHandle
+    const directory = {
+      kind: 'directory' as const,
+      name: 'backups',
+      queryPermission: async () => 'granted' as PermissionState,
+      async *entries() {
+        yield ['storyforge-bad.json', unreadable] as [string, FileSystemFileHandle]
+        yield ['storyforge-one.json', readable('storyforge-one.json', firstRead)] as [string, FileSystemFileHandle]
+        yield ['storyforge-two.json', readable('storyforge-two.json', secondRead)] as [string, FileSystemFileHandle]
+      },
+    } as unknown as FileSystemDirectoryHandle
+
+    const backups = await runtimeWithDirectory(directory).files.readBackups({
+      bindingId: 'project-1',
+      purpose: 'project-backup',
+    })
+    expect(firstRead).not.toHaveBeenCalled()
+    expect(secondRead).not.toHaveBeenCalled()
+
+    const iterator = backups[Symbol.asyncIterator]()
+    const first = await iterator.next()
+    expect(first.value?.name).toBe('storyforge-one.json')
+    expect(firstRead).toHaveBeenCalledOnce()
+    expect(secondRead).not.toHaveBeenCalled()
+
+    const second = await iterator.next()
+    expect(second.value?.name).toBe('storyforge-two.json')
+    expect(secondRead).toHaveBeenCalledOnce()
+    expect((await iterator.next()).done).toBe(true)
   })
 })

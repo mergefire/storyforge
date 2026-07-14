@@ -6,15 +6,20 @@ export type RuntimeKind = 'web' | 'tauri'
 export type JsonPrimitive = boolean | number | string | null
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
+/**
+ * `cancelled` means the user dismissed native UI without choosing a value.
+ * A caller-driven AbortSignal always rejects with RuntimeError code ABORTED so
+ * orchestration can distinguish its own cancellation from a user decision.
+ */
 export type RuntimeOutcome<T> =
   | { status: 'completed'; value: T }
   | { status: 'cancelled' }
 
-export type SecretKey =
+export type AiSecretKey =
   | 'storyforge.ai.primary'
   | 'storyforge.ai.embedding'
-  | 'storyforge.github.gist'
   | `storyforge.ai.preset.${string}`
+export type SecretKey = AiSecretKey | 'storyforge.github.gist'
 
 declare const credentialIdBrand: unique symbol
 export type CredentialId = string & { readonly [credentialIdBrand]: true }
@@ -22,10 +27,34 @@ export type CredentialId = string & { readonly [credentialIdBrand]: true }
 declare const endpointApprovalIdBrand: unique symbol
 export type EndpointApprovalId = string & { readonly [endpointApprovalIdBrand]: true }
 
-export interface SecretDescriptor {
-  key: SecretKey
-  persistence: 'session' | 'device'
-}
+export type AiOperation = 'chat-completions' | 'embeddings'
+
+/**
+ * A credential is usable only for the exact capability request it was bound
+ * to. This prevents an opaque reference obtained for Gist/profile A from being
+ * used as a confused deputy for AI/profile B or an attacker-controlled origin.
+ */
+export type CredentialScope =
+  | {
+    kind: 'ai'
+    provider: AIProvider
+    profileId: string
+    operation: AiOperation
+    configuredBaseUrl: string
+  }
+  | { kind: 'github-gist' }
+
+export type SecretDescriptor =
+  | {
+    key: AiSecretKey
+    persistence: 'session' | 'device'
+    scope: Extract<CredentialScope, { kind: 'ai' }>
+  }
+  | {
+    key: 'storyforge.github.gist'
+    persistence: 'session' | 'device'
+    scope: Extract<CredentialScope, { kind: 'github-gist' }>
+  }
 
 export interface SecretStore {
   /** Writes a secret and returns an opaque reference bound to that exact value. */
@@ -36,8 +65,6 @@ export interface SecretStore {
   /** Deletes the logical secret and invalidates every reference issued for it. */
   delete(key: SecretKey): Promise<void>
 }
-
-export type AiOperation = 'chat-completions' | 'embeddings'
 
 /**
  * AI is the sole network capability that carries a configured base URL so Web
@@ -197,7 +224,7 @@ export interface FileTransport {
   inspectBackupBinding(bindingId: string): Promise<BackupBinding>
   requestBackupPermission(bindingId: string, write: boolean): Promise<BackupBinding>
   writeBackup(request: BackupWriteRequest): Promise<{ displayName: string }>
-  readBackups(request: BackupReadRequest): Promise<BackupFile[]>
+  readBackups(request: BackupReadRequest): Promise<AsyncIterable<BackupFile>>
   clearBackupBinding(bindingId: string): Promise<void>
 }
 
