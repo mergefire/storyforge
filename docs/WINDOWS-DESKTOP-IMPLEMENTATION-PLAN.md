@@ -582,7 +582,7 @@ interface RuntimeAdapter {
 
 **完成判据**
 
-D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前确定性夹具核心已落地，`small-v1` 嵌套引用重映射已 PASS；往返业务 hash 归一化仍未实现，动态实测也未齐，不得标 PASS。
+D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前确定性夹具核心已落地，`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS；empty/small 可交付夹具文件、其余完整夹具与动态实测仍未齐，不得标 PASS。
 
 ---
 

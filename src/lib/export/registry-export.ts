@@ -20,11 +20,67 @@ import {
 } from './registry-ref-remap'
 import type { PortableReferenceRef } from './registry-ref-remap'
 
+/**
+ * Put tree rows in a stable parent-before-child order while preserving the
+ * original order among rows that are ready at the same time.
+ *
+ * Export indexes are positional. Without this pass, a source database whose
+ * numeric primary keys are unrelated to insertion order can export a child
+ * before its parent; import necessarily inserts the parent first, so a second
+ * export would assign different indexes to the same business nodes.
+ */
+function orderTreeRowsForExport(spec: TableSpec, rows: any[]): any[] {
+  if (!spec.tree) return rows
+
+  const rowIds = new Set<unknown>()
+  for (const row of rows) {
+    if (row.id == null) throw new Error(`[deriveExport] ${spec.name} tree row is missing id`)
+    if (rowIds.has(row.id)) {
+      throw new Error(`[deriveExport] ${spec.name} tree contains duplicate id ${String(row.id)}`)
+    }
+    rowIds.add(row.id)
+  }
+
+  for (const row of rows) {
+    const parentId = row[spec.tree.parentField]
+    if (parentId != null && !rowIds.has(parentId)) {
+      throw new Error(
+        `[deriveExport] ${spec.name} tree row ${String(row.id)} references missing or cross-project parent ${String(parentId)}`,
+      )
+    }
+  }
+
+  const ordered: any[] = []
+  const placed = new Set<unknown>()
+  let remaining = rows.slice()
+  while (remaining.length > 0) {
+    const ready: any[] = []
+    const blocked: any[] = []
+    for (const row of remaining) {
+      const parentId = row[spec.tree.parentField]
+      if (parentId == null || placed.has(parentId)) ready.push(row)
+      else blocked.push(row)
+    }
+    if (ready.length === 0) {
+      throw new Error(
+        `[deriveExport] ${spec.name} tree contains a parent cycle: ${blocked.map(row => String(row.id)).join(',')}`,
+      )
+    }
+    for (const row of ready) {
+      ordered.push(row)
+      placed.add(row.id)
+    }
+    remaining = blocked
+  }
+  return ordered
+}
+
 /** 取一张 exportable 表的库内记录(项目级按 projectId;direct-child 经 projectResolver) */
 async function queryRows(spec: TableSpec, projectId: number): Promise<any[]> {
   if (spec.owner === 'project') {
     const coll = (db as any)[spec.name].where('projectId').equals(projectId)
-    return spec.exportOrderBy ? await coll.sortBy(spec.exportOrderBy) : await coll.toArray()
+    const rows = spec.exportOrderBy ? await coll.sortBy(spec.exportOrderBy) : await coll.toArray()
+    return orderTreeRowsForExport(spec, rows)
   }
   // direct-child / indirect:用 projectResolver 拿父键,再用关联字段 anyOf 查
   if (!spec.projectResolver) return []
@@ -32,7 +88,8 @@ async function queryRows(spec: TableSpec, projectId: number): Promise<any[]> {
   if (!parentIds.length) return []
   const linkRemap = (spec.exportRemap ?? []).find(rm => REGISTRY_BY_NAME.get(rm.remapVia)?.owner === 'project')
   if (!linkRemap) return []
-  return await (db as any)[spec.name].where(linkRemap.field).anyOf(parentIds).toArray()
+  const rows = await (db as any)[spec.name].where(linkRemap.field).anyOf(parentIds).toArray()
+  return orderTreeRowsForExport(spec, rows)
 }
 
 /** 把一行库记录转成导出对象(剥 id/projectId、外键→导出序号、写 _exportId、JSON 引用重映射) */

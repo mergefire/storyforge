@@ -12,7 +12,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { db } from '../../src/lib/db/schema'
 import { PROJECT_TABLES, REGISTRY_BY_NAME } from '../../src/lib/registry/project-tables'
-import { checkPortableRefContracts, checkRegistry } from '../../src/lib/registry/validate'
+import {
+  checkPortableRefContracts,
+  checkRegistry,
+  checkTreeExportContracts,
+} from '../../src/lib/registry/validate'
 import type { RefSpec, TableSpec } from '../../src/lib/registry/types'
 import {
   projectScopedTables, worldScopedTables, exportableTables,
@@ -165,6 +169,42 @@ describe('Phase 1.1a · PROJECT_TABLES 注册表', () => {
       )
       expect(result.errors).toContain(
         'detailedOutlines.refs(appearingCharacterIds) portable target characters 可丢行时必须声明 exportIdField',
+      )
+    })
+
+    it('tree 纯校验要求 tree/selfTree/exportIdField 成套登记', () => {
+      const invalidSpecs = PROJECT_TABLES.map((spec): TableSpec => {
+        if (spec.name === 'temporalFacts') return { ...spec, tree: undefined }
+        if (spec.name === 'outlineNodes') return { ...spec, exportIdField: false }
+        if (spec.name === 'worldNodes') {
+          return {
+            ...spec,
+            exportRemap: spec.exportRemap?.filter(remap => !remap.selfTree),
+          }
+        }
+        if (spec.name === 'importantLocations') {
+          return {
+            ...spec,
+            exportRemap: spec.exportRemap?.map(remap => ({
+              ...remap,
+              remapVia: remap.selfTree ? 'outlineNodes' : remap.remapVia,
+            })),
+          }
+        }
+        return spec
+      })
+
+      const result = checkTreeExportContracts(invalidSpecs)
+      expect(result.ok).toBe(false)
+      expect(result.errors).toContain(
+        'temporalFacts.selfTree(supersedesFactId) 必须声明匹配的 tree.parentField',
+      )
+      expect(result.errors).toContain('outlineNodes.tree 必须声明 exportIdField')
+      expect(result.errors).toContain(
+        'worldNodes.tree(parentId) 必须且只能有一个匹配的 selfTree exportRemap',
+      )
+      expect(result.errors).toContain(
+        'importantLocations.selfTree(parentId) remapVia 必须指向自身',
       )
     })
   })

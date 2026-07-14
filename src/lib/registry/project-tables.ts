@@ -168,12 +168,13 @@ export const PROJECT_TABLES: TableSpec[] = [
 
   // ───────────────────── NS-4 时序事实账本 ─────────────────────
   // 导出/导入：全部分类型 FK + 三个章节引用 + 自引用 supersedesFactId 都做 exportRemap，
-  //   未映射（引用的实体/章已不在导出内）默认置 null，事实不丢、引用不悬空。
+  //   外部实体/章节未映射时默认置 null；supersedesFactId 必须指向同项目事实，否则导出失败关闭，
+  //   避免把损坏的取代链静默改写成根事实。
   // 项目级删除：owner:'project' 自动覆盖。
   // 单独删除/合并：角色删除/合并由 character-references.ts 统一重映射；章节删除由 chapter store
   //   调 fact-ledger/lifecycle.ts 清 source/valid chapter FK 并降级待复核。绝不自动改写相邻时序。
   { table: db.temporalFacts, name: 'temporalFacts', owner: 'project', worldScoped: true,
-    exportable: true, exportIdField: true,
+    exportable: true, exportIdField: true, tree: { parentField: 'supersedesFactId' },
     defaults: { status: 'candidate', locked: false },
     exportRemap: [
       { field: 'worldGroupId', remapVia: 'worldGroups', exportAs: '_wgExportId' },

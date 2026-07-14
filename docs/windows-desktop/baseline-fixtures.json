@@ -4,6 +4,7 @@
   "registryCoverage": {
     "source": "src/lib/registry/project-tables.ts#PROJECT_TABLES",
     "rule": "At generation time, derive every current project table and its owner/export policy from PROJECT_TABLES. Do not copy a table-name list into this specification.",
+    "sourceFingerprintRule": "SHA-256 of UTF-8 registry source after CRLF/CR is canonicalized to LF, so identical commits have identical fingerprints across worktrees.",
     "required": true
   },
   "projectExportFormat": {
@@ -23,11 +24,17 @@
     "canonicalJson": {
       "objectKeys": "LEXICOGRAPHIC",
       "arrayOrder": "PRESERVE",
-      "excludedRuntimeFields": [
-        "exportedAt",
-        "createdAt",
-        "updatedAt"
+      "singleStateExcludedPaths": [
+        "$.exportedAt"
       ],
+      "roundtripExcludedPaths": [
+        "$.exportedAt",
+        "$.project.createdAt",
+        "$.project.updatedAt",
+        "$.<exportableTable>[*].createdAt",
+        "$.<exportableTable>[*].updatedAt"
+      ],
+      "roundtripProjectNameRule": "Require targetName === sourceName + '（导入）', then compare the target projection with the exact source name. Never strip a suffix from one state in isolation.",
       "blobPolicy": "FAIL_CLOSED_HASH_BYTES_SEPARATELY"
     }
   },
@@ -62,7 +69,7 @@
         "sourceAndImportedPrimaryKeysMustDiffer": true
       },
       "currentValidation": {
-        "status": "BLOCKED_HASH_NORMALIZATION",
+        "status": "PASS_IN_MEMORY_READY_FOR_ARTIFACT_GENERATION",
         "evidence": "tests/desktop-contract/D0.4-fixtures.test.ts",
         "referenceRemapStatus": "PASS",
         "referenceRemapEvidence": [
@@ -76,9 +83,15 @@
           "creativeRules[].citedReferenceIds[]",
           "codexEntries[].refs.*[]"
         ],
-        "roundtripHashStatus": "NOT_IMPLEMENTED",
-        "roundtripHashGap": "The canonicalizer is deterministic and fail-closed, but business normalization for remapped IDs and the imported project-name suffix is not implemented. Current source/re-export hashes are diagnostic only and intentionally differ.",
-        "rule": "Keep artifactStatus NOT_GENERATED until normalized source/re-export business hashes are equal. Reference remap is PASS, but row counts and raw diagnostic hashes cannot override the remaining normalization gap."
+        "treeExportOrderStatus": "PASS",
+        "roundtripHashStatus": "PASS",
+        "roundtripComparatorVersion": "d04-roundtrip-v1",
+        "roundtripHashEvidence": [
+          "tests/desktop-contract/D0.4-fixtures.test.ts",
+          "tests/regression/R-export-tree-order-stability.test.ts"
+        ],
+        "roundtripHashRule": "Both sides cross the real JSON stringify/parse artifact boundary before comparison. Tree tables are exported in stable parent-before-child order. The canonicalizer validates the complete input graph before excluding only the declared runtime paths, requires target project name to equal source name plus exactly one '（导入）' suffix, replaces only that verified target projection, preserves every other field and array position, and fails closed on Blob or unsupported JSON values.",
+        "rule": "In-memory reference and normalized hash gates are PASS. Keep artifactStatus NOT_GENERATED until the rebuildable empty-v1/small-v1 files and strict fixture manifest are generated, hashed, checked and committed."
       }
     },
     {

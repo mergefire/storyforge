@@ -6,15 +6,45 @@ import type { TableSpec } from '../../src/lib/registry/types'
 export const D04_FIXTURE_SEED = 'storyforge-windows-d0.4-v1'
 export const D04_FIXTURE_CLOCK_ISO = '2026-01-01T00:00:00.000Z'
 export const D04_FIXTURE_CLOCK_MS = Date.parse(D04_FIXTURE_CLOCK_ISO)
+export const D04_IMPORT_PROJECT_NAME_SUFFIX = '（导入）'
 
 const NUMERIC_ID_HEX_LENGTH = 13
 const ORDINAL_WIDTH = 8
-export const D04_CANONICAL_EXCLUDED_FIELDS = [
-  'exportedAt',
-  'createdAt',
-  'updatedAt',
+export const D04_SINGLE_STATE_EXCLUDED_PATHS = ['$.exportedAt'] as const
+export const D04_ROUNDTRIP_EXCLUDED_PATHS = [
+  '$.exportedAt',
+  '$.project.createdAt',
+  '$.project.updatedAt',
+  '$.<exportableTable>[*].createdAt',
+  '$.<exportableTable>[*].updatedAt',
 ] as const
-const DEFAULT_RUNTIME_FIELDS = new Set<string>(D04_CANONICAL_EXCLUDED_FIELDS)
+
+type CanonicalPathSegment = string | number
+type CanonicalExclusionPolicy = (path: readonly CanonicalPathSegment[]) => boolean
+
+const EXPORTABLE_TABLE_NAMES = new Set(
+  PROJECT_TABLES.filter(spec => spec.exportable && spec.name !== 'projects').map(spec => spec.name),
+)
+
+function isRootExportedAt(path: readonly CanonicalPathSegment[]): boolean {
+  return path.length === 1 && path[0] === 'exportedAt'
+}
+
+function excludeSingleStateEnvelope(path: readonly CanonicalPathSegment[]): boolean {
+  return isRootExportedAt(path)
+}
+
+function excludeRoundtripRuntimeMetadata(path: readonly CanonicalPathSegment[]): boolean {
+  if (isRootExportedAt(path)) return true
+  if (path.length === 2 && path[0] === 'project') {
+    return path[1] === 'createdAt' || path[1] === 'updatedAt'
+  }
+  return path.length === 3
+    && typeof path[0] === 'string'
+    && EXPORTABLE_TABLE_NAMES.has(path[0])
+    && typeof path[1] === 'number'
+    && (path[2] === 'createdAt' || path[2] === 'updatedAt')
+}
 
 export type FixtureTableClassification =
   | 'exportable'
@@ -108,19 +138,77 @@ function isPlainObject(value: object): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null
 }
 
-function canonicalize(
+/**
+ * Validate the complete input graph before any runtime-path exclusion is applied.
+ * Otherwise an excluded timestamp could hide a Blob, unsupported primitive or cycle.
+ */
+function validateCanonicalValue(
   value: unknown,
-  excludedFields: ReadonlySet<string>,
   stack: WeakSet<object>,
   path: string,
+): void {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error(`non-finite number at ${path}`)
+    return
+  }
+  if (typeof value === 'undefined'
+    || typeof value === 'bigint'
+    || typeof value === 'function'
+    || typeof value === 'symbol') {
+    throw new Error(`unsupported canonical value at ${path}: ${typeof value}`)
+  }
+
+  if (typeof Blob !== 'undefined' && value instanceof Blob) {
+    throw new Error(`Blob must be hashed as bytes instead of canonical JSON at ${path}`)
+  }
+  if (value instanceof Date) {
+    if (!Number.isFinite(value.getTime())) throw new Error(`invalid Date at ${path}`)
+    return
+  }
+  if (!value || typeof value !== 'object') {
+    throw new Error(`unsupported canonical value at ${path}`)
+  }
+  if (stack.has(value)) throw new Error(`cyclic canonical value at ${path}`)
+
+  stack.add(value)
+  try {
+    if (Array.isArray(value)) {
+      for (let index = 0; index < value.length; index += 1) {
+        if (!Object.prototype.hasOwnProperty.call(value, index)) {
+          throw new Error(`unsupported canonical value at ${path}[${index}]: undefined`)
+        }
+        validateCanonicalValue(value[index], stack, `${path}[${index}]`)
+      }
+      return
+    }
+    if (!isPlainObject(value)) {
+      throw new Error(`non-plain canonical object at ${path}`)
+    }
+    for (const key of Object.keys(value).sort()) {
+      validateCanonicalValue(value[key], stack, `${path}.${key}`)
+    }
+  } finally {
+    stack.delete(value)
+  }
+}
+
+function canonicalize(
+  value: unknown,
+  exclusionPolicy: CanonicalExclusionPolicy,
+  stack: WeakSet<object>,
+  path: string,
+  pathSegments: readonly CanonicalPathSegment[],
 ): unknown {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return value
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) throw new Error(`non-finite number at ${path}`)
     return value
   }
-  if (typeof value === 'undefined') return undefined
-  if (typeof value === 'bigint' || typeof value === 'function' || typeof value === 'symbol') {
+  if (typeof value === 'undefined'
+    || typeof value === 'bigint'
+    || typeof value === 'function'
+    || typeof value === 'symbol') {
     throw new Error(`unsupported canonical value at ${path}: ${typeof value}`)
   }
 
@@ -137,7 +225,13 @@ function canonicalize(
   try {
     if (Array.isArray(value)) {
       return value.map((item, index) => {
-        const normalized = canonicalize(item, excludedFields, stack, `${path}[${index}]`)
+        const normalized = canonicalize(
+          item,
+          exclusionPolicy,
+          stack,
+          `${path}[${index}]`,
+          [...pathSegments, index],
+        )
         return normalized === undefined ? null : normalized
       })
     }
@@ -147,8 +241,9 @@ function canonicalize(
 
     const normalized = Object.create(null) as Record<string, unknown>
     for (const key of Object.keys(value).sort()) {
-      if (excludedFields.has(key)) continue
-      const child = canonicalize(value[key], excludedFields, stack, `${path}.${key}`)
+      const childPath = [...pathSegments, key]
+      if (exclusionPolicy(childPath)) continue
+      const child = canonicalize(value[key], exclusionPolicy, stack, `${path}.${key}`, childPath)
       if (child !== undefined) normalized[key] = child
     }
     return normalized
@@ -159,25 +254,92 @@ function canonicalize(
 
 export function canonicalizeFixtureValue(
   value: unknown,
-  excludedFields: ReadonlySet<string> = DEFAULT_RUNTIME_FIELDS,
+  exclusionPolicy: CanonicalExclusionPolicy = excludeSingleStateEnvelope,
 ): unknown {
-  return canonicalize(value, excludedFields, new WeakSet(), '$')
+  validateCanonicalValue(value, new WeakSet(), '$')
+  return canonicalize(value, exclusionPolicy, new WeakSet(), '$', [])
 }
 
 export function canonicalFixtureJson(
   value: unknown,
-  excludedFields: ReadonlySet<string> = DEFAULT_RUNTIME_FIELDS,
+  exclusionPolicy: CanonicalExclusionPolicy = excludeSingleStateEnvelope,
 ): string {
-  return JSON.stringify(canonicalizeFixtureValue(value, excludedFields))
+  return JSON.stringify(canonicalizeFixtureValue(value, exclusionPolicy))
 }
 
 export function fixtureSha256(
   value: unknown,
-  excludedFields: ReadonlySet<string> = DEFAULT_RUNTIME_FIELDS,
+  exclusionPolicy: CanonicalExclusionPolicy = excludeSingleStateEnvelope,
 ): string {
   return createHash('sha256')
-    .update(canonicalFixtureJson(value, excludedFields), 'utf8')
+    .update(canonicalFixtureJson(value, exclusionPolicy), 'utf8')
     .digest('hex')
+}
+
+export interface FixtureRoundtripBusinessPair {
+  source: unknown
+  reExported: unknown
+}
+
+export interface FixtureRoundtripBusinessHashes {
+  sourceSha256: string
+  reExportedSha256: string
+  equal: boolean
+}
+
+function requireCanonicalRecord(value: unknown, path: string): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !isPlainObject(value)) {
+    throw new Error(`expected canonical object at ${path}`)
+  }
+  return value
+}
+
+/**
+ * Normalize the one intentional business-visible change made by project import.
+ *
+ * The imported name is checked as an exact relation before replacement. This is
+ * pairwise on purpose: blindly trimming a suffix would hide real names that
+ * already end in “（导入）”. No other field or array ordering is normalized.
+ */
+export function normalizeFixtureRoundtripBusinessPair(
+  sourceExport: unknown,
+  reExported: unknown,
+): FixtureRoundtripBusinessPair {
+  const source = canonicalizeFixtureValue(sourceExport, excludeRoundtripRuntimeMetadata)
+  const target = canonicalizeFixtureValue(reExported, excludeRoundtripRuntimeMetadata)
+  const sourceRoot = requireCanonicalRecord(source, '$source')
+  const targetRoot = requireCanonicalRecord(target, '$reExported')
+  const sourceProject = requireCanonicalRecord(sourceRoot.project, '$source.project')
+  const targetProject = requireCanonicalRecord(targetRoot.project, '$reExported.project')
+  const sourceName = sourceProject.name
+  const targetName = targetProject.name
+
+  if (typeof sourceName !== 'string' || typeof targetName !== 'string') {
+    throw new Error('roundtrip project names must be strings')
+  }
+  const expectedTargetName = `${sourceName}${D04_IMPORT_PROJECT_NAME_SUFFIX}`
+  if (targetName !== expectedTargetName) {
+    throw new Error(
+      `unexpected imported project name: expected ${JSON.stringify(expectedTargetName)}, got ${JSON.stringify(targetName)}`,
+    )
+  }
+
+  targetProject.name = sourceName
+  return { source, reExported: target }
+}
+
+export function fixtureRoundtripBusinessHashes(
+  sourceExport: unknown,
+  reExported: unknown,
+): FixtureRoundtripBusinessHashes {
+  const normalized = normalizeFixtureRoundtripBusinessPair(sourceExport, reExported)
+  const sourceSha256 = fixtureSha256(normalized.source)
+  const reExportedSha256 = fixtureSha256(normalized.reExported)
+  return {
+    sourceSha256,
+    reExportedSha256,
+    equal: sourceSha256 === reExportedSha256,
+  }
 }
 
 function classifyTable(spec: TableSpec): FixtureTableClassification {

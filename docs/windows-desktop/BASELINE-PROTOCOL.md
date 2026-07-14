@@ -78,6 +78,7 @@ D0.4 只建立可复现协议、固定夹具规格、结果格式和无浏览器
 
 1. 固定 UTF-8、UTC 时间、随机种子和稳定 ID；禁止使用当前时间或系统随机数。
 2. 表覆盖从 `PROJECT_TABLES` 读取；规格文件不得出现手写 `tableNames`。
+   注册表源码指纹必须先把 CRLF/CR 规范化为 LF，再计算 UTF-8 SHA-256，禁止同一提交因 worktree 换行策略产生不同指纹。
 3. 每个已生成夹具保存生成器版本、源提交、字节数、逐文件 SHA-256 和逻辑计数。
 4. 导出→清库→导入后，规范化业务 JSON 的 SHA-256 必须相同。
 5. 外键/跨表引用、主键唯一性、项目归属与 Blob 字节哈希必须逐项断言。
@@ -98,9 +99,9 @@ D0.4 只建立可复现协议、固定夹具规格、结果格式和无浏览器
 npm.cmd run check:desktop-fixtures
 ```
 
-它从 `PROJECT_TABLES` 动态证明全部 42 个项目表恰好覆盖一次，并验证稳定 ID、固定时钟、精确正文长度、canonicalizer 的确定性/敏感性/危险键边界，以及 `small-v1` 的 10 章导出/清库/导入路径。当前 source/re-export 哈希只是诊断值：主键重映射与导入项目名后缀的业务归一化尚未实现，因此还没有“往返哈希相等”断言。该命令是生成器与数据断言的开发安全网，不会生成可交付夹具文件，也不能代替生产 `web-tab`、真实 IndexedDB、重启或性能证据。
+它从 `PROJECT_TABLES` 动态证明全部 42 个项目表恰好覆盖一次，并验证稳定 ID、固定时钟、精确正文长度、canonicalizer 的确定性/敏感性/危险键边界，以及 `small-v1` 的 10 章导出/清库/导入路径。两端数据先经过真实 JSON stringify/parse 产物边界；树表导出再稳定为父先顺序，防止清库导入后运输序号漂移。canonicalizer 会先验证完整输入图，再排除规格声明的根级/行级运行时路径；往返比较先精确验证目标项目名等于源名追加一次 `（导入）`，再还原该目标投影。源名本来带后缀时必须匹配双后缀；任何其他字段、嵌套同名时间字段、数组位置或引用变化都会使业务 hash 不等，Blob 与 JSON 不支持的值在排除前失败关闭。当前 `small-v1` 的规范化 source/re-export SHA-256 已相等。该命令仍只是生成器与数据断言的开发安全网，不会生成可交付夹具文件，也不能代替生产 `web-tab`、真实 IndexedDB、重启或性能证据。
 
-当前项目 JSON 导出格式为 `version: 4`，并用精确 marker `nestedRefEncoding: "export-index-v1"` 声明嵌套数字是目标表的导出序号。`small-v1` 已确定性验证 `detailedOutlines` 的角色/场景角色/伏笔数组、`creativeRules[].citedReferenceIds[]` 与 `codexEntries[].refs.*[]` 在清库导入后全部解析到新主键，`dangling=[]`，`referenceRemapStatus=PASS`。旧 `version: 1/2/3` 仍可导入，但其嵌套数字只能按历史 raw database ID 原样保留；没有 v4 marker 时不得猜测或按导出序号解释。当前唯一夹具内存阻塞项是业务归一化哈希等值尚未实现，行数或 raw diagnostic hash 仍不能把夹具标记为已生成。
+当前项目 JSON 导出格式为 `version: 4`，并用精确 marker `nestedRefEncoding: "export-index-v1"` 声明嵌套数字是目标表的导出序号。`small-v1` 已确定性验证 `detailedOutlines` 的角色/场景角色/伏笔数组、`creativeRules[].citedReferenceIds[]` 与 `codexEntries[].refs.*[]` 在清库导入后全部解析到新主键，`dangling=[]`，`referenceRemapStatus=PASS`；规范化往返业务 hash 也为 `PASS`。旧 `version: 1/2/3` 仍可导入，但其嵌套数字只能按历史 raw database ID 原样保留；没有 v4 marker 时不得猜测或按导出序号解释。`small-v1` 当前状态是 `PASS_IN_MEMORY_READY_FOR_ARTIFACT_GENERATION`，但文件与严格 manifest 尚未生成，不能把 `artifactStatus` 标为已生成。
 
 在夹具生成并通过上述断言前，其状态只能是 `NOT_GENERATED` 或 `NOT_AVAILABLE`。
 
@@ -253,4 +254,4 @@ npm.cmd run baseline:collect-static -- --output .qa-reports/windows-desktop/<rep
 4. 所有必需安全场景有可复核证据；
 5. 报告 Schema 校验通过且功能门及必需场景不存在 `NOT_MEASURED` 项。
 
-以上 PASS 条件除移除 installed PWA 的必需参考地位外均未放宽。当前已具备确定性夹具核心，`small-v1` 嵌套引用重映射已通过且无悬空引用，但往返业务哈希归一化尚未闭环，完整夹具及生产 `web-tab` 的功能、性能、恢复、安全实测也未齐，因此 D0.4 仍为 **IN PROGRESS / NOT_ELIGIBLE**。
+以上 PASS 条件除移除 installed PWA 的必需参考地位外均未放宽。当前已具备确定性夹具核心，`small-v1` 嵌套引用与规范化往返业务 hash 的内存门均已通过；empty/small 可交付文件与严格 manifest、其余完整夹具及生产 `web-tab` 的功能、性能、恢复、安全实测仍未齐，因此 D0.4 仍为 **IN PROGRESS / NOT_ELIGIBLE**。

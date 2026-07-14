@@ -89,6 +89,50 @@ export function checkPortableRefContracts(
   return { ok: errors.length === 0, errors }
 }
 
+/**
+ * 校验单父自引用的可移植导出契约。
+ *
+ * `selfTree` 不能只登记 remap：导出和导入都必须先做父先拓扑排序，否则前向引用会被
+ * 静默置 null。`tree`、同表 selfTree remap 与显式 `_exportId` 三者必须成套出现。
+ */
+export function checkTreeExportContracts(
+  specs: readonly TableSpec[],
+): RegistryValidationResult {
+  const errors: string[] = []
+
+  for (const spec of specs) {
+    const selfTreeRemaps = (spec.exportRemap ?? []).filter(remap => remap.selfTree)
+
+    if (spec.tree) {
+      const parentRemaps = selfTreeRemaps.filter(
+        remap => remap.field === spec.tree!.parentField,
+      )
+      if (!spec.exportable) {
+        errors.push(`${spec.name}.tree 必须用于 exportable 表`)
+      }
+      if (!spec.exportIdField) {
+        errors.push(`${spec.name}.tree 必须声明 exportIdField`)
+      }
+      if (parentRemaps.length !== 1) {
+        errors.push(
+          `${spec.name}.tree(${spec.tree.parentField}) 必须且只能有一个匹配的 selfTree exportRemap`,
+        )
+      }
+    }
+
+    for (const remap of selfTreeRemaps) {
+      if (remap.remapVia !== spec.name) {
+        errors.push(`${spec.name}.selfTree(${remap.field}) remapVia 必须指向自身`)
+      }
+      if (!spec.tree || spec.tree.parentField !== remap.field) {
+        errors.push(`${spec.name}.selfTree(${remap.field}) 必须声明匹配的 tree.parentField`)
+      }
+    }
+  }
+
+  return { ok: errors.length === 0, errors }
+}
+
 /** 纯函数校验(测试可直接调用,不依赖 throw) */
 export function checkRegistry(): RegistryValidationResult {
   const errors: string[] = []
@@ -135,6 +179,7 @@ export function checkRegistry(): RegistryValidationResult {
     }
   }
   errors.push(...checkPortableRefContracts(PROJECT_TABLES).errors)
+  errors.push(...checkTreeExportContracts(PROJECT_TABLES).errors)
 
   const fieldKeys = new Set<string>()
   for (const field of FIELD_REGISTRY) {

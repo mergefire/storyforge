@@ -12,11 +12,15 @@ import {
   buildRegistryCoverage,
   canonicalFixtureJson,
   createFixtureText,
-  D04_CANONICAL_EXCLUDED_FIELDS,
   D04_FIXTURE_CLOCK_ISO,
   D04_FIXTURE_CLOCK_MS,
   D04_FIXTURE_SEED,
+  D04_IMPORT_PROJECT_NAME_SUFFIX,
+  D04_ROUNDTRIP_EXCLUDED_PATHS,
+  D04_SINGLE_STATE_EXCLUDED_PATHS,
+  fixtureRoundtripBusinessHashes,
   fixtureSha256,
+  normalizeFixtureRoundtripBusinessPair,
   stableFixtureHexId,
   stableFixtureNumericId,
 } from '../helpers/d04-fixture-kit'
@@ -36,8 +40,11 @@ const smallFixtureSpec = fixtureSpec.fixtures.find(
   currentValidation: {
     referenceRemapEvidence: string[]
     referenceRemapStatus: string
+    roundtripComparatorVersion: string
+    roundtripHashEvidence: string[]
     roundtripHashStatus: string
     status: string
+    treeExportOrderStatus: string
   }
   expected: {
     chapters: number
@@ -67,6 +74,13 @@ async function collectExportablePrimaryKeys(): Promise<Map<string, number[]>> {
 
 function countNonWhitespace(value: string): number {
   return value.replace(/\s/gu, '').length
+}
+
+/** Exercise the same serialized JSON boundary as a downloaded/imported fixture artifact. */
+function throughJsonArtifact<T>(value: T): T {
+  const serialized = JSON.stringify(value)
+  if (serialized === undefined) throw new Error('fixture export must serialize to a JSON value')
+  return JSON.parse(serialized) as T
 }
 
 function parseNumericIdArray(value: unknown, path: string): number[] {
@@ -187,23 +201,79 @@ describe('D0.4 deterministic fixture contract', () => {
     expect(createFixtureText('small-v1', 'chapter-content', 0, 2000)).toBe(text)
     expect(createFixtureText('small-v1', 'chapter-content', 1, 2000)).not.toBe(text)
 
-    const left = { b: 2, a: { updatedAt: 123, y: 2, x: 1 } }
-    const right = { a: { x: 1, y: 2, updatedAt: 999 }, b: 2 }
+    const left = { exportedAt: 123, b: 2, a: { y: 2, x: 1 } }
+    const right = { a: { x: 1, y: 2 }, b: 2, exportedAt: 999 }
     expect(canonicalFixtureJson(left)).toBe(canonicalFixtureJson(right))
     expect(fixtureSha256(left)).toBe(fixtureSha256(right))
     expect(fixtureSha256({ title: 'source' })).not.toBe(fixtureSha256({ title: 'changed' }))
+    expect(fixtureSha256({ nested: { updatedAt: 1 } })).not.toBe(
+      fixtureSha256({ nested: { updatedAt: 2 } }),
+    )
 
     const prototypeKey = JSON.parse('{"__proto__":{"x":1}}')
     expect(canonicalFixtureJson(prototypeKey)).toBe('{"__proto__":{"x":1}}')
     expect(fixtureSha256(prototypeKey)).not.toBe(fixtureSha256({}))
     expect(fixtureSpec.determinism.seed).toBe(D04_FIXTURE_SEED)
-    expect(fixtureSpec.determinism.canonicalJson.excludedRuntimeFields).toEqual(
-      D04_CANONICAL_EXCLUDED_FIELDS,
+    expect(fixtureSpec.determinism.canonicalJson.singleStateExcludedPaths).toEqual(
+      D04_SINGLE_STATE_EXCLUDED_PATHS,
+    )
+    expect(fixtureSpec.determinism.canonicalJson.roundtripExcludedPaths).toEqual(
+      D04_ROUNDTRIP_EXCLUDED_PATHS,
     )
     expect(() => stableFixtureNumericId('', 'chapters', 0)).toThrow('fixtureId')
     expect(() => createFixtureText('small-v1', 'chapter', 0, -1)).toThrow(
       'nonWhitespaceCharacters',
     )
+  })
+
+  it('validates excluded runtime paths before omitting them from canonical data', () => {
+    const invalidExcludedValues: Array<[string, unknown, string]> = [
+      ['Blob', new Blob(['bytes']), 'Blob must be hashed as bytes'],
+      ['function', () => undefined, 'unsupported canonical value at $.exportedAt: function'],
+      ['symbol', Symbol('timestamp'), 'unsupported canonical value at $.exportedAt: symbol'],
+      ['bigint', 1n, 'unsupported canonical value at $.exportedAt: bigint'],
+      ['undefined', undefined, 'unsupported canonical value at $.exportedAt: undefined'],
+      ['non-finite number', Number.NaN, 'non-finite number at $.exportedAt'],
+      ['invalid Date', new Date(Number.NaN), 'invalid Date at $.exportedAt'],
+      ['non-plain object', new Map(), 'non-plain canonical object at $.exportedAt'],
+    ]
+    for (const [label, value, expectedError] of invalidExcludedValues) {
+      expect(
+        () => canonicalFixtureJson({ exportedAt: value, payload: 'still-visible' }),
+        label,
+      ).toThrow(expectedError)
+    }
+
+    const cyclicTimestamp: Record<string, unknown> = {}
+    cyclicTimestamp.self = cyclicTimestamp
+    expect(() => canonicalFixtureJson({
+      exportedAt: cyclicTimestamp,
+      payload: 'still-visible',
+    })).toThrow('cyclic canonical value at $.exportedAt.self')
+
+    const target = {
+      project: { name: `项目${D04_IMPORT_PROJECT_NAME_SUFFIX}` },
+      chapters: [{}],
+    }
+    expect(() => normalizeFixtureRoundtripBusinessPair(
+      {
+        project: { name: '项目', updatedAt: new Blob(['hidden-project-timestamp']) },
+        chapters: [{}],
+      },
+      target,
+    )).toThrow('Blob must be hashed as bytes instead of canonical JSON at $.project.updatedAt')
+    expect(() => normalizeFixtureRoundtripBusinessPair(
+      {
+        project: { name: '项目' },
+        chapters: [{ createdAt: Symbol('hidden-row-timestamp') }],
+      },
+      target,
+    )).toThrow('unsupported canonical value at $.chapters[0].createdAt: symbol')
+
+    expect(canonicalFixtureJson({
+      exportedAt: new Date(0),
+      payload: 'still-visible',
+    })).toBe('{"payload":"still-visible"}')
   })
 
   it('derives exactly one coverage row per PROJECT_TABLES entry', () => {
@@ -214,6 +284,81 @@ describe('D0.4 deterministic fixture contract', () => {
     expect(coverage.find(entry => entry.name === 'importFiles')?.classification).toBe('blob')
     expect(coverage.find(entry => entry.name === 'promptTemplates')?.classification).toBe('global')
     expect(coverage.find(entry => entry.name === 'chapters')?.classification).toBe('exportable')
+  })
+
+  it('normalizes only the exact import-name transform and keeps business changes hash-visible', () => {
+    const names = [
+      '普通项目',
+      `原名${D04_IMPORT_PROJECT_NAME_SUFFIX}`,
+      `双后缀${D04_IMPORT_PROJECT_NAME_SUFFIX}${D04_IMPORT_PROJECT_NAME_SUFFIX}`,
+    ]
+
+    for (const sourceName of names) {
+      const source = {
+        version: 4,
+        exportedAt: 1,
+        project: { name: sourceName, description: 'same', createdAt: 1, updatedAt: 1 },
+        chapters: [
+          {
+            title: '第一章', order: 0, createdAt: 1, updatedAt: 1,
+            metadata: { updatedAt: 'business-value' },
+          },
+          {
+            title: '第二章', order: 1, createdAt: 1, updatedAt: 1,
+            metadata: { updatedAt: 'business-value-2' },
+          },
+        ],
+      }
+      const reExported = {
+        version: 4,
+        exportedAt: 2,
+        project: {
+          name: `${sourceName}${D04_IMPORT_PROJECT_NAME_SUFFIX}`,
+          description: 'same',
+          createdAt: 2,
+          updatedAt: 2,
+        },
+        chapters: [
+          {
+            title: '第一章', order: 0, createdAt: 2, updatedAt: 2,
+            metadata: { updatedAt: 'business-value' },
+          },
+          {
+            title: '第二章', order: 1, createdAt: 2, updatedAt: 2,
+            metadata: { updatedAt: 'business-value-2' },
+          },
+        ],
+      }
+      const before = structuredClone(reExported)
+      const hashes = fixtureRoundtripBusinessHashes(source, reExported)
+      expect(hashes.equal, sourceName).toBe(true)
+      expect(hashes.sourceSha256).toBe(hashes.reExportedSha256)
+      expect(reExported).toEqual(before)
+
+      reExported.chapters[0].title = '被篡改'
+      expect(fixtureRoundtripBusinessHashes(source, reExported).equal).toBe(false)
+      reExported.chapters[0].title = '第一章'
+      reExported.chapters[0].metadata.updatedAt = 'nested-business-change'
+      expect(fixtureRoundtripBusinessHashes(source, reExported).equal).toBe(false)
+      reExported.chapters[0].metadata.updatedAt = 'business-value'
+      reExported.chapters.reverse()
+      expect(fixtureRoundtripBusinessHashes(source, reExported).equal).toBe(false)
+      reExported.chapters.reverse()
+      reExported.chapters.push(structuredClone(reExported.chapters[1]))
+      expect(fixtureRoundtripBusinessHashes(source, reExported).equal).toBe(false)
+    }
+
+    const source = { project: { name: '项目' }, chapters: [] }
+    for (const invalidName of ['项目', '项目（副本）', '项目（导入）（导入）', '项目(导入)']) {
+      expect(() => normalizeFixtureRoundtripBusinessPair(
+        source,
+        { project: { name: invalidName }, chapters: [] },
+      ), invalidName).toThrow('unexpected imported project name')
+    }
+    expect(() => fixtureRoundtripBusinessHashes(
+      { ...source, payload: new Blob(['bytes']) },
+      { project: { name: `项目${D04_IMPORT_PROJECT_NAME_SUFFIX}` }, chapters: [] },
+    )).toThrow('Blob must be hashed as bytes')
   })
 
   it('builds small-v1 deterministically with 10 chapters and full exportable-table coverage', async () => {
@@ -264,7 +409,7 @@ describe('D0.4 deterministic fixture contract', () => {
     }
   })
 
-  it('passes semantic reference remap while keeping small-v1 blocked on hash normalization', async () => {
+  it('passes semantic references and normalized business hash while artifacts remain ungenerated', async () => {
     const source = await seedFullProject({
       fixtureId: 'small-v1',
       projectName: 'D0.4 small-v1',
@@ -282,11 +427,12 @@ describe('D0.4 deterministic fixture contract', () => {
       version: 4,
       nestedRefEncoding: 'export-index-v1',
     })
+    const exportedArtifact = throughJsonArtifact(exported)
     const sourceKeys = await collectExportablePrimaryKeys()
 
     await db.delete()
     await db.open()
-    const importedProjectId = await importProjectJSON(exported)
+    const importedProjectId = await importProjectJSON(exportedArtifact)
     const importedKeys = await collectExportablePrimaryKeys()
 
     expect(importedProjectId).not.toBe(source.projectId)
@@ -313,18 +459,21 @@ describe('D0.4 deterministic fixture contract', () => {
     })
 
     const reExported = await exportProjectJSON(importedProjectId)
+    const reExportedArtifact = throughJsonArtifact(reExported)
     for (const spec of PROJECT_TABLES.filter(spec => spec.exportable && spec.name !== 'projects')) {
       expect(
-        (reExported as unknown as Record<string, unknown[]>)[spec.name]?.length,
+        (reExportedArtifact as unknown as Record<string, unknown[]>)[spec.name]?.length,
         `${spec.name} row count must survive roundtrip`,
-      ).toBe((exported as unknown as Record<string, unknown[]>)[spec.name]?.length)
+      ).toBe((exportedArtifact as unknown as Record<string, unknown[]>)[spec.name]?.length)
     }
 
     const dangling = await collectDanglingFixtureReferences(importedProjectId)
     expect(dangling).toEqual([])
 
     expect(smallFixtureSpec.artifactStatus).toBe('NOT_GENERATED')
-    expect(smallFixtureSpec.currentValidation.status).toBe('BLOCKED_HASH_NORMALIZATION')
+    expect(smallFixtureSpec.currentValidation.status).toBe(
+      'PASS_IN_MEMORY_READY_FOR_ARTIFACT_GENERATION',
+    )
     expect(smallFixtureSpec.currentValidation.referenceRemapStatus).toBe('PASS')
     expect(smallFixtureSpec.currentValidation.referenceRemapEvidence).toEqual(
       expect.arrayContaining([
@@ -332,12 +481,29 @@ describe('D0.4 deterministic fixture contract', () => {
         'tests/desktop-contract/D0.4-fixtures.test.ts',
       ]),
     )
-    expect(smallFixtureSpec.currentValidation.roundtripHashStatus).toBe('NOT_IMPLEMENTED')
-    const sourceDiagnosticHash = fixtureSha256(exported)
-    const importedDiagnosticHash = fixtureSha256(reExported)
+    expect(smallFixtureSpec.currentValidation.treeExportOrderStatus).toBe('PASS')
+    expect(smallFixtureSpec.currentValidation.roundtripHashStatus).toBe('PASS')
+    expect(smallFixtureSpec.currentValidation.roundtripComparatorVersion).toBe(
+      'd04-roundtrip-v1',
+    )
+    expect(smallFixtureSpec.currentValidation.roundtripHashEvidence).toEqual(
+      expect.arrayContaining([
+        'tests/desktop-contract/D0.4-fixtures.test.ts',
+        'tests/regression/R-export-tree-order-stability.test.ts',
+      ]),
+    )
+    const sourceDiagnosticHash = fixtureSha256(exportedArtifact)
+    const importedDiagnosticHash = fixtureSha256(reExportedArtifact)
     expect(sourceDiagnosticHash).toMatch(/^[a-f0-9]{64}$/)
     expect(importedDiagnosticHash).toMatch(/^[a-f0-9]{64}$/)
     expect(importedDiagnosticHash).not.toBe(sourceDiagnosticHash)
+    const businessHashes = fixtureRoundtripBusinessHashes(
+      exportedArtifact,
+      reExportedArtifact,
+    )
+    expect(businessHashes.sourceSha256).toMatch(/^[a-f0-9]{64}$/)
+    expect(businessHashes.reExportedSha256).toBe(businessHashes.sourceSha256)
+    expect(businessHashes.equal).toBe(true)
     expect(fixtureSpec.determinism.clock).toBe(D04_FIXTURE_CLOCK_ISO)
   })
 })

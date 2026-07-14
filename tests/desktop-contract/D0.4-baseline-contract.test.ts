@@ -15,6 +15,9 @@ import * as baseline from ${JSON.stringify(baselineModuleUrl)}
 const request = JSON.parse(fs.readFileSync(0, 'utf8'))
 let result
 switch (request.action) {
+  case 'canonicalSourceTextForFingerprint':
+    result = baseline.canonicalSourceTextForFingerprint(request.payload)
+    break
   case 'constants':
     result = {
       AGGREGATE_MINIMUM_SAMPLES: baseline.AGGREGATE_MINIMUM_SAMPLES,
@@ -78,6 +81,10 @@ const {
 
 function readDatabaseSchemaVersionFacts(): any {
   return runBaselineBridge('readDatabaseSchemaVersionFacts')
+}
+
+function canonicalSourceTextForFingerprint(value: string): string {
+  return runBaselineBridge('canonicalSourceTextForFingerprint', value)
 }
 
 function readRegistryFacts(): any {
@@ -210,6 +217,12 @@ function makeFullyMeasuredReport(): {
 describe('D0.4 Windows baseline contract', () => {
   it('keeps the checked-in protocol, fixtures, schema and sample coherent', () => {
     expect(validateStaticContract()).toEqual([])
+  })
+
+  it('canonicalizes registry source line endings before fingerprinting', () => {
+    expect(canonicalSourceTextForFingerprint('alpha\r\nbeta\rgamma\n')).toBe(
+      'alpha\nbeta\ngamma\n',
+    )
   })
 
   it('uses d0.4-v2 while retaining v1 fixture data semantics', () => {

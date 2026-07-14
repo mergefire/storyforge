@@ -128,6 +128,11 @@ function sha256File(filePath) {
   return sha256(fs.readFileSync(filePath))
 }
 
+export function canonicalSourceTextForFingerprint(value) {
+  if (typeof value !== 'string') throw new TypeError('registry source must be a string')
+  return value.replace(/\r\n?/g, '\n')
+}
+
 function sameMembers(actual, expected) {
   return actual.length === expected.length
     && [...actual].sort().every((value, index) => value === [...expected].sort()[index])
@@ -171,7 +176,7 @@ export function readRegistryFacts() {
 
   return {
     count: uniqueNames.length,
-    sourceSha256: sha256(Buffer.from(source, 'utf8')),
+    sourceSha256: sha256(Buffer.from(canonicalSourceTextForFingerprint(source), 'utf8')),
     nameSetSha256: sha256(Buffer.from([...uniqueNames].sort().join('\n'), 'utf8')),
   }
 }
