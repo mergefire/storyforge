@@ -29,21 +29,18 @@ export interface ExecuteAiRequestOptions {
 
 /**
  * Plaintext credentials cross the runtime boundary only through SecretStore.put.
- * An empty key intentionally means an anonymous OpenAI-compatible endpoint.
+ * An empty key means this request uses an anonymous OpenAI-compatible endpoint.
+ * It must not mutate the vault: another in-flight request may still hold a
+ * value-bound reference for the same logical profile. Explicit configuration
+ * removal owns SecretStore.delete and its documented reference invalidation.
  */
 export async function bindAiCredential({
   key,
   apiKey,
   persistence = 'session',
 }: BindAiCredentialOptions): Promise<CredentialId | undefined> {
-  const secrets = getRuntime().secrets
-  if (!apiKey) {
-    // Clearing a configured key must also remove the old vault entry. Otherwise
-    // an anonymous custom/Ollama request leaves a stale reusable credential.
-    await secrets.delete(key)
-    return undefined
-  }
-  return await secrets.put({ key, persistence }, apiKey)
+  if (!apiKey) return undefined
+  return await getRuntime().secrets.put({ key, persistence }, apiKey)
 }
 
 /** Performs one transport attempt. Retry policy belongs to the TypeScript caller. */
