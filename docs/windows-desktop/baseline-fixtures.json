@@ -11,8 +11,19 @@
     "clock": "2026-01-01T00:00:00.000Z",
     "timezone": "UTC",
     "textEncoding": "UTF-8",
-    "idRule": "SHA-256(seed + fixtureId + entityKind + zero-padded ordinal), encoded as a stable lowercase identifier",
-    "blobRule": "Byte at zero-based offset i is SHA-256(seed + fixtureId + floor(i / 1048576))[i mod 32]; generation must be streaming and must record the final SHA-256."
+    "logicalIdRule": "SHA-256 of the UTF-8 JSON tuple [seed, fixtureId, entityKind, zero-padded ordinal], encoded as a stable lowercase hexadecimal identifier. Tuple encoding preserves coordinate boundaries.",
+    "sourcePrimaryKeyRule": "Use the first 13 hexadecimal characters of the logical ID as a positive JavaScript-safe integer. Imported target keys must differ so remap assertions cannot pass accidentally.",
+    "blobRule": "Generate and hash in 1048576-byte chunks. The complete 1 GiB artifact is explicit-command only, never allocated as one Buffer/Blob and never inserted into fake-indexeddb.",
+    "canonicalJson": {
+      "objectKeys": "LEXICOGRAPHIC",
+      "arrayOrder": "PRESERVE",
+      "excludedRuntimeFields": [
+        "exportedAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "blobPolicy": "FAIL_CLOSED_HASH_BYTES_SEPARATELY"
+    }
   },
   "fixtures": [
     {
@@ -22,7 +33,9 @@
       "purpose": "First launch, empty database, empty project list and import boundary.",
       "expected": {
         "projects": 0,
-        "worlds": 0,
+        "worldGroups": 0,
+        "worldviews": 0,
+        "worldNodes": 0,
         "chapters": 0
       }
     },
@@ -33,11 +46,28 @@
       "purpose": "Representative daily editing, save, restart, export and import.",
       "expected": {
         "projects": 1,
-        "worlds": 1,
+        "worldGroups": 2,
+        "worldviews": 2,
+        "worldNodes": 2,
         "volumes": 1,
         "chapters": 10,
         "wordsPerChapter": 2000,
-        "registryCoverage": "ALL_APPLICABLE_PROJECT_TABLES"
+        "registryCoverage": "ALL_APPLICABLE_PROJECT_TABLES",
+        "sourceAndImportedPrimaryKeysMustDiffer": true
+      },
+      "currentValidation": {
+        "status": "BLOCKED_SEMANTIC_REFERENCE_REMAP_AND_HASH_NORMALIZATION",
+        "evidence": "tests/desktop-contract/D0.4-fixtures.test.ts",
+        "knownPaths": [
+          "detailedOutlines[].appearingCharacterIds[]",
+          "detailedOutlines[].scenes[].characterIds[]",
+          "detailedOutlines[].foreshadowIds[]",
+          "creativeRules[].citedReferenceIds[]",
+          "codexEntries[].refs.*[]"
+        ],
+        "roundtripHashStatus": "NOT_IMPLEMENTED",
+        "roundtripHashGap": "The canonicalizer is deterministic and fail-closed, but business normalization for remapped IDs and the imported project-name suffix is not implemented. Current source/re-export hashes are diagnostic only and intentionally differ.",
+        "rule": "Keep artifactStatus NOT_GENERATED until every imported reference resolves inside the imported project and normalized source/re-export business hashes are equal. Row counts and raw diagnostic hashes cannot override either gap."
       }
     },
     {
@@ -47,7 +77,9 @@
       "purpose": "Deterministic worst-normal project for opening, editor, graph/canvas and 30-minute memory workloads.",
       "expected": {
         "projects": 1,
-        "worlds": 1,
+        "worldGroups": 1,
+        "worldviews": 1,
+        "worldNodes": 1,
         "volumes": 10,
         "chaptersPerVolume": 100,
         "chapters": 1000,
@@ -68,7 +100,11 @@
           524288000,
           1073741824
         ],
-        "sha256": "COMPUTE_AFTER_GENERATION"
+        "sha256": "COMPUTE_AFTER_GENERATION",
+        "chunkBytes": 1048576,
+        "fullGenerationMode": "EXPLICIT_COMMAND_ONLY",
+        "ordinaryCi": false,
+        "fakeIndexedDbPersistence": false
       }
     },
     {
@@ -82,6 +118,8 @@
           "minimum": 1,
           "maximum": 37
         },
+        "artifactFormat": "REBUILDABLE_RECIPE_AND_ASSERTIONS",
+        "forbiddenArtifactFormat": "BROWSER_PROFILE_OR_LEVELDB_SNAPSHOT",
         "artifactPerVersion": true,
         "latestNormalizedHashMustMatch": true
       }
@@ -117,7 +155,7 @@
     {
       "id": "ASSERT-NORMALIZED-HASH",
       "required": true,
-      "rule": "Canonical JSON uses sorted object keys and registry order, excludes declared runtime-only metadata, and has the recorded SHA-256."
+      "rule": "Canonical JSON sorts object keys lexicographically, preserves array order, excludes declared runtime-only metadata, and has the recorded SHA-256. Exported table rows must already follow PROJECT_TABLES exportOrderBy metadata."
     },
     {
       "id": "ASSERT-ROUNDTRIP",

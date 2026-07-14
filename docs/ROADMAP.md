@@ -5,7 +5,7 @@
 > 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
 > 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — D0～D5 详细规格；项目级授权、依赖、闸门与状态见 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-15（Windows Desktop D0.4 `d0.4-v2` 已把生产 `web-tab` 冻结为唯一必需参考；D0.2～D0.4 仍进行中，D1～D5 未开始）
+> **最后更新**: 2026-07-15（Windows Desktop D0.4 `d0.4-v2` 已把生产 `web-tab` 冻结为唯一必需参考，并落地确定性夹具安全网；D0.2～D0.4 仍进行中，D1～D5 未开始）
 > **说明**: 本文档是任务索引，不是施工权威。旧文档已归档至 `docs/archive/`；实施与放行以 MASTER-BLUEPRINT 为准。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
@@ -25,7 +25,7 @@
 | D0.1 纳入唯一施工权威 | ✅ PASS：2026-07-14 Claude 独立审查无阻断项 | 治理提交推送后保持唯一施工权威 |
 | D0.2 身份与支持范围 | 🟠 进行中：开发身份草案已建立 | 作者确认正式 publisher/证书主体；冻结 productName、identifier 与 UDF |
 | D0.3 RuntimeAdapter 契约 | 🟠 进行中：浏览器专属能力与 PoC 风险盘点完成 | 落地 contract、fake 与 Web wrapper，并通过架构检查 |
-| D0.4 功能/性能/安全基线 | 🟠 进行中：`d0.4-v2` 已明确生产 `web-tab` 必需、installed PWA 可选 | 冻结夹具并采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；其余必需证据未齐前不得 PASS |
+| D0.4 功能/性能/安全基线 | 🟠 进行中：`d0.4-v2` 协议与确定性夹具核心已落地；`small-v1` 检出 `AUDIT-1b`，往返业务 hash 归一化尚未实现 | 修复嵌套引用重映射并完成 hash 等值断言，生成全部冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
 | D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
 | D1～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
 
@@ -1292,11 +1292,12 @@ for each character:
 - **安全网（数据红线）**：`R-export-fullcoverage`（全 31 表 + 双世界组往返）锁当前行为 → `R-export-derive-equivalence`（派生导出 ≡ 真实旧格式 fixture，逐字段）→ `R-export-derive-roundtrip`（派生往返 + 旧 fixture 向后兼容）。等价仅两处无害差异：派生版去掉了旧版冗余的 outlineNodes/worldNodes 原始 parentId 死字段。
 - **验收达成**：新增 exportable 表只登记注册表即自动进出导出/导入；旧备份/Gist 云存档格式不变（fixture 锁死）；往返测试全绿。
 
-### 🟢 AUDIT-1b（AUDIT-1 派生时发现 · 待修）— 细纲数组/JSON 内的角色引用导入未重映射
-- **现状**：`detailedOutlines.appearingCharacterIds`（number[]）与 `scenes[].characterIds`（JSON 内）当前导入**未重映射**到新角色 id（注册表 `refs` 已声明为 character 引用，但导出/导入只处理 `exportRemap` 字段，不处理 refs 里的 array/json 引用）。同类：`creativeRules.citedReferenceIds` → references。
-- **影响**：导入后细纲「本章出场角色」可能指向错误/不存在的角色。属次要元数据，非正文/主外键，不致命。
+### 🟠 AUDIT-1b（AUDIT-1 派生时发现 · 待修）— 细纲数组/JSON 内的角色引用导入未重映射
+- **现状**：`detailedOutlines.appearingCharacterIds`（number[]）与 `scenes[].characterIds`（JSON 内）当前导入**未重映射**到新角色 id（注册表 `refs` 已声明为 character 引用，但导出/导入只处理 `exportRemap` 字段，不处理 refs 里的 array/json 引用）。同类还包括 `detailedOutlines.foreshadowIds` → foreshadows、JSON-string `creativeRules.citedReferenceIds` → references，以及 `codexEntries.refs` 的词条自引用。
+- **D0.4 证据（2026-07-15）**：`tests/desktop-contract/D0.4-fixtures.test.ts` 用固定 `small-v1` 做导出→清库→导入，稳定复现 10 个 `appearingCharacterIds`、10 个 `scenes[].characterIds`、10 个 `foreshadowIds`、1 个 JSON-string `citedReferenceIds` 与 1 个 Codex 自引用悬空；测试精确锁定现状，禁止行数或哈希检查掩盖语义错误。
+- **影响**：导入后细纲「本章出场角色」可能指向错误/不存在的角色。它不阻塞确定性夹具基础设施继续开发，但会阻止 `small-v1` 从 `NOT_GENERATED` 升级，并且在修复前不得通过 D0.4 的引用完整性门。
 - **改法**：派生引擎已统一架构，后续可让 `refs` 中 `kind: 'array' | 'json'` 且指向 exportable 表的引用也纳入导出/导入重映射（开启后 `R-export-fullcoverage` 里被锁的 `appearingCharacterIds` 断言可恢复为「重映射到新 id」）。
-- **优先级**：🟢 低（次要元数据，且已有架构支撑，增量小）。
+- **优先级**：🟠 Windows Desktop D0.4 当前数据完整性阻塞项（不阻塞其他独立开发切片；修复须保持旧导出格式兼容并补往返回归）。
 
 ### ✅ AUDIT-2（已完成 2026-06-16 · 核实收尾）— 原生 alert/confirm/prompt 全面替换为 Dialog
 - **现状核实（2026-06-16）**：UI 层（`src/components` / `hooks` / `pages`）原生弹窗**已全部替换**——`Dialog` 组件已被 **22 个文件**使用，`check:architecture` ⑥号守卫（禁 UI 层 `alert/confirm/prompt`）持续绿。审查报告时的"约 23 文件"已在商业审查 P0/P1 批次及后续逐步替换完毕。

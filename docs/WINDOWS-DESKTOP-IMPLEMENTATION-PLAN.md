@@ -574,13 +574,15 @@ interface RuntimeAdapter {
 
 **验证**
 
+- `npm.cmd run check:desktop-baseline` 校验协议、Schema、样例与裁决边界。
+- `npm.cmd run check:desktop-fixtures` 校验确定性 ID/正文、canonicalizer 边界、42 表注册表覆盖，以及 `small-v1` 导出导入语义引用；在业务 ID/项目名归一化完成前，source/re-export hash 只作诊断值，不得宣称往返等值；该命令也不替代真实浏览器证据。
 - 同一项目、章节和操作脚本至少运行三轮。
 - 记录环境、PID/进程树和原始指标。
 - 不使用“感觉更轻”作为结果。
 
 **完成判据**
 
-D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前实测未齐，不得标 PASS。
+D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前确定性夹具核心已落地，但 `small-v1` 仍受 `AUDIT-1b` 嵌套引用重映射与往返业务 hash 归一化缺口阻塞，动态实测也未齐，不得标 PASS。
 
 ---
 

@@ -86,11 +86,21 @@ D0.4 只建立可复现协议、固定夹具规格、结果格式和无浏览器
 固定夹具：
 
 - `empty-v1`：空数据库和首次启动边界。
-- `small-v1`：1 项目、1 世界观、10 章，覆盖日常编辑和导入导出。
+- `small-v1`：1 项目、2 世界组、2 世界观、10 章，覆盖跨世界引用、日常编辑和导入导出。
 - `large-synthetic-v1`：确定性合成大项目，10 卷 × 100 章，并覆盖注册表声明的各类项目数据。
 - `blob-ladder-v1`：10 MiB、100 MiB、500 MiB、1 GiB 的确定性二进制阶梯。
 - `legacy-matrix-v1`：各受支持历史 schema / 导出版本的最小兼容矩阵。
 - `real-anonymized-v1`：仅本机保存的匿名真实项目；仓库只记录计数与哈希，当前默认 `NOT_AVAILABLE`。
+
+当前已落地确定性内存夹具验证器：
+
+```powershell
+npm.cmd run check:desktop-fixtures
+```
+
+它从 `PROJECT_TABLES` 动态证明全部 42 个项目表恰好覆盖一次，并验证稳定 ID、固定时钟、精确正文长度、canonicalizer 的确定性/敏感性/危险键边界，以及 `small-v1` 的 10 章导出/清库/导入路径。当前 source/re-export 哈希只是诊断值：主键重映射与导入项目名后缀的业务归一化尚未实现，因此还没有“往返哈希相等”断言。该命令是生成器与数据断言的开发安全网，不会生成可交付夹具文件，也不能代替生产 `web-tab`、真实 IndexedDB、重启或性能证据。
+
+当前 `small-v1` 验证还会确定性检出既有 `AUDIT-1b`：`detailedOutlines` 的角色/场景角色/伏笔数组、`creativeRules[].citedReferenceIds[]` 与 `codexEntries[].refs.*[]` 在导入后未重映射。测试使用生产形态的 JSON string 覆盖 CreativeRules 与 Codex 引用，并保留该失败事实；引用完整性修复与业务归一化哈希等值断言两者完成前，行数或 raw diagnostic hash 都不能把夹具标记为已生成。
 
 在夹具生成并通过上述断言前，其状态只能是 `NOT_GENERATED` 或 `NOT_AVAILABLE`。
 
@@ -222,10 +232,11 @@ D0.4 不复制专项规划 §5 的聚合 FP 矩阵，也不抢先建立 D0.5 的
 
 ```powershell
 npm.cmd run check:desktop-baseline
+npm.cmd run check:desktop-fixtures
 npm.cmd run baseline:collect-static -- --output .qa-reports/windows-desktop/<report-id> --source-commit <commit>
 ```
 
-静态采集器只读取仓库元数据和本机版本信息：
+前两个命令分别校验报告协议与确定性夹具安全网；只有 `baseline:collect-static` 会创建静态报告目录。静态采集器只读取仓库元数据和本机版本信息：
 
 - 不启动 Edge、Chrome、WebView2、Vite、Tauri 或应用进程。
 - 不运行 Git；源提交必须由调用方显式提供，否则记录 `UNRESOLVED`。
@@ -242,4 +253,4 @@ npm.cmd run baseline:collect-static -- --output .qa-reports/windows-desktop/<rep
 4. 所有必需安全场景有可复核证据；
 5. 报告 Schema 校验通过且功能门及必需场景不存在 `NOT_MEASURED` 项。
 
-以上 PASS 条件除移除 installed PWA 的必需参考地位外均未放宽。当前仍缺完整夹具与生产 `web-tab` 的功能、性能、恢复、安全实测，因此 D0.4 仍为 **IN PROGRESS / NOT_ELIGIBLE**。
+以上 PASS 条件除移除 installed PWA 的必需参考地位外均未放宽。当前已具备确定性夹具核心和 `small-v1` 内存验证，但 `AUDIT-1b` 与往返业务哈希归一化尚未闭环，完整夹具及生产 `web-tab` 的功能、性能、恢复、安全实测也未齐，因此 D0.4 仍为 **IN PROGRESS / NOT_ELIGIBLE**。
