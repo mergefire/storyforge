@@ -102,7 +102,8 @@ function ExportTab({ project, onImported }: Props) {
     try {
       show('loading', '正在导出 JSON...')
       const data = await exportProjectJSON(project.id!)
-      downloadJSON(data, `${project.name}_${new Date().toISOString().slice(0, 10)}.json`)
+      const output = await downloadJSON(data, `${project.name}_${new Date().toISOString().slice(0, 10)}.json`)
+      if (output.status === 'cancelled') { show('idle', ''); return }
       show('success', 'JSON 导出成功！')
     } catch (e) { show('error', `导出失败：${(e as Error).message}`) }
   }
@@ -124,7 +125,8 @@ function ExportTab({ project, onImported }: Props) {
     try {
       show('loading', '正在导出 Markdown...')
       const md = await exportProjectMarkdown(project.id!)
-      downloadTextFile(md, `${project.name}_${new Date().toISOString().slice(0, 10)}.md`, 'text/markdown')
+      const output = await downloadTextFile(md, `${project.name}_${new Date().toISOString().slice(0, 10)}.md`, 'text/markdown')
+      if (output.status === 'cancelled') { show('idle', ''); return }
       show('success', 'Markdown 导出成功！')
     } catch (e) { show('error', `导出失败：${(e as Error).message}`) }
   }
@@ -133,7 +135,8 @@ function ExportTab({ project, onImported }: Props) {
     try {
       show('loading', '正在导出 TXT...')
       const txt = await exportProjectTXT(project.id!)
-      downloadTextFile(txt, `${project.name}_${new Date().toISOString().slice(0, 10)}.txt`)
+      const output = await downloadTextFile(txt, `${project.name}_${new Date().toISOString().slice(0, 10)}.txt`)
+      if (output.status === 'cancelled') { show('idle', ''); return }
       show('success', 'TXT 导出成功！')
     } catch (e) { show('error', `导出失败：${(e as Error).message}`) }
   }

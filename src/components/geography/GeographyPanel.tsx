@@ -10,6 +10,7 @@ import type { Project, Location, LocationType } from '../../lib/types'
 import { nanoid } from '../../lib/utils/id'
 import { sanitizeSvg } from '../../lib/utils/sanitize-svg'
 import LocationTreeMap from './LocationTreeMap'
+import { getRuntime } from '../../runtime'
 
 const LOCATION_TYPES: { value: LocationType; label: string }[] = [
   { value: 'continent', label: '大陆' },
@@ -141,7 +142,7 @@ export default function GeographyPanel({ project }: Props) {
   }
 
   const handleCopyPrompt = async () => {
-    await navigator.clipboard.writeText(imagePrompt)
+    await getRuntime().clipboard.writeText('ai-image-prompt', imagePrompt)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

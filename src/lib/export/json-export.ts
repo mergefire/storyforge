@@ -13,6 +13,7 @@
  */
 import { deriveExportProjectJSON } from './registry-export'
 import { deriveImportProjectJSON } from './registry-import'
+import { getRuntime } from '../../runtime'
 import type {
   Project, Worldview, StoryCore, PowerSystem,
   Character, OutlineNode, Chapter,
@@ -109,16 +110,13 @@ export async function exportProjectJSON(projectId: number): Promise<ProjectExpor
   return deriveExportProjectJSON(projectId)
 }
 
-/** 下载 JSON 文件 */
+/** 输出 JSON 文件；业务数据仍由注册表派生，运行时只处理文件 I/O。 */
 export function downloadJSON(data: ProjectExportData, filename: string) {
-  const json = JSON.stringify(data, null, 2)
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+  return getRuntime().files.save({
+    purpose: 'project-json',
+    suggestedName: filename,
+    content: { kind: 'text', text: JSON.stringify(data, null, 2) },
+  })
 }
 
 /** 导入项目 JSON — 返回新项目 ID（注册表派生，兼容 v1/v2/v3 旧格式） */

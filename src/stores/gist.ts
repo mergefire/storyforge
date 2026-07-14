@@ -7,7 +7,7 @@
  */
 import { create } from 'zustand'
 import {
-  exportToGist, importFromGist, validateGitHubPAT, listStoryforgeGists, listGistRevisions,
+  clearGitHubPATCredential, exportToGist, importFromGist, validateGitHubPAT, listStoryforgeGists, listGistRevisions,
   type GistBackupMeta, type GistRevisionMeta,
 } from '../lib/export/gist-export'
 import { exportProjectJSON, importProjectJSON } from '../lib/export/json-export'
@@ -69,7 +69,7 @@ interface GistState {
 
   /** 连接 GitHub:验证 PAT 并保存 */
   connect: (pat: string, rememberPat?: boolean) => Promise<boolean>
-  disconnect: () => void
+  disconnect: () => Promise<void>
   setAutoBackup: (on: boolean) => void
   /** 备份指定项目到云端(创建/更新该项目的 Gist) */
   backupProject: (projectId: number) => Promise<{ url: string } | null>
@@ -106,10 +106,22 @@ export const useGistStore = create<GistState>((set, get) => ({
     }
   },
 
-  disconnect: () => {
+  disconnect: async () => {
     clearAuth()
     localStorage.removeItem(AUTO_KEY)
-    set({ pat: null, username: null, rememberPat: false, autoBackup: false })
+    set({
+      pat: null,
+      username: null,
+      rememberPat: false,
+      autoBackup: false,
+      busy: false,
+      error: null,
+    })
+    try {
+      await clearGitHubPATCredential()
+    } catch {
+      set({ error: '已断开，但运行时凭据清理失败，请重启应用后检查凭据状态' })
+    }
   },
 
   setAutoBackup: (on) => {

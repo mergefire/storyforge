@@ -8,6 +8,7 @@
 import { db } from '../db/schema'
 import { htmlToPlainText } from '../utils/html'
 import type { OutlineNode, Chapter } from '../types'
+import { getRuntime } from '../../runtime'
 
 const SEPARATOR = '\n\n---\n\n'
 
@@ -178,13 +179,11 @@ function compress(text: string, maxLen: number): string {
 
 /** 下载快照文件 */
 export function downloadContextSnapshot(text: string, projectName: string) {
-  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${projectName}_上下文快照_${new Date().toISOString().slice(0, 10)}.md`
-  a.click()
-  URL.revokeObjectURL(url)
+  return getRuntime().files.save({
+    purpose: 'context-snapshot',
+    suggestedName: `${projectName}_上下文快照_${new Date().toISOString().slice(0, 10)}.md`,
+    content: { kind: 'text', text },
+  })
 }
 
 // ── 上下文快照本地存储 ──
