@@ -104,7 +104,9 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
 
   private readonly faults = new Map<FakeRuntimeOperation, RuntimeErrorCode>()
   private readonly secretValues = new Map<SecretKey, string>()
-  private readonly credentialKeys = new Map<CredentialId, SecretKey>()
+  private readonly credentials = new Map<CredentialId, { key: SecretKey; value: string }>()
+  private readonly currentCredentials = new Map<SecretKey, CredentialId>()
+  private credentialSequence = 0
   private readonly now: () => number
   private readonly aiChunks: readonly Uint8Array[]
   private readonly aiStatus: number
@@ -155,15 +157,19 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
     if (code) throw runtimeFailure(code, operation)
   }
 
-  private credentialId(key: SecretKey): CredentialId {
-    const id = `fake-vault:${key}` as CredentialId
-    this.credentialKeys.set(id, key)
+  private credentialId(key: SecretKey, value: string): CredentialId {
+    const currentId = this.currentCredentials.get(key)
+    if (currentId && this.credentials.get(currentId)?.value === value) return currentId
+
+    this.credentialSequence += 1
+    const id = `fake-vault:${this.credentialSequence}:${key}` as CredentialId
+    this.credentials.set(id, { key, value })
+    this.currentCredentials.set(key, id)
     return id
   }
 
   private assertCredential(credentialId: CredentialId, operation: FakeRuntimeOperation): void {
-    const key = this.credentialKeys.get(credentialId)
-    if (!key || !this.secretValues.has(key)) throw runtimeFailure('PERMISSION_DENIED', operation)
+    if (!this.credentials.has(credentialId)) throw runtimeFailure('PERMISSION_DENIED', operation)
   }
 
   readonly ai: RuntimeAdapter['ai'] = {
@@ -304,7 +310,7 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
       this.assertNoFailure('secrets.put')
       this.secretValues.set(descriptor.key, value)
       this.state.secretKeys.add(descriptor.key)
-      return this.credentialId(descriptor.key)
+      return this.credentialId(descriptor.key, value)
     },
     has: async key => {
       this.assertNoFailure('secrets.has')
@@ -312,12 +318,17 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
     },
     reference: async key => {
       this.assertNoFailure('secrets.has')
-      return this.secretValues.has(key) ? this.credentialId(key) : null
+      const value = this.secretValues.get(key)
+      return value === undefined ? null : this.credentialId(key, value)
     },
     delete: async key => {
       this.assertNoFailure('secrets.delete')
       this.secretValues.delete(key)
       this.state.secretKeys.delete(key)
+      this.currentCredentials.delete(key)
+      for (const [credentialId, credential] of this.credentials) {
+        if (credential.key === key) this.credentials.delete(credentialId)
+      }
     },
   }
 
