@@ -32,11 +32,14 @@ import type {
   SecretKey,
 } from '../contract'
 import { normalizeRuntimeError, RuntimeError, throwIfAborted } from '../errors'
+import { shouldRegisterStoryForgeServiceWorker } from './service-worker-policy'
 
 const GIST_API = 'https://api.github.com/gists'
 const SECRET_PREFIX = 'storyforge-runtime-secret:'
 const BINDING_PREFIX = 'runtime-binding:'
 const MAX_DIAGNOSTIC_EVENTS = 200
+const WEB_SERVICE_WORKER_SCRIPT = '/storyforge/sw.js'
+const WEB_SERVICE_WORKER_SCOPE = '/storyforge/'
 
 interface StorageLike {
   getItem(key: string): string | null
@@ -73,6 +76,8 @@ export interface WebFileDelegates {
   bindingStore?: WebBindingStore
 }
 
+export type WebServiceWorkerContainer = Pick<ServiceWorkerContainer, 'getRegistration' | 'register'>
+
 export interface WebRuntimeOptions {
   fetch?: typeof globalThis.fetch
   files?: WebFileDelegates
@@ -80,6 +85,8 @@ export interface WebRuntimeOptions {
   openExternal?: (url: string) => void | Promise<void>
   localStorage?: StorageLike
   sessionStorage?: StorageLike
+  serviceWorker?: WebServiceWorkerContainer | null
+  hostname?: string
   now?: () => number
   version?: string
 }
@@ -154,6 +161,15 @@ function optionalGlobalStorage(name: 'localStorage' | 'sessionStorage'): Storage
     if (typeof window !== 'undefined') return window[name]
   } catch {
     // Storage can be blocked by browser privacy settings. Use an in-memory fallback.
+  }
+  return undefined
+}
+
+function optionalServiceWorker(): WebServiceWorkerContainer | undefined {
+  try {
+    if (typeof navigator !== 'undefined') return navigator.serviceWorker
+  } catch {
+    // Access can be denied in restricted WebViews/security contexts. Updates stay optional.
   }
   return undefined
 }
@@ -677,6 +693,11 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
 
   const local = options.localStorage ?? optionalGlobalStorage('localStorage') ?? new MemoryStorage()
   const session = options.sessionStorage ?? optionalGlobalStorage('sessionStorage') ?? new MemoryStorage()
+  const serviceWorker = options.serviceWorker === undefined
+    ? optionalServiceWorker()
+    : options.serviceWorker ?? undefined
+  const serviceWorkerHostname = options.hostname
+    ?? (typeof location !== 'undefined' ? location.hostname : '')
   const vault = new WebSecretVault(local, session)
   const bindingStore = options.files?.bindingStore ?? defaultBindingStore()
   const pickDirectory = options.files?.pickDirectory ?? defaultPickDirectory
@@ -1118,15 +1139,71 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
     },
   }
 
+  const serviceWorkerEnabled = !!serviceWorker
+    && shouldRegisterStoryForgeServiceWorker(serviceWorkerHostname)
+  let managedServiceWorker: ServiceWorkerRegistration | undefined
+  let serviceWorkerInitialization: Promise<void> | undefined
+
+  async function registerManagedServiceWorker(): Promise<void> {
+    if (!serviceWorkerEnabled || !serviceWorker) return
+    try {
+      managedServiceWorker = await serviceWorker.register(WEB_SERVICE_WORKER_SCRIPT, {
+        scope: WEB_SERVICE_WORKER_SCOPE,
+      })
+    } catch (error) {
+      throw normalizeRuntimeError(error, 'updates.initialize')
+    }
+  }
+
+  function initializeServiceWorker(): Promise<void> {
+    if (serviceWorkerInitialization) return serviceWorkerInitialization
+    if (!serviceWorkerEnabled) {
+      serviceWorkerInitialization = Promise.resolve()
+      return serviceWorkerInitialization
+    }
+    if (
+      typeof window === 'undefined'
+      || typeof document === 'undefined'
+      || document.readyState === 'complete'
+    ) {
+      serviceWorkerInitialization = registerManagedServiceWorker()
+      return serviceWorkerInitialization
+    }
+    serviceWorkerInitialization = new Promise<void>((resolve, reject) => {
+      window.addEventListener('load', () => {
+        void registerManagedServiceWorker().then(resolve, reject)
+      }, { once: true })
+    })
+    return serviceWorkerInitialization
+  }
+
+  async function getManagedServiceWorker(operation: string): Promise<ServiceWorkerRegistration | undefined> {
+    await initializeServiceWorker()
+    if (!serviceWorkerEnabled || !serviceWorker) return undefined
+    if (managedServiceWorker) return managedServiceWorker
+    try {
+      managedServiceWorker = await serviceWorker.getRegistration()
+      return managedServiceWorker
+    } catch (error) {
+      throw normalizeRuntimeError(error, operation)
+    }
+  }
+
   const updates: RuntimeAdapter['updates'] = {
+    initialize: initializeServiceWorker,
+
     async check() {
-      if (typeof navigator === 'undefined' || !navigator.serviceWorker) return null
-      const registration = await navigator.serviceWorker.getRegistration()
-      if (!registration) return null
-      await registration.update()
-      return registration.waiting
-        ? { releaseId: 'web-service-worker', version: options.version ?? 'web-update' }
-        : null
+      const operation = 'updates.check'
+      try {
+        const registration = await getManagedServiceWorker(operation)
+        if (!registration) return null
+        await registration.update()
+        return registration.waiting
+          ? { releaseId: 'web-service-worker', version: options.version ?? 'web-update' }
+          : null
+      } catch (error) {
+        throw normalizeRuntimeError(error, operation)
+      }
     },
 
     async install(releaseId, signal) {
@@ -1135,11 +1212,16 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       if (releaseId !== 'web-service-worker') {
         throw new RuntimeError('INVALID_INPUT', '更新标识无效', { operation })
       }
-      const registration = await navigator.serviceWorker?.getRegistration()
-      if (!registration?.waiting) {
-        throw new RuntimeError('NOT_FOUND', '没有待安装的 Web 更新', { operation })
+      try {
+        const registration = await getManagedServiceWorker(operation)
+        throwIfAborted(signal, operation)
+        if (!registration?.waiting) {
+          throw new RuntimeError('NOT_FOUND', '没有待安装的 Web 更新', { operation })
+        }
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' })
+      } catch (error) {
+        throw normalizeRuntimeError(error, operation)
       }
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' })
     },
   }
 

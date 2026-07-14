@@ -105,6 +105,8 @@ describe('D0.3 RuntimeAdapter contract', () => {
     expect(runtime.state.clipboardWrites).toEqual([{ purpose: 'workflow-output', text: 'result' }])
     expect((await runtime.durability.inspect()).persisted).toBe(true)
     expect((await runtime.distribution.getInfo()).channel).toBe('dev')
+    await runtime.updates.initialize()
+    expect(runtime.state.updatesInitialized).toBe(true)
   })
 
   it('distinguishes user cancellation from AbortSignal cancellation', async () => {

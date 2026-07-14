@@ -12,65 +12,40 @@ import { validateRegistry } from './lib/registry/validate'
 import { db } from './lib/db/schema'
 import { finalizeCharacterAxesMigrationSnapshots } from './lib/migrations/finalize-character-axes-snapshots'
 import { applyStoryForgeTheme, resolveStoryForgeTheme } from './lib/theme'
-import { registerStoryForgeServiceWorker } from './lib/pwa/register-service-worker'
+import { getRuntime } from './runtime'
+import { initializeRuntimeCapabilities } from './runtime/bootstrap'
 import './index.css'
 
-// 从 localStorage 恢复主题（兼容旧主题名迁移）
 applyStoryForgeTheme(resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')))
-registerStoryForgeServiceWorker()
-
-/**
- * FB-11 数据持久 · 启动期申请「持久化存储」。
- * 不申请时浏览器把 IndexedDB 当 best-effort,可在磁盘压力/关闭清理/隐私插件下
- * 直接驱逐整库 → 用户表现为"数据被重置"。persist() 在 Chrome 是静默授予(按使用度
- * 启发式,不弹窗),被拒或不支持都不影响主流程,故 fire-and-forget。
- */
-async function requestPersistentStorage() {
-  try {
-    if (navigator.storage?.persist) {
-      const already = await navigator.storage.persisted()
-      if (!already) {
-        const granted = await navigator.storage.persist()
-        console.info(`[bootstrap] persistent storage ${granted ? '已授予' : '未授予(浏览器启发式未满足,可稍后再试)'}`)
-      }
-    }
-  } catch (e) {
-    console.warn('[bootstrap] persist storage 申请失败(不影响运行):', e)
-  }
-}
+void initializeRuntimeCapabilities(getRuntime())
 
 async function bootstrap() {
-  // 0. FB-11: 尽早申请持久化存储,降低 IndexedDB 被浏览器驱逐("重置")的概率。
-  void requestPersistentStorage()
-
-  // 0. Phase 1.1b: 注册表完整性校验。开发环境 throw(立刻发现漏登记),生产环境只告警。
+  // Phase 1.1b: validate the three registries before opening application data.
   try {
     validateRegistry({ throwOnError: import.meta.env.DEV })
-  } catch (e) {
-    console.error('[bootstrap] registry validation failed:', e)
+  } catch (error) {
+    console.error('[bootstrap] registry validation failed:', error)
   }
 
-  // 1. Schema 健康自检：开发环境可自动 reset，生产环境绝不自动删库。
+  // Schema health check never resets a production database automatically.
   try {
     await ensureSchema(REQUIRED_TABLES, { allowReset: import.meta.env.DEV })
     await db.open()
     await finalizeCharacterAxesMigrationSnapshots()
-  } catch (e) {
-    console.error('[bootstrap] schema check failed:', e)
+  } catch (error) {
+    console.error('[bootstrap] schema check failed:', error)
   }
 
-  // 2. Phase 1：初始化提示词模板（必要时 seed 系统模板）
   try {
     await usePromptStore.getState().init()
-  } catch (e) {
-    console.error('[bootstrap] prompt store init failed:', e)
+  } catch (error) {
+    console.error('[bootstrap] prompt store init failed:', error)
   }
 
-  // 3. Phase 16：初始化工作流（必要时 seed 系统工作流）
   try {
     await useWorkflowStore.getState().init()
-  } catch (e) {
-    console.error('[bootstrap] workflow store init failed:', e)
+  } catch (error) {
+    console.error('[bootstrap] workflow store init failed:', error)
   }
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -88,4 +63,4 @@ async function bootstrap() {
   )
 }
 
-bootstrap()
+void bootstrap()
