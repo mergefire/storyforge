@@ -12,6 +12,7 @@
  *   ⑤ PROJECT_TABLES exportable 表必须接入 JSON 导出/导入
  *   ⑥ components/hooks/pages 不得使用浏览器原生 alert/confirm/prompt
  *   ⑦ 正式 UI 不得出现"正在开发/即将推出/敬请期待"式死入口文案
+ *   ⑧ Tauri API/window.__TAURI__ 只能出现在 runtime/tauri 边界
  *
  * 用法:node scripts/check-architecture.mjs
  */
@@ -203,6 +204,18 @@ for (const dir of UI_DIRS) {
     if (!m) continue
     const line = src.slice(0, m.index).split('\n').length
     violations.push(`[⑦半成品文案] ${file}:${line}: 正式 UI 不得出现"${m[0]}"式死入口承诺;请隐藏入口、标记 Labs 禁用态,或指向已上线流程`)
+  }
+}
+
+// ── ⑧ Tauri API 只能进入唯一运行时边界 ──
+// D0.3 先启用可以零误报落地的边界守卫。浏览器 API 的历史调用点会按
+// src/runtime/README.md 的 staged inventory 逐批接管，清零后再启用对应硬禁令。
+for (const file of walk('src')) {
+  if (file.startsWith('src/runtime/tauri/')) continue
+  const src = read(file)
+  const forbidden = /(?:from\s*['"]@tauri-apps\/|import\(\s*['"]@tauri-apps\/|\bwindow\.__TAURI__\b|\bglobalThis\.__TAURI__\b)/
+  if (forbidden.test(src)) {
+    violations.push(`[⑧Tauri边界] ${file}: Tauri API 只能由 src/runtime/tauri 导入，业务层必须走 RuntimeAdapter`)
   }
 }
 

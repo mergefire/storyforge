@@ -6,9 +6,11 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { db } from '../../src/lib/db/schema'
+import { getRuntime } from '../../src/runtime'
 import { useGistStore } from '../../src/stores/gist'
 
 const PAT = 'ghp_fake'
+const RUNTIME_GIST_SECRET_KEY = 'storyforge-runtime-secret:storyforge.github.gist'
 
 async function seedProject(): Promise<number> {
   const now = Date.now()
@@ -42,9 +44,17 @@ function mockValidatePAT(login = 'tester') {
   }))
 }
 
+function mockRejectPAT() {
+  vi.stubGlobal('fetch', vi.fn(async () => ({
+    ok: false,
+    status: 401,
+    json: async () => ({ message: 'bad credentials' }),
+  })))
+}
+
 describe('R-GIST · PAT 存储策略', () => {
   beforeEach(() => resetGistState())
-  afterEach(() => { vi.unstubAllGlobals(); resetGistState() })
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); resetGistState() })
 
   it('默认只存 sessionStorage,不落 localStorage', async () => {
     mockValidatePAT('session-user')
@@ -72,6 +82,58 @@ describe('R-GIST · PAT 存储策略', () => {
     expect(fresh.useGistStore.getState().pat).toBe(PAT)
     expect(fresh.useGistStore.getState().username).toBe('legacy-user')
     expect(fresh.useGistStore.getState().rememberPat).toBe(true)
+  })
+
+  it('PAT 验证失败时清除临时 runtime credential', async () => {
+    mockRejectPAT()
+
+    const ok = await useGistStore.getState().connect(PAT)
+
+    expect(ok).toBe(false)
+    expect(sessionStorage.getItem(RUNTIME_GIST_SECRET_KEY)).toBeNull()
+    expect(sessionStorage.getItem('sf-gist-pat')).toBeNull()
+    expect(useGistStore.getState().pat).toBeNull()
+  })
+
+  it('断开连接时同时清除旧认证状态和 runtime credential', async () => {
+    mockValidatePAT('disconnect-user')
+    expect(await useGistStore.getState().connect(PAT, true)).toBe(true)
+    useGistStore.getState().setAutoBackup(true)
+    useGistStore.setState({ busy: true, error: 'old error' })
+    expect(sessionStorage.getItem(RUNTIME_GIST_SECRET_KEY)).toBe(PAT)
+
+    await useGistStore.getState().disconnect()
+
+    expect(localStorage.getItem('sf-gist-pat')).toBeNull()
+    expect(localStorage.getItem('sf-gist-user')).toBeNull()
+    expect(localStorage.getItem('sf-gist-auto')).toBeNull()
+    expect(sessionStorage.getItem(RUNTIME_GIST_SECRET_KEY)).toBeNull()
+    expect(useGistStore.getState()).toMatchObject({
+      pat: null,
+      username: null,
+      rememberPat: false,
+      autoBackup: false,
+      busy: false,
+      error: null,
+    })
+  })
+
+  it('runtime credential 删除失败时仍完成断开并报告明确错误', async () => {
+    mockValidatePAT('cleanup-failure-user')
+    expect(await useGistStore.getState().connect(PAT)).toBe(true)
+    vi.spyOn(getRuntime().secrets, 'delete').mockRejectedValueOnce(new Error('vault unavailable'))
+
+    await expect(useGistStore.getState().disconnect()).resolves.toBeUndefined()
+
+    expect(sessionStorage.getItem('sf-gist-pat')).toBeNull()
+    expect(useGistStore.getState()).toMatchObject({
+      pat: null,
+      username: null,
+      rememberPat: false,
+      autoBackup: false,
+      busy: false,
+      error: '已断开，但运行时凭据清理失败，请重启应用后检查凭据状态',
+    })
   })
 })
 

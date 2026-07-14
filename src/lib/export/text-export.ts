@@ -1,6 +1,7 @@
 import { db } from '../db/schema'
 import type { OutlineNode, Chapter } from '../types'
 import { isHtml, htmlToPlainText } from '../utils/html'
+import { getRuntime } from '../../runtime'
 
 /** HTML → Markdown（简化规则，覆盖 TipTap StarterKit 产出的常见结构） */
 function htmlToMarkdown(html: string): string {
@@ -178,12 +179,14 @@ function renderChapterTxt(node: OutlineNode, chapterMap: Map<number, Chapter>): 
 }
 
 /** 下载文本文件 */
-export function downloadTextFile(content: string, filename: string, mimeType: string = 'text/plain') {
-  const blob = new Blob([content], { type: `${mimeType};charset=utf-8` })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+export function downloadTextFile(
+  content: string,
+  filename: string,
+  mimeType: 'text/plain' | 'text/markdown' = 'text/plain',
+) {
+  return getRuntime().files.save({
+    purpose: mimeType === 'text/markdown' ? 'project-markdown' : 'project-text',
+    suggestedName: filename,
+    content: { kind: 'text', text: content },
+  })
 }
