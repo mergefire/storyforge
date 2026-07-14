@@ -109,6 +109,28 @@ describe('D0.3 RuntimeAdapter contract', () => {
     expect(runtime.state.updatesInitialized).toBe(true)
   })
 
+  it('versions fake credential references and invalidates them on delete', async () => {
+    const runtime = createFakeRuntime()
+    const descriptor = { key: 'storyforge.ai.primary' as const, persistence: 'session' as const }
+    const first = await runtime.secrets.put(descriptor, 'sk-first')
+    const second = await runtime.secrets.put(descriptor, 'sk-second')
+
+    expect(first).not.toBe(second)
+    expect(await runtime.secrets.reference(descriptor.key)).toBe(second)
+
+    await runtime.secrets.delete(descriptor.key)
+    await expect(runtime.ai.execute({
+      endpoint: {
+        provider: 'custom',
+        profileId: 'rotated',
+        operation: 'chat-completions',
+        configuredBaseUrl: 'https://example.com/v1',
+      },
+      credentialId: first,
+      body: {},
+    })).rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
+  })
+
   it('distinguishes user cancellation from AbortSignal cancellation', async () => {
     const runtime = createFakeRuntime()
     runtime.cancelNext('files.save')

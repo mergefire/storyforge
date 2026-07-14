@@ -28,11 +28,12 @@ export interface SecretDescriptor {
 }
 
 export interface SecretStore {
-  /** Writes a secret. The value is never returned by this contract. */
+  /** Writes a secret and returns an opaque reference bound to that exact value. */
   put(descriptor: SecretDescriptor, value: string): Promise<CredentialId>
   has(key: SecretKey): Promise<boolean>
   /** Returns an opaque vault reference, never the underlying plaintext. */
   reference(key: SecretKey): Promise<CredentialId | null>
+  /** Deletes the logical secret and invalidates every reference issued for it. */
   delete(key: SecretKey): Promise<void>
 }
 

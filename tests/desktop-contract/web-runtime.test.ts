@@ -89,6 +89,37 @@ describe('D0.3 Web RuntimeAdapter', () => {
     expect('get' in runtime.secrets).toBe(false)
   })
 
+  it('binds each credential id to the exact secret value across rotations', async () => {
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }))
+    const runtime = createWebRuntime({ fetch: fetchMock })
+    const descriptor = { key: 'storyforge.ai.primary' as const, persistence: 'session' as const }
+    const firstCredential = await runtime.secrets.put(descriptor, 'sk-first')
+    const secondCredential = await runtime.secrets.put(descriptor, 'sk-second')
+
+    expect(firstCredential).not.toBe(secondCredential)
+    expect(await runtime.secrets.reference(descriptor.key)).toBe(secondCredential)
+
+    const execute = (credentialId: typeof firstCredential) => runtime.ai.execute({
+      endpoint: {
+        provider: 'custom',
+        profileId: 'credential-rotation',
+        operation: 'chat-completions',
+        configuredBaseUrl: '/openai-proxy/v1',
+      },
+      credentialId,
+      body: {},
+    })
+    await execute(firstCredential)
+    await execute(secondCredential)
+
+    expect(fetchMock.mock.calls[0][1]?.headers).toMatchObject({ Authorization: 'Bearer sk-first' })
+    expect(fetchMock.mock.calls[1][1]?.headers).toMatchObject({ Authorization: 'Bearer sk-second' })
+
+    await runtime.secrets.delete(descriptor.key)
+    await expect(execute(firstCredential))
+      .rejects.toMatchObject<Partial<RuntimeError>>({ code: 'PERMISSION_DENIED' })
+  })
+
   it.each([
     ['chat-completions', '/deepseek-proxy/v1'],
     ['chat-completions', '/openai-proxy/v1'],

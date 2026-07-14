@@ -176,7 +176,9 @@ function optionalServiceWorker(): WebServiceWorkerContainer | undefined {
 
 class WebSecretVault {
   readonly publicStore: RuntimeAdapter['secrets']
-  private readonly credentialKeys = new Map<CredentialId, SecretKey>()
+  private readonly credentials = new Map<CredentialId, { key: SecretKey; value: string }>()
+  private readonly currentCredentials = new Map<SecretKey, CredentialId>()
+  private credentialSequence = 0
 
   constructor(
     private readonly local: StorageLike,
@@ -194,9 +196,14 @@ class WebSecretVault {
     return `${SECRET_PREFIX}${key}`
   }
 
-  private credentialId(key: SecretKey): CredentialId {
-    const id = `web-vault:${key}` as CredentialId
-    this.credentialKeys.set(id, key)
+  private credentialId(key: SecretKey, value: string): CredentialId {
+    const currentId = this.currentCredentials.get(key)
+    if (currentId && this.credentials.get(currentId)?.value === value) return currentId
+
+    this.credentialSequence += 1
+    const id = `web-vault:${this.credentialSequence}:${key}` as CredentialId
+    this.credentials.set(id, { key, value })
+    this.currentCredentials.set(key, id)
     return id
   }
 
@@ -205,7 +212,7 @@ class WebSecretVault {
     const other = descriptor.persistence === 'device' ? this.session : this.local
     target.setItem(this.storageKey(descriptor.key), value)
     other.removeItem(this.storageKey(descriptor.key))
-    return this.credentialId(descriptor.key)
+    return this.credentialId(descriptor.key, value)
   }
 
   private async has(key: SecretKey): Promise<boolean> {
@@ -214,27 +221,28 @@ class WebSecretVault {
   }
 
   private async reference(key: SecretKey): Promise<CredentialId | null> {
-    return await this.has(key) ? this.credentialId(key) : null
+    const storageKey = this.storageKey(key)
+    const value = this.session.getItem(storageKey) ?? this.local.getItem(storageKey)
+    return value === null ? null : this.credentialId(key, value)
   }
 
   private async delete(key: SecretKey): Promise<void> {
     const storageKey = this.storageKey(key)
     this.session.removeItem(storageKey)
     this.local.removeItem(storageKey)
+    this.currentCredentials.delete(key)
+    for (const [credentialId, credential] of this.credentials) {
+      if (credential.key === key) this.credentials.delete(credentialId)
+    }
   }
 
   resolve(credentialId: CredentialId | undefined, operation: string): string | undefined {
     if (!credentialId) return undefined
-    const key = this.credentialKeys.get(credentialId)
-    if (!key) {
+    const credential = this.credentials.get(credentialId)
+    if (!credential) {
       throw new RuntimeError('PERMISSION_DENIED', '凭据引用不属于当前运行时', { operation })
     }
-    const storageKey = this.storageKey(key)
-    const value = this.session.getItem(storageKey) ?? this.local.getItem(storageKey)
-    if (value === null) {
-      throw new RuntimeError('NOT_FOUND', '所需凭据尚未配置', { operation })
-    }
-    return value
+    return credential.value
   }
 }
 
