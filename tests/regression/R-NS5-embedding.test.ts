@@ -63,7 +63,9 @@ describe('NS-5 · embedding 语义检索通道', () => {
     const fetchMock = vi.fn(async (_url: string, opts: any) => {
       calls++
       const input = JSON.parse(opts.body).input as string[]
-      return { ok: true, json: async () => ({ data: input.map((_t, i) => ({ index: i, embedding: [1, 2, 3] })) }) } as any
+      return new Response(JSON.stringify({
+        data: input.map((_t, i) => ({ index: i, embedding: [1, 2, 3] })),
+      }), { status: 200 })
     })
     vi.stubGlobal('fetch', fetchMock)
 

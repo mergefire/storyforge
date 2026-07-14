@@ -2,12 +2,18 @@
  * NS-5 · Embedding 适配器 — 语义检索通道的唯一出口。
  *
  * 走 OpenAI 兼容 /embeddings 端点（{model, input:[...]} → {data:[{embedding:[...]}]}）。
- * 批量嵌入（一次多段省往返）；带超时重试；消耗记到 'retrieval.embed' 分类。
+ * 批量嵌入（一次多段省往返）；带 60 秒超时；消耗记到 'retrieval.embed' 分类。
  * 失败抛错由调用方决定降级——绝不污染主流程。
  */
 import type { EmbeddingConfig } from '../../types'
 import { recordUsage } from '../usage-log'
 import { estimateTokens } from '../context-budget'
+import {
+  bindAiCredential,
+  executeAiRequest,
+  isSuccessfulAiResponse,
+  readAiResponseText,
+} from '../runtime-transport'
 
 /** 当前向量所属模型标识（换 provider/model 即视为失效，绝不跨模型混算余弦）。 */
 export function embeddingModelTag(cfg: EmbeddingConfig): string {
@@ -16,7 +22,13 @@ export function embeddingModelTag(cfg: EmbeddingConfig): string {
 
 /** 配置是否可用于真正发起嵌入调用。 */
 export function isEmbeddingReady(cfg: EmbeddingConfig | null | undefined): cfg is EmbeddingConfig {
-  return !!(cfg && cfg.enabled && cfg.baseUrl && cfg.model && (cfg.apiKey || cfg.provider === 'ollama'))
+  return !!(
+    cfg
+    && cfg.enabled
+    && cfg.baseUrl
+    && cfg.model
+    && (cfg.apiKey || cfg.provider === 'ollama' || cfg.provider === 'custom')
+  )
 }
 
 const EMBED_TIMEOUT_MS = 60_000
@@ -32,26 +44,30 @@ export async function embedTexts(
   signal?: AbortSignal,
 ): Promise<number[][]> {
   if (!texts.length) return []
-  const baseUrl = cfg.baseUrl.replace(/\/+$/, '')
   const controller = new AbortController()
-  const onAbort = () => controller.abort()
-  if (signal) signal.addEventListener('abort', onAbort, { once: true })
+  const onAbort = () => controller.abort(signal?.reason)
+  if (signal?.aborted) controller.abort(signal.reason)
+  else if (signal) signal.addEventListener('abort', onAbort, { once: true })
   const timer = setTimeout(() => controller.abort(), EMBED_TIMEOUT_MS)
   try {
-    const res = await fetch(`${baseUrl}/embeddings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(cfg.apiKey ? { Authorization: `Bearer ${cfg.apiKey}` } : {}),
-      },
-      body: JSON.stringify({ model: cfg.model, input: texts }),
+    const credentialId = await bindAiCredential({
+      key: 'storyforge.ai.embedding',
+      apiKey: cfg.apiKey,
+    })
+    const res = await executeAiRequest({
+      provider: cfg.provider,
+      profileId: 'embedding',
+      operation: 'embeddings',
+      configuredBaseUrl: cfg.baseUrl,
+      credentialId,
+      body: { model: cfg.model, input: texts },
       signal: controller.signal,
     })
-    if (!res.ok) {
-      const body = await res.text().catch(() => '')
-      throw new Error(`embedding HTTP ${res.status}: ${body.slice(0, 200)}`)
+    const bodyText = await readAiResponseText(res.body)
+    if (!isSuccessfulAiResponse(res)) {
+      throw new Error(`embedding HTTP ${res.status}: ${bodyText.slice(0, 200)}`)
     }
-    const json = await res.json() as { data?: Array<{ embedding?: number[]; index?: number }> }
+    const json = JSON.parse(bodyText) as { data?: Array<{ embedding?: number[]; index?: number }> }
     const data = json.data
     if (!Array.isArray(data) || data.length !== texts.length) {
       throw new Error(`embedding 返回条数不符：期望 ${texts.length}，实得 ${data?.length ?? 0}`)
