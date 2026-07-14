@@ -1,4 +1,5 @@
 import { buildOpenAIEndpoint } from '../../lib/ai/openai-endpoint'
+import { sourceDocumentPolicy } from '../../lib/source-document-policy'
 import {
   clearFolderHandle,
   loadFolderHandle,
@@ -31,6 +32,14 @@ import type {
   SecretDescriptor,
   SecretKey,
 } from '../contract'
+import {
+  aiCredentialScope,
+  assertSecretDescriptor,
+  cloneSecretDescriptor,
+  GIST_CREDENTIAL_SCOPE,
+  isSecretDescriptor,
+  sameCredentialScope,
+} from '../credential-scope'
 import { normalizeRuntimeError, RuntimeError, throwIfAborted } from '../errors'
 import { shouldRegisterStoryForgeServiceWorker } from './service-worker-policy'
 
@@ -40,6 +49,7 @@ const BINDING_PREFIX = 'runtime-binding:'
 const MAX_DIAGNOSTIC_EVENTS = 200
 const WEB_SERVICE_WORKER_SCRIPT = '/storyforge/sw.js'
 const WEB_SERVICE_WORKER_SCOPE = '/storyforge/'
+const FILE_PICKER_FOCUS_CANCEL_DELAY_MS = 300
 
 interface StorageLike {
   getItem(key: string): string | null
@@ -176,7 +186,7 @@ function optionalServiceWorker(): WebServiceWorkerContainer | undefined {
 
 class WebSecretVault {
   readonly publicStore: RuntimeAdapter['secrets']
-  private readonly credentials = new Map<CredentialId, { key: SecretKey; value: string }>()
+  private readonly credentials = new Map<CredentialId, { descriptor: SecretDescriptor; value: string }>()
   private readonly currentCredentials = new Map<SecretKey, CredentialId>()
   private credentialSequence = 0
 
@@ -196,34 +206,50 @@ class WebSecretVault {
     return `${SECRET_PREFIX}${key}`
   }
 
-  private credentialId(key: SecretKey, value: string): CredentialId {
-    const currentId = this.currentCredentials.get(key)
-    if (currentId && this.credentials.get(currentId)?.value === value) return currentId
+  private credentialId(descriptor: SecretDescriptor, value: string): CredentialId {
+    const currentId = this.currentCredentials.get(descriptor.key)
+    const current = currentId ? this.credentials.get(currentId) : undefined
+    if (current && current.value === value && sameCredentialScope(current.descriptor.scope, descriptor.scope)) {
+      return currentId!
+    }
 
     this.credentialSequence += 1
-    const id = `web-vault:${this.credentialSequence}:${key}` as CredentialId
-    this.credentials.set(id, { key, value })
-    this.currentCredentials.set(key, id)
+    const id = `web-vault:${this.credentialSequence}:${descriptor.key}` as CredentialId
+    this.credentials.set(id, { descriptor, value })
+    this.currentCredentials.set(descriptor.key, id)
     return id
   }
 
   private async put(descriptor: SecretDescriptor, value: string): Promise<CredentialId> {
-    const target = descriptor.persistence === 'device' ? this.local : this.session
-    const other = descriptor.persistence === 'device' ? this.session : this.local
-    target.setItem(this.storageKey(descriptor.key), value)
-    other.removeItem(this.storageKey(descriptor.key))
-    return this.credentialId(descriptor.key, value)
+    assertSecretDescriptor(descriptor, 'secrets.put')
+    const stableDescriptor = cloneSecretDescriptor(descriptor)
+    const target = stableDescriptor.persistence === 'device' ? this.local : this.session
+    const other = stableDescriptor.persistence === 'device' ? this.session : this.local
+    target.setItem(this.storageKey(stableDescriptor.key), JSON.stringify({ descriptor: stableDescriptor, value }))
+    other.removeItem(this.storageKey(stableDescriptor.key))
+    return this.credentialId(stableDescriptor, value)
   }
 
   private async has(key: SecretKey): Promise<boolean> {
-    const storageKey = this.storageKey(key)
-    return this.session.getItem(storageKey) !== null || this.local.getItem(storageKey) !== null
+    return this.readStoredSecret(key) !== null
   }
 
   private async reference(key: SecretKey): Promise<CredentialId | null> {
+    const stored = this.readStoredSecret(key)
+    return stored === null ? null : this.credentialId(stored.descriptor, stored.value)
+  }
+
+  private readStoredSecret(key: SecretKey): { descriptor: SecretDescriptor; value: string } | null {
     const storageKey = this.storageKey(key)
-    const value = this.session.getItem(storageKey) ?? this.local.getItem(storageKey)
-    return value === null ? null : this.credentialId(key, value)
+    const raw = this.session.getItem(storageKey) ?? this.local.getItem(storageKey)
+    if (raw === null) return null
+    try {
+      const parsed = JSON.parse(raw) as { descriptor?: unknown; value?: unknown }
+      if (typeof parsed.value !== 'string' || !isSecretDescriptor(parsed.descriptor, key)) return null
+      return { descriptor: parsed.descriptor, value: parsed.value }
+    } catch {
+      return null
+    }
   }
 
   private async delete(key: SecretKey): Promise<void> {
@@ -232,15 +258,19 @@ class WebSecretVault {
     this.local.removeItem(storageKey)
     this.currentCredentials.delete(key)
     for (const [credentialId, credential] of this.credentials) {
-      if (credential.key === key) this.credentials.delete(credentialId)
+      if (credential.descriptor.key === key) this.credentials.delete(credentialId)
     }
   }
 
-  resolve(credentialId: CredentialId | undefined, operation: string): string | undefined {
+  resolve(
+    credentialId: CredentialId | undefined,
+    operation: string,
+    expectedScope: Parameters<typeof sameCredentialScope>[1],
+  ): string | undefined {
     if (!credentialId) return undefined
     const credential = this.credentials.get(credentialId)
-    if (!credential) {
-      throw new RuntimeError('PERMISSION_DENIED', '凭据引用不属于当前运行时', { operation })
+    if (!credential || !sameCredentialScope(credential.descriptor.scope, expectedScope)) {
+      throw new RuntimeError('PERMISSION_DENIED', '凭据引用不属于当前运行时或请求作用域', { operation })
     }
     return credential.value
   }
@@ -352,6 +382,18 @@ function openFileExtensions(purpose: OpenFilePurpose): readonly string[] {
 async function readOpenedFile(file: File, request: OpenFileRequest): Promise<OpenedFile> {
   const operation = 'files.open'
   assertFilenameExtension(file.name, openFileExtensions(request.purpose), operation)
+  if (request.purpose === 'source-document') {
+    const policy = sourceDocumentPolicy(file.name)
+    if (policy && file.size > policy.limit) {
+      const limitMB = (policy.limit / 1024 / 1024).toFixed(1)
+      const actualMB = (file.size / 1024 / 1024).toFixed(2)
+      throw new RuntimeError(
+        'INVALID_INPUT',
+        `.${policy.ext} 文件最大 ${limitMB} MB，当前 ${actualMB} MB。请先压缩或只截取需要的部分。`,
+        { operation },
+      )
+    }
+  }
   throwIfAborted(request.signal, operation)
   const buffer = await file.arrayBuffer()
   throwIfAborted(request.signal, operation)
@@ -420,7 +462,7 @@ function openFileWithInput(request: OpenFileRequest): Promise<RuntimeOutcome<Ope
     const onFocus = () => {
       focusTimer = window.setTimeout(() => {
         if (!settled && !input.files?.length) onCancel()
-      }, 0)
+      }, FILE_PICKER_FOCUS_CANCEL_DELAY_MS)
     }
 
     if (request.signal?.aborted) {
@@ -500,32 +542,29 @@ function backupNameMatches(purpose: BackupReadRequest['purpose'], name: string):
 }
 
 async function writeAndCloseBackup(
-  writable: Pick<FileSystemWritableFileStream, 'write' | 'close'>,
+  writable: Pick<FileSystemWritableFileStream, 'write' | 'close' | 'abort'>,
   bytes: ArrayBuffer,
   signal: AbortSignal | undefined,
   operation: string,
 ): Promise<void> {
-  let hasPrimaryError = false
-  let primaryError: unknown
   try {
     throwIfAborted(signal, operation)
     await writable.write(bytes)
     throwIfAborted(signal, operation)
-  } catch (error) {
-    hasPrimaryError = true
-    primaryError = error
-  }
-
-  try {
+    // close() is the commit point for an atomic FSA writable. Once it starts,
+    // a late AbortSignal cannot reliably roll the commit back, so a successful
+    // close is reported as success rather than a false "cancelled after save".
     await writable.close()
-  } catch (closeError) {
-    if (!hasPrimaryError) {
-      throwIfAborted(signal, operation)
-      throw closeError
+  } catch (error) {
+    // write/validation/close failures must never be turned into a committed
+    // partial backup. Preserve the primary error if cleanup also fails.
+    try {
+      await writable.abort(error)
+    } catch {
+      // best effort rollback; the original failure remains authoritative
     }
+    throw error
   }
-  if (hasPrimaryError) throw primaryError
-  throwIfAborted(signal, operation)
 }
 
 async function* responseBody(
@@ -548,7 +587,7 @@ async function* responseBody(
       yield result.value
     }
   } catch (error) {
-    throw normalizeRuntimeError(error, operation)
+    throw normalizeRuntimeError(error, operation, { typeErrorIsNetwork: true })
   } finally {
     if (!completed) {
       try {
@@ -570,7 +609,19 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 async function jsonRecord(response: Response): Promise<Record<string, unknown>> {
-  return asRecord(await response.json())
+  // A few existing callers/tests supply a minimal Response-compatible object.
+  // Keep that compatibility while real fetch responses use text() so HTML and
+  // plain-text gateway errors retain a useful bounded message.
+  if (typeof response.text !== 'function') return asRecord(await response.json())
+  const text = await response.text()
+  if (!text) return {}
+  try {
+    return asRecord(JSON.parse(text))
+  } catch {
+    // Gateways and rate limiters commonly return HTML/plain text. Preserve a
+    // bounded message while callers retain the authoritative status/retry flag.
+    return { message: text.slice(0, 500) }
+  }
 }
 
 function remoteErrorMessage(payload: Record<string, unknown>, fallback: string): string {
@@ -660,6 +711,32 @@ function checkedAiBaseUrl(endpoint: AiEndpointDescriptor): string {
   return url.toString()
 }
 
+const DIAGNOSTIC_ERROR_CODES = new Set([
+  'ABORTED', 'CANCELLED', 'TIMEOUT', 'PERMISSION_DENIED', 'DISK_FULL',
+  'UNAVAILABLE', 'UNSUPPORTED', 'INVALID_INPUT', 'NOT_FOUND', 'BUSY',
+  'NETWORK', 'REMOTE_ERROR', 'INTEGRITY_ERROR', 'UNKNOWN',
+])
+const DIAGNOSTIC_FILE_PURPOSES = new Set([
+  ...Object.keys(WEB_OPEN_FILE_FORMATS),
+  ...Object.keys(WEB_SAVE_FILE_FORMATS),
+  'project-backup',
+  'full-migration-archive',
+])
+
+function assertDiagnosticEnum(
+  record: Record<string, unknown>,
+  key: string,
+  values: ReadonlySet<string>,
+  operation: string,
+  optional = false,
+): void {
+  const value = record[key]
+  if (optional && value === undefined) return
+  if (typeof value !== 'string' || !values.has(value)) {
+    throw new RuntimeError('INVALID_INPUT', `诊断事件 ${key} 枚举值无效`, { operation })
+  }
+}
+
 function assertDiagnosticEvent(event: DiagnosticEvent): void {
   const operation = 'diagnostics.record'
   const record = event as unknown as Record<string, unknown>
@@ -683,6 +760,35 @@ function assertDiagnosticEvent(event: DiagnosticEvent): void {
     if (value !== undefined && (!Number.isFinite(value) || (value as number) < 0)) {
       throw new RuntimeError('INVALID_INPUT', '诊断事件数值无效', { operation })
     }
+  }
+  assertDiagnosticEnum(record, 'errorCode', DIAGNOSTIC_ERROR_CODES, operation, true)
+  switch (event.kind) {
+    case 'runtime-capability':
+      assertDiagnosticEnum(record, 'capability', new Set([
+        'ai', 'gist', 'files', 'secrets', 'clipboard', 'external',
+        'durability', 'distribution', 'updates',
+      ]), operation)
+      assertDiagnosticEnum(record, 'outcome', new Set(['started', 'completed', 'failed']), operation)
+      break
+    case 'network-attempt':
+      assertDiagnosticEnum(record, 'service', new Set(['ai', 'github-gist']), operation)
+      assertDiagnosticEnum(record, 'operation', new Set([
+        'chat-completions', 'embeddings', 'validate', 'write', 'list', 'read', 'revisions',
+      ]), operation)
+      assertDiagnosticEnum(record, 'outcome', new Set(['completed', 'failed', 'aborted']), operation)
+      break
+    case 'file-operation':
+      assertDiagnosticEnum(record, 'operation', new Set(['save', 'open', 'bind', 'write-backup', 'read-backups']), operation)
+      assertDiagnosticEnum(record, 'purpose', DIAGNOSTIC_FILE_PURPOSES, operation)
+      assertDiagnosticEnum(record, 'outcome', new Set(['completed', 'cancelled', 'failed']), operation)
+      break
+    case 'migration-phase':
+      assertDiagnosticEnum(record, 'phase', new Set(['preflight', 'export', 'import', 'verify', 'activate', 'rollback']), operation)
+      assertDiagnosticEnum(record, 'outcome', new Set(['started', 'completed', 'failed']), operation)
+      break
+    case 'update-state':
+      assertDiagnosticEnum(record, 'state', new Set(['available', 'downloading', 'ready', 'installing', 'completed', 'failed']), operation)
+      break
   }
   if (event.kind === 'update-state' && event.version !== undefined && !/^[a-zA-Z0-9.+-]{1,64}$/.test(event.version)) {
     throw new RuntimeError('INVALID_INPUT', '更新版本格式无效', { operation })
@@ -733,7 +839,11 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
           baseUrl,
           request.endpoint.operation === 'chat-completions' ? 'chat/completions' : 'embeddings',
         )
-        const credential = vault.resolve(request.credentialId, operation)
+        const credential = vault.resolve(
+          request.credentialId,
+          operation,
+          aiCredentialScope(request.endpoint),
+        )
         const response = await fetchImpl(endpoint, {
           method: 'POST',
           redirect: 'error',
@@ -750,7 +860,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
           body: responseBody(response, request.signal, operation),
         }
       } catch (error) {
-        throw normalizeRuntimeError(error, operation)
+        throw normalizeRuntimeError(error, operation, { typeErrorIsNetwork: true })
       }
     },
   }
@@ -760,22 +870,28 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       const operation = 'gist.validateCredential'
       throwIfAborted(signal, operation)
       try {
-        const token = vault.resolve(credentialId, operation) ?? ''
+        const token = vault.resolve(credentialId, operation, GIST_CREDENTIAL_SCOPE) ?? ''
         const response = await fetchImpl('https://api.github.com/user', {
           headers: githubHeaders(token),
           redirect: 'error',
           signal,
         })
-        if (!response.ok) {
-          throw new RuntimeError('PERMISSION_DENIED', 'GitHub 凭据无效或权限不足', { operation })
-        }
         const payload = await jsonRecord(response)
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            throw new RuntimeError('PERMISSION_DENIED', 'GitHub 凭据无效或权限不足', { operation })
+          }
+          throw new RuntimeError('REMOTE_ERROR', remoteErrorMessage(payload, `GitHub API 错误 ${response.status}`), {
+            operation,
+            retryable: response.status === 429 || response.status >= 500,
+          })
+        }
         if (typeof payload.login !== 'string') {
           throw new RuntimeError('REMOTE_ERROR', 'GitHub 响应缺少登录名', { operation })
         }
         return { login: payload.login }
       } catch (error) {
-        throw normalizeRuntimeError(error, operation)
+        throw normalizeRuntimeError(error, operation, { typeErrorIsNetwork: true })
       }
     },
 
@@ -785,7 +901,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       assertSafeFilename(request.filename, operation)
       if (request.gistId) assertGistId(request.gistId, 'Gist ID')
       try {
-        const token = vault.resolve(request.credentialId, operation) ?? ''
+        const token = vault.resolve(request.credentialId, operation, GIST_CREDENTIAL_SCOPE) ?? ''
         const response = await fetchImpl(
           request.gistId ? `${GIST_API}/${request.gistId}` : GIST_API,
           {
@@ -812,7 +928,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
         }
         return { gistId: payload.id, url: payload.html_url }
       } catch (error) {
-        throw normalizeRuntimeError(error, operation)
+        throw normalizeRuntimeError(error, operation, { typeErrorIsNetwork: true })
       }
     },
 
@@ -820,14 +936,18 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       const operation = 'gist.listBackups'
       throwIfAborted(signal, operation)
       try {
-        const token = vault.resolve(credentialId, operation) ?? ''
+        const token = vault.resolve(credentialId, operation, GIST_CREDENTIAL_SCOPE) ?? ''
         const response = await fetchImpl(`${GIST_API}?per_page=100`, {
           headers: githubHeaders(token),
           redirect: 'error',
           signal,
         })
         if (!response.ok) {
-          throw new RuntimeError('REMOTE_ERROR', `GitHub API 错误 ${response.status}`, { operation })
+          const payload = await jsonRecord(response)
+          throw new RuntimeError('REMOTE_ERROR', remoteErrorMessage(payload, `GitHub API 错误 ${response.status}`), {
+            operation,
+            retryable: response.status === 429 || response.status >= 500,
+          })
         }
         const payload = await response.json()
         if (!Array.isArray(payload)) {
@@ -852,7 +972,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
         }
         return backups
       } catch (error) {
-        throw normalizeRuntimeError(error, operation)
+        throw normalizeRuntimeError(error, operation, { typeErrorIsNetwork: true })
       }
     },
 
@@ -862,7 +982,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       assertGistId(gistId, 'Gist ID')
       if (revision) assertGistId(revision, 'revision')
       try {
-        const token = vault.resolve(credentialId, operation) ?? ''
+        const token = vault.resolve(credentialId, operation, GIST_CREDENTIAL_SCOPE) ?? ''
         const url = revision ? `${GIST_API}/${gistId}/${revision}` : `${GIST_API}/${gistId}`
         const response = await fetchImpl(url, {
           headers: githubHeaders(token),
@@ -873,6 +993,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
         if (!response.ok) {
           throw new RuntimeError('REMOTE_ERROR', remoteErrorMessage(payload, `GitHub API 错误 ${response.status}`), {
             operation,
+            retryable: response.status === 429 || response.status >= 500,
           })
         }
         const file = findBackupFile(payload.files)
@@ -886,13 +1007,16 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
             signal,
           })
           if (!rawResponse.ok) {
-            throw new RuntimeError('REMOTE_ERROR', `GitHub raw 文件错误 ${rawResponse.status}`, { operation })
+            throw new RuntimeError('REMOTE_ERROR', `GitHub raw 文件错误 ${rawResponse.status}`, {
+              operation,
+              retryable: rawResponse.status === 429 || rawResponse.status >= 500,
+            })
           }
           content = await rawResponse.text()
         }
         return { filename: file.filename, content }
       } catch (error) {
-        throw normalizeRuntimeError(error, operation)
+        throw normalizeRuntimeError(error, operation, { typeErrorIsNetwork: true })
       }
     },
 
@@ -901,7 +1025,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       throwIfAborted(signal, operation)
       assertGistId(gistId, 'Gist ID')
       try {
-        const token = vault.resolve(credentialId, operation) ?? ''
+        const token = vault.resolve(credentialId, operation, GIST_CREDENTIAL_SCOPE) ?? ''
         const response = await fetchImpl(`${GIST_API}/${gistId}`, {
           headers: githubHeaders(token),
           redirect: 'error',
@@ -911,6 +1035,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
         if (!response.ok) {
           throw new RuntimeError('REMOTE_ERROR', remoteErrorMessage(payload, `GitHub API 错误 ${response.status}`), {
             operation,
+            retryable: response.status === 429 || response.status >= 500,
           })
         }
         if (!Array.isArray(payload.history)) return []
@@ -926,7 +1051,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
           }]
         })
       } catch (error) {
-        throw normalizeRuntimeError(error, operation)
+        throw normalizeRuntimeError(error, operation, { typeErrorIsNetwork: true })
       }
     },
   }
@@ -936,8 +1061,42 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
     return `${BINDING_PREFIX}${bindingId}`
   }
 
+  function legacyBindingKey(bindingId: string): string | null {
+    if (bindingId === 'home-project-restore') return 'last'
+    const project = /^project-backup-(\d+)$/.exec(bindingId)
+    return project ? `proj-${project[1]}` : null
+  }
+
+  async function loadBinding(bindingId: string): Promise<FileSystemDirectoryHandle | null> {
+    const currentKey = bindingKey(bindingId)
+    const current = await bindingStore.load(currentKey)
+    if (current) return current
+
+    const legacyKey = legacyBindingKey(bindingId)
+    if (!legacyKey) return null
+    const legacy = await bindingStore.load(legacyKey)
+    if (!legacy) return null
+    // Preserve the legacy source for rollback while best-effort seeding the new
+    // opaque binding. A migration write failure must not disable old backups.
+    try {
+      await bindingStore.save(currentKey, legacy)
+    } catch (error) {
+      console.warn('[runtime] 旧目录绑定迁移失败，将继续使用旧绑定:', error)
+    }
+    return legacy
+  }
+
+  async function saveBinding(bindingId: string, handle: FileSystemDirectoryHandle): Promise<void> {
+    await bindingStore.save(bindingKey(bindingId), handle)
+    const legacyKey = legacyBindingKey(bindingId)
+    if (legacyKey) await bindingStore.save(legacyKey, handle)
+    // The legacy home restore flow always followed the most recently selected
+    // project folder. Keep it warm during the compatibility window.
+    if (/^project-backup-\d+$/.test(bindingId)) await bindingStore.save('last', handle)
+  }
+
   async function requireBinding(bindingId: string, operation: string): Promise<FileSystemDirectoryHandle> {
-    const handle = await bindingStore.load(bindingKey(bindingId))
+    const handle = await loadBinding(bindingId)
     if (!handle) throw new RuntimeError('NOT_FOUND', '备份目录尚未绑定', { operation })
     return handle
   }
@@ -974,7 +1133,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       throwIfAborted(undefined, operation)
       try {
         const handle = await pickDirectory()
-        await bindingStore.save(bindingKey(bindingId), handle)
+        await saveBinding(bindingId, handle)
         return {
           status: 'completed',
           value: {
@@ -990,7 +1149,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
     },
 
     async inspectBackupBinding(bindingId) {
-      const handle = await bindingStore.load(bindingKey(bindingId))
+      const handle = await loadBinding(bindingId)
       if (!handle) return { bindingId, label: '', permission: 'missing' }
       return { bindingId, label: handle.name, permission: await permissionState(handle, true) }
     },
@@ -1045,7 +1204,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       }
     },
 
-    async readBackups(request: BackupReadRequest): Promise<BackupFile[]> {
+    async readBackups(request: BackupReadRequest): Promise<AsyncIterable<BackupFile>> {
       const operation = 'files.readBackups'
       throwIfAborted(request.signal, operation)
       try {
@@ -1059,17 +1218,27 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
         const directory = handle as unknown as {
           entries(): AsyncIterableIterator<[string, FileSystemFileHandle]>
         }
-        const result: BackupFile[] = []
-        for await (const [name, entry] of directory.entries()) {
-          throwIfAborted(request.signal, operation)
-          if (entry.kind !== 'file' || !backupNameMatches(request.purpose, name)) continue
-          const file = await entry.getFile()
-          throwIfAborted(request.signal, operation)
-          const buffer = await file.arrayBuffer()
-          throwIfAborted(request.signal, operation)
-          result.push({ name, bytes: new Uint8Array(buffer) })
-        }
-        return result
+        return (async function* (): AsyncIterable<BackupFile> {
+          try {
+            for await (const [name, entry] of directory.entries()) {
+              throwIfAborted(request.signal, operation)
+              if (entry.kind !== 'file' || !backupNameMatches(request.purpose, name)) continue
+              try {
+                const file = await entry.getFile()
+                throwIfAborted(request.signal, operation)
+                const buffer = await file.arrayBuffer()
+                throwIfAborted(request.signal, operation)
+                yield { name, bytes: new Uint8Array(buffer) }
+              } catch (_error) {
+                // Preserve the legacy restore behavior: an unreadable/corrupt
+                // candidate is skipped, while an explicit caller abort stops all work.
+                throwIfAborted(request.signal, operation)
+              }
+            }
+          } catch (error) {
+            throw normalizeRuntimeError(error, operation)
+          }
+        })()
       } catch (error) {
         throw normalizeRuntimeError(error, operation)
       }
@@ -1078,6 +1247,8 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
     async clearBackupBinding(bindingId) {
       try {
         await bindingStore.delete(bindingKey(bindingId))
+        const legacyKey = legacyBindingKey(bindingId)
+        if (legacyKey) await bindingStore.delete(legacyKey)
       } catch (error) {
         throw normalizeRuntimeError(error, 'files.clearBackupBinding')
       }
@@ -1116,11 +1287,10 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
         if (typeof window === 'undefined') {
           throw new RuntimeError('UNSUPPORTED', '当前环境不能打开外部链接', { operation: 'external.open' })
         }
-        const opened = window.open(url, '_blank', 'noopener,noreferrer')
-        if (!opened) {
-          throw new RuntimeError('PERMISSION_DENIED', '外部链接被浏览器拦截', { operation: 'external.open' })
-        }
-        opened.opener = null
+        // With noopener, compliant browsers may intentionally return null even
+        // when the new tab opened. The return value therefore cannot distinguish
+        // success from popup blocking without weakening reverse-tabnabbing safety.
+        window.open(url, '_blank', 'noopener,noreferrer')
       } catch (error) {
         throw normalizeRuntimeError(error, 'external.open')
       }

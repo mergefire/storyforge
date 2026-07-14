@@ -41,6 +41,8 @@ own StoryForge prompts, adoption rules, project schemas, or table lifecycles.
 - `SecretStore.put` is the only plaintext input and returns an opaque
   `CredentialId`; `has/reference/delete` never reveal a value. AI/Gist receive
   only that ID, and a native adapter must never return plaintext to the renderer.
+  Each ID is bound to its exact capability, provider profile, operation, and
+  configured origin; cross-service/profile/origin reuse is rejected.
 - Clipboard and external links use closed purpose/destination unions.
   Diagnostics are a stable discriminated union with per-event fields, not a
   generic code/metadata bag.
@@ -49,33 +51,43 @@ own StoryForge prompts, adoption rules, project schemas, or table lifecycles.
 
 ## D0.3 takeover state
 
-Status: **IN PROGRESS**. The contract, Web/Fake implementations, denial tests,
-and first safe caller migrations are complete. D0.3 is not recorded as PASS
-while the explicitly listed historical calls below remain outside the boundary.
+Status: **PASS — INDEPENDENT REVIEW COMPLETE**. The source-level D0.3
+completion criterion is met: every inventoried browser-only capability has one
+owner, and production business code has no direct fetch, File System Access,
+clipboard, storage-persistence, Service Worker, external-window, browser file
+input/download-anchor, or Tauri call. `scripts/check-architecture.mjs` now makes
+that boundary a failing build rule. Independent review approved the stable tree
+with no P0/P1 or D0.3-introduced P2 blocker. This status is not a claim that the
+native Tauri/Rust implementation or Windows client exists yet.
 
-Already routed through this boundary:
+Routed through this boundary:
 
+- AI streaming/non-streaming chat, connection test, and embeddings while
+  preserving shared SSE parsing, retries, timeouts, usage accounting, and abort;
 - GitHub Gist validate/create/update/list/read/history transport;
-- project JSON, Markdown, TXT, and context-snapshot file output;
+- all current file opens and outputs, including project/context exports,
+  pre-destructive backup, fact/state/prompt/inspiration exports, map PNG bytes,
+  source/reference/prompt imports, and ImportDoc;
+- opaque folder binding, automatic backup, backup discovery, and restore;
 - the two production clipboard writes;
-- Web wrappers and Fake implementations for all contract capabilities;
-- architecture guard preventing Tauri imports outside `runtime/tauri`.
-
-Historical browser calls that remain reachable are deliberately enumerated
-below. Their contract exists now, but replacing each UI caller is assigned to
-the implementation task that can run both Web and real Windows smoke tests:
-
-| Remaining call group | Current files | Takeover/checker activation |
-| --- | --- | --- |
-| AI fetch/stream/test/embedding | `lib/ai/client.ts`, `lib/ai/adapters/embedding-adapter.ts`, `stores/ai-config.ts` | D1.4 proves the byte-stream IPC; D3.1 switches callers and then bans direct AI `fetch` |
-| Folder binding/automatic backup/restore | `lib/storage/folder-backup.ts`, `lib/storage/folder-handle-store.ts`, `components/data/DataManagementPanel.tsx`, `hooks/useFolderAutoBackup.ts`, `pages/HomePage.tsx` | D3.3 switches from browser handles to opaque `bindingId`; then bans FSA outside `runtime/web` |
-| Other Blob/anchor exports | fact memory, state cards, map image, inspiration, prompt template/workflow manager, pre-operation safety backup | Each caller moves to its frozen `SaveFilePurpose` during D1.4/D3.3; then bans `createObjectURL` outside `runtime/web` |
-| External anchors | repository link and GitHub Gist-token link | D3.4 routes both through the closed destination union; then bans renderer `_blank` navigation |
-| Plaintext AI/Gist secrets in Web storage | `stores/ai-config.ts`, `stores/gist.ts` | D2 migrates settings; D3.2 moves Windows secrets to Credential Manager and verifies no plaintext-return command |
+- GitHub token/repository external destinations, storage durability, Web update
+  lifecycle, and distribution metadata;
+- Web wrappers and Fake implementations for every contract capability;
+- architecture guards confining Web-only capabilities to `runtime/web` and
+  future Tauri imports to `runtime/tauri`, including alternate network APIs and
+  scattered runtime-target branches;
+- source-document size rejection before allocation, delayed fallback-picker
+  cancellation, atomic backup rollback, and lazy per-file backup restore that
+  skips an unreadable candidate without retaining every raw backup in memory.
 
 Non-secret UI preferences and business drafts in `localStorage` are not native
 capabilities by themselves. They remain part of WebView profile migration and
 must not be swept into `SecretStore`.
+
+Formal Tauri commands/channels, Windows Credential Manager, native filesystem
+implementation, updater/signing, packaged-client smoke, and WebView profile
+migration belong to D1–D4. The Tauri target continues to fail closed until an
+adapter is explicitly registered.
 
 ## Testing
 

@@ -20,10 +20,26 @@ export type GistBackupMeta = RuntimeGistBackupMeta
 export type GistRevisionMeta = RuntimeGistRevisionMeta
 
 const GIST_CREDENTIAL_KEY = 'storyforge.github.gist' as const
+const GIST_FILENAME_PREFIX = 'storyforge-'
+const GIST_FILENAME_SUFFIX = '.json'
+const GIST_FILENAME_MAX_LENGTH = 180
+
+export function gistBackupFilename(projectName: string): string {
+  const sanitized = projectName
+    .replace(/[/\\?%*:|"<>\s]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'project'
+  const maxStemLength = GIST_FILENAME_MAX_LENGTH
+    - GIST_FILENAME_PREFIX.length
+    - GIST_FILENAME_SUFFIX.length
+  let stem = sanitized.slice(0, maxStemLength)
+  // Avoid ending on half of a UTF-16 surrogate pair when a long emoji name is truncated.
+  if (/[\uD800-\uDBFF]$/.test(stem)) stem = stem.slice(0, -1)
+  return `${GIST_FILENAME_PREFIX}${stem}${GIST_FILENAME_SUFFIX}`
+}
 
 function sessionCredential(pat: string): Promise<CredentialId> {
   return getRuntime().secrets.put(
-    { key: GIST_CREDENTIAL_KEY, persistence: 'session' },
+    { key: GIST_CREDENTIAL_KEY, persistence: 'session', scope: { kind: 'github-gist' } },
     pat,
   )
 }
@@ -41,8 +57,7 @@ export async function exportToGist(
   data: ProjectExportData,
   config: GistConfig,
 ): Promise<GistResult> {
-  const safeProjectName = data.project.name.replace(/[/\\?%*:|"<>\s]+/g, '-').replace(/^-+|-+$/g, '') || 'project'
-  const filename = `storyforge-${safeProjectName}.json`
+  const filename = gistBackupFilename(data.project.name)
   const credentialId = await sessionCredential(config.pat)
   return getRuntime().gist.writeBackup({
     credentialId,

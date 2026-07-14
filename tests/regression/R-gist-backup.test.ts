@@ -7,10 +7,21 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { db } from '../../src/lib/db/schema'
 import { getRuntime } from '../../src/runtime'
+import { gistBackupFilename } from '../../src/lib/export/gist-export'
 import { useGistStore } from '../../src/stores/gist'
 
 const PAT = 'ghp_fake'
 const RUNTIME_GIST_SECRET_KEY = 'storyforge-runtime-secret:storyforge.github.gist'
+
+it('长项目名的 Gist 文件名保持在 runtime 限制内且不截断代理对', () => {
+  // Prefix/suffix leave 164 UTF-16 units. 163 ASCII units plus an emoji puts
+  // its high surrogate exactly at the truncation boundary.
+  const filename = gistBackupFilename(`${'a'.repeat(163)}😀`)
+  expect(filename.length).toBeLessThanOrEqual(180)
+  expect(filename).toMatch(/^storyforge-.*\.json$/)
+  expect(filename).not.toMatch(/[\uD800-\uDBFF]\.json$/)
+  expect(filename).toBe(`storyforge-${'a'.repeat(163)}.json`)
+})
 
 async function seedProject(): Promise<number> {
   const now = Date.now()
@@ -100,7 +111,14 @@ describe('R-GIST · PAT 存储策略', () => {
     expect(await useGistStore.getState().connect(PAT, true)).toBe(true)
     useGistStore.getState().setAutoBackup(true)
     useGistStore.setState({ busy: true, error: 'old error' })
-    expect(sessionStorage.getItem(RUNTIME_GIST_SECRET_KEY)).toBe(PAT)
+    expect(JSON.parse(sessionStorage.getItem(RUNTIME_GIST_SECRET_KEY) ?? '{}')).toEqual({
+      descriptor: {
+        key: 'storyforge.github.gist',
+        persistence: 'session',
+        scope: { kind: 'github-gist' },
+      },
+      value: PAT,
+    })
 
     await useGistStore.getState().disconnect()
 

@@ -261,6 +261,10 @@ export async function* streamChat(
     const credentialId = await bindAiCredential({
       key: 'storyforge.ai.primary',
       apiKey: config.apiKey,
+      provider: config.provider,
+      profileId: 'primary',
+      operation: 'chat-completions',
+      configuredBaseUrl: req.configuredBaseUrl,
     })
 
     // 自动重试：遇到 429（频率限制）或 503（服务不可用）时，最多重试 2 次
@@ -437,6 +441,10 @@ export async function chat(
   const credentialId = await bindAiCredential({
     key: 'storyforge.ai.primary',
     apiKey: config.apiKey,
+    provider: config.provider,
+    profileId: 'primary',
+    operation: 'chat-completions',
+    configuredBaseUrl: req.configuredBaseUrl,
   })
   const response = await executeAiRequest({
     provider: config.provider,

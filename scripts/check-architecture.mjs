@@ -19,6 +19,10 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  findBrowserRuntimeViolations,
+  findRuntimeTargetBranchViolations,
+} from './runtime-boundary-rules.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -207,9 +211,25 @@ for (const dir of UI_DIRS) {
   }
 }
 
-// ── ⑧ Tauri API 只能进入唯一运行时边界 ──
-// D0.3 先启用可以零误报落地的边界守卫。浏览器 API 的历史调用点会按
-// src/runtime/README.md 的 staged inventory 逐批接管，清零后再启用对应硬禁令。
+// ── ⑧ 浏览器专属能力只能进入 Web 运行时边界 ──
+// D0.3 完成接管后，业务层不得重新引入网络、文件选择/下载、剪贴板、
+// 持久化、Service Worker 或任意新窗口导航。Tauri 对应实现走 runtime/tauri。
+for (const file of walk('src')) {
+  if (file.startsWith('src/runtime/web/')) continue
+  const src = read(file)
+  for (const match of findBrowserRuntimeViolations(src)) {
+    const line = src.slice(0, match.index).split('\n').length
+    violations.push(`[⑧Web运行时边界] ${file}:${line}: ${match.label} 只能由 src/runtime/web 实现；业务层必须走 RuntimeAdapter`)
+  }
+  if (file.startsWith('src/runtime/')) continue
+  for (const match of findRuntimeTargetBranchViolations(src)) {
+    const line = src.slice(0, match.index).split('\n').length
+    violations.push(`[⑧运行时选择边界] ${file}:${line}: ${match.label} 只能由 src/runtime 组合根实现；业务层不得按目标散落分支`)
+  }
+}
+
+// ── ⑨ Tauri API 只能进入唯一运行时边界 ──
+// Native imports stay isolated just like the Web-only capabilities guarded above.
 for (const file of walk('src')) {
   if (file.startsWith('src/runtime/tauri/')) continue
   const src = read(file)

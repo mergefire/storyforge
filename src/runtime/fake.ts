@@ -2,7 +2,9 @@ import type {
   AiTransportRequest,
   AvailableUpdate,
   BackupBinding,
+  BackupFile,
   ClipboardPurpose,
+  CredentialScope,
   CredentialId,
   DiagnosticEvent,
   ExternalDestination,
@@ -13,8 +15,16 @@ import type {
   RuntimeAdapter,
   RuntimeOutcome,
   SaveFileRequest,
+  SecretDescriptor,
   SecretKey,
 } from './contract'
+import {
+  aiCredentialScope,
+  assertSecretDescriptor,
+  cloneSecretDescriptor,
+  GIST_CREDENTIAL_SCOPE,
+  sameCredentialScope,
+} from './credential-scope'
 import { RuntimeError, type RuntimeErrorCode, throwIfAborted } from './errors'
 
 export type FakeRuntimeOperation =
@@ -103,8 +113,8 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
   readonly state: FakeRuntimeState
 
   private readonly faults = new Map<FakeRuntimeOperation, RuntimeErrorCode>()
-  private readonly secretValues = new Map<SecretKey, string>()
-  private readonly credentials = new Map<CredentialId, { key: SecretKey; value: string }>()
+  private readonly secretValues = new Map<SecretKey, { descriptor: SecretDescriptor; value: string }>()
+  private readonly credentials = new Map<CredentialId, { descriptor: SecretDescriptor; value: string }>()
   private readonly currentCredentials = new Map<SecretKey, CredentialId>()
   private credentialSequence = 0
   private readonly now: () => number
@@ -157,25 +167,37 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
     if (code) throw runtimeFailure(code, operation)
   }
 
-  private credentialId(key: SecretKey, value: string): CredentialId {
-    const currentId = this.currentCredentials.get(key)
-    if (currentId && this.credentials.get(currentId)?.value === value) return currentId
+  private credentialId(descriptor: SecretDescriptor, value: string): CredentialId {
+    const currentId = this.currentCredentials.get(descriptor.key)
+    const current = currentId ? this.credentials.get(currentId) : undefined
+    if (current && current.value === value && sameCredentialScope(current.descriptor.scope, descriptor.scope)) {
+      return currentId!
+    }
 
     this.credentialSequence += 1
-    const id = `fake-vault:${this.credentialSequence}:${key}` as CredentialId
-    this.credentials.set(id, { key, value })
-    this.currentCredentials.set(key, id)
+    const id = `fake-vault:${this.credentialSequence}:${descriptor.key}` as CredentialId
+    this.credentials.set(id, { descriptor, value })
+    this.currentCredentials.set(descriptor.key, id)
     return id
   }
 
-  private assertCredential(credentialId: CredentialId, operation: FakeRuntimeOperation): void {
-    if (!this.credentials.has(credentialId)) throw runtimeFailure('PERMISSION_DENIED', operation)
+  private assertCredential(
+    credentialId: CredentialId,
+    operation: FakeRuntimeOperation,
+    expectedScope: CredentialScope,
+  ): void {
+    const credential = this.credentials.get(credentialId)
+    if (!credential || !sameCredentialScope(credential.descriptor.scope, expectedScope)) {
+      throw runtimeFailure('PERMISSION_DENIED', operation)
+    }
   }
 
   readonly ai: RuntimeAdapter['ai'] = {
     execute: async request => {
       this.assertNoFailure('ai.execute', request.signal)
-      if (request.credentialId) this.assertCredential(request.credentialId, 'ai.execute')
+      if (request.credentialId) {
+        this.assertCredential(request.credentialId, 'ai.execute', aiCredentialScope(request.endpoint))
+      }
       this.state.aiRequests.push(request)
       const chunks = this.aiChunks
       const signal = request.signal
@@ -195,13 +217,13 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
   readonly gist: RuntimeAdapter['gist'] = {
     validateCredential: async (credentialId, signal) => {
       this.assertNoFailure('gist.validateCredential', signal)
-      this.assertCredential(credentialId, 'gist.validateCredential')
+      this.assertCredential(credentialId, 'gist.validateCredential', GIST_CREDENTIAL_SCOPE)
       return { login: 'fake-user' }
     },
 
     writeBackup: async request => {
       this.assertNoFailure('gist.writeBackup', request.signal)
-      this.assertCredential(request.credentialId, 'gist.writeBackup')
+      this.assertCredential(request.credentialId, 'gist.writeBackup', GIST_CREDENTIAL_SCOPE)
       const gistId = request.gistId ?? `f${this.state.gistBackups.size + 10000}`
       this.state.gistBackups.set(gistId, {
         filename: request.filename,
@@ -214,7 +236,7 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
 
     listBackups: async (credentialId, signal): Promise<GistBackupMeta[]> => {
       this.assertNoFailure('gist.listBackups', signal)
-      this.assertCredential(credentialId, 'gist.listBackups')
+      this.assertCredential(credentialId, 'gist.listBackups', GIST_CREDENTIAL_SCOPE)
       return [...this.state.gistBackups].map(([gistId, backup]) => ({
         gistId,
         filename: backup.filename,
@@ -225,7 +247,7 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
 
     readBackup: async (credentialId, gistId, _revision, signal) => {
       this.assertNoFailure('gist.readBackup', signal)
-      this.assertCredential(credentialId, 'gist.readBackup')
+      this.assertCredential(credentialId, 'gist.readBackup', GIST_CREDENTIAL_SCOPE)
       const backup = this.state.gistBackups.get(gistId)
       if (!backup) throw runtimeFailure('NOT_FOUND', 'gist.readBackup')
       return { filename: backup.filename, content: backup.content }
@@ -233,7 +255,7 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
 
     listRevisions: async (credentialId, gistId, signal) => {
       this.assertNoFailure('gist.listRevisions', signal)
-      this.assertCredential(credentialId, 'gist.listRevisions')
+      this.assertCredential(credentialId, 'gist.listRevisions', GIST_CREDENTIAL_SCOPE)
       return this.state.gistRevisions.get(gistId)?.map(item => ({ ...item })) ?? []
     },
   }
@@ -295,7 +317,14 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
       this.assertNoFailure('files.readBackups', request.signal)
       const files = this.state.bindingFiles.get(request.bindingId)
       if (!files) throw runtimeFailure('NOT_FOUND', 'files.readBackups')
-      return [...files].map(([name, bytes]) => ({ name, bytes: bytes.slice() }))
+      const entries = [...files]
+      const assertReadable = () => this.assertNoFailure('files.readBackups', request.signal)
+      return (async function* (): AsyncIterable<BackupFile> {
+        for (const [name, bytes] of entries) {
+          assertReadable()
+          yield { name, bytes: bytes.slice() }
+        }
+      })()
     },
 
     clearBackupBinding: async bindingId => {
@@ -308,9 +337,11 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
   readonly secrets: RuntimeAdapter['secrets'] = {
     put: async (descriptor, value) => {
       this.assertNoFailure('secrets.put')
-      this.secretValues.set(descriptor.key, value)
-      this.state.secretKeys.add(descriptor.key)
-      return this.credentialId(descriptor.key, value)
+      assertSecretDescriptor(descriptor, 'secrets.put')
+      const stableDescriptor = cloneSecretDescriptor(descriptor)
+      this.secretValues.set(stableDescriptor.key, { descriptor: stableDescriptor, value })
+      this.state.secretKeys.add(stableDescriptor.key)
+      return this.credentialId(stableDescriptor, value)
     },
     has: async key => {
       this.assertNoFailure('secrets.has')
@@ -318,8 +349,8 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
     },
     reference: async key => {
       this.assertNoFailure('secrets.has')
-      const value = this.secretValues.get(key)
-      return value === undefined ? null : this.credentialId(key, value)
+      const secret = this.secretValues.get(key)
+      return secret === undefined ? null : this.credentialId(secret.descriptor, secret.value)
     },
     delete: async key => {
       this.assertNoFailure('secrets.delete')
@@ -327,7 +358,7 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
       this.state.secretKeys.delete(key)
       this.currentCredentials.delete(key)
       for (const [credentialId, credential] of this.credentials) {
-        if (credential.key === key) this.credentials.delete(credentialId)
+        if (credential.descriptor.key === key) this.credentials.delete(credentialId)
       }
     },
   }

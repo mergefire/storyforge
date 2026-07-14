@@ -46,7 +46,15 @@ function errorName(error: unknown): string | undefined {
   return typeof error.name === 'string' ? error.name : undefined
 }
 
-export function normalizeRuntimeError(error: unknown, operation: string): RuntimeError {
+export interface NormalizeRuntimeErrorOptions {
+  typeErrorIsNetwork?: boolean
+}
+
+export function normalizeRuntimeError(
+  error: unknown,
+  operation: string,
+  options: NormalizeRuntimeErrorOptions = {},
+): RuntimeError {
   if (error instanceof RuntimeError) return error
 
   const name = errorName(error)
@@ -59,7 +67,7 @@ export function normalizeRuntimeError(error: unknown, operation: string): Runtim
   if (name === 'QuotaExceededError') {
     return new RuntimeError('DISK_FULL', '可用存储空间不足', { operation, cause: error })
   }
-  if (error instanceof TypeError) {
+  if (error instanceof TypeError && options.typeErrorIsNetwork) {
     return new RuntimeError('NETWORK', '运行时网络请求失败', {
       operation,
       retryable: true,

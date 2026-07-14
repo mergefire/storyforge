@@ -2,7 +2,7 @@ import { useState, useEffect, useSyncExternalStore } from 'react'
 import { Wifi, WifiOff, Eye, EyeOff, CheckCircle, Trash2, ScrollText } from 'lucide-react'
 import { useAIConfigStore, type TestResult } from '../../stores/ai-config'
 import EmbeddingConfigCard from './EmbeddingConfigCard'
-import type { AIProvider } from '../../lib/types'
+import type { AIConfig, AIProvider } from '../../lib/types'
 import { PROVIDER_MODELS } from '../../lib/types'
 import { getLogs, subscribeLogs, clearLogs, formatLog } from '../../lib/ai/logger'
 import { applyStoryForgeTheme, resolveStoryForgeTheme, THEME_OPTIONS, type StoryForgeTheme } from '../../lib/theme'
@@ -42,6 +42,18 @@ export default function AIConfigPanel() {
   const [currentTheme, setCurrentTheme] = useState<StoryForgeTheme>(() =>
     resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')),
   )
+
+  const reportSettingsError = (error: unknown) => {
+    void dialog.alert({
+      title: '凭据设置未保存',
+      message: error instanceof Error ? error.message : String(error),
+      tone: 'danger',
+    })
+  }
+  const runSettingsChange = (operation: Promise<unknown>) => {
+    void operation.catch(reportSettingsError)
+  }
+  const updateConfig = (partial: Partial<AIConfig>) => runSettingsChange(setConfig(partial))
 
   const handleSavePreset = () => {
     if (!presetName.trim()) return
@@ -87,7 +99,13 @@ export default function AIConfigPanel() {
       confirmText: '删除',
       tone: 'danger',
     })
-    if (ok) deletePreset(id)
+    if (ok) {
+      try {
+        await deletePreset(id)
+      } catch (error) {
+        reportSettingsError(error)
+      }
+    }
   }
 
   // 切换 provider 时清空测试结果
@@ -146,7 +164,7 @@ export default function AIConfigPanel() {
                       : 'bg-bg-base text-text-secondary border-border hover:border-accent/50'
                   }`}
                 >
-                  <button onClick={() => applyPreset(p.id)} title={`${p.config.provider} · ${p.config.model}`}>
+                  <button onClick={() => runSettingsChange(applyPreset(p.id))} title={`${p.config.provider} · ${p.config.model}`}>
                     {p.name}
                   </button>
                   {activePresetId === p.id && (
@@ -177,7 +195,7 @@ export default function AIConfigPanel() {
             <label className="block text-sm text-text-secondary mb-1.5">提供商</label>
             <select
               value={config.provider}
-              onChange={(e) => switchProvider(e.target.value as AIProvider)}
+              onChange={(e) => runSettingsChange(switchProvider(e.target.value as AIProvider))}
               className="w-full px-3 py-2 bg-bg-base border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent transition-colors"
             >
               {PROVIDER_OPTIONS.map((opt) => (
@@ -200,7 +218,7 @@ export default function AIConfigPanel() {
               <input
                 type={showKey ? 'text' : 'password'}
                 value={config.apiKey}
-                onChange={(e) => setConfig({ apiKey: e.target.value })}
+                onChange={(e) => updateConfig({ apiKey: e.target.value })}
                 placeholder={config.provider === 'ollama' ? '不需要 Key' : '输入 API Key...'}
                 className="w-full px-3 py-2 pr-10 bg-bg-base border border-border rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
               />
@@ -215,7 +233,7 @@ export default function AIConfigPanel() {
               <input
                 type="checkbox"
                 checked={rememberApiKey}
-                onChange={e => setRememberApiKey(e.target.checked)}
+                onChange={e => runSettingsChange(setRememberApiKey(e.target.checked))}
                 className="mt-0.5 accent-accent"
               />
               <span>
@@ -230,19 +248,19 @@ export default function AIConfigPanel() {
               <input
                 type="text"
                 value={config.baseUrl}
-                onChange={(e) => setConfig({ baseUrl: e.target.value })}
+                onChange={(e) => updateConfig({ baseUrl: e.target.value })}
                 className="w-full px-3 py-2 bg-bg-base border border-border rounded-lg text-text-primary text-sm focus:outline-none focus:border-accent transition-colors"
               />
               {['custom', 'ollama'].includes(config.provider) && (
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   <button
-                    onClick={() => setConfig({ provider: 'custom', baseUrl: 'http://localhost:1234/v1', apiKey: config.apiKey || 'lm-studio', model: 'qwen3-14b' })}
+                    onClick={() => updateConfig({ provider: 'custom', baseUrl: 'http://localhost:1234/v1', apiKey: '', model: 'qwen3-14b' })}
                     className="text-xs px-2 py-1 rounded bg-bg-elevated text-text-secondary border border-border hover:text-accent hover:border-accent/50 transition-colors"
                   >
                     LM Studio
                   </button>
                   <button
-                    onClick={() => setConfig({ provider: 'ollama', baseUrl: 'http://localhost:11434/v1', apiKey: config.apiKey || 'ollama', model: 'qwen2.5:7b' })}
+                    onClick={() => updateConfig({ provider: 'ollama', baseUrl: 'http://localhost:11434/v1', apiKey: '', model: 'qwen2.5:7b' })}
                     className="text-xs px-2 py-1 rounded bg-bg-elevated text-text-secondary border border-border hover:text-accent hover:border-accent/50 transition-colors"
                   >
                     Ollama
@@ -273,14 +291,14 @@ export default function AIConfigPanel() {
                   <div className="mt-1.5 flex gap-2">
                     {!isProxy ? (
                       <button
-                        onClick={() => setConfig({ baseUrl: pm.proxy })}
+                        onClick={() => updateConfig({ baseUrl: pm.proxy })}
                         className="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors"
                       >
                         🔄 切换到本地代理
                       </button>
                     ) : (
                       <button
-                        onClick={() => setConfig({ baseUrl: pm.direct })}
+                        onClick={() => updateConfig({ baseUrl: pm.direct })}
                         className="text-xs px-2 py-1 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
                       >
                         🔗 恢复直连
@@ -296,7 +314,7 @@ export default function AIConfigPanel() {
                 <>
                   <select
                     value={config.model}
-                    onChange={(e) => setConfig({ model: e.target.value })}
+                    onChange={(e) => updateConfig({ model: e.target.value })}
                     className="w-full px-3 py-2 bg-bg-base border border-border rounded-lg text-text-primary text-sm focus:outline-none focus:border-accent transition-colors"
                   >
                     {PROVIDER_MODELS[config.provider].map((m) => (
@@ -315,7 +333,7 @@ export default function AIConfigPanel() {
                   <input
                     type="text"
                     value={config.model}
-                    onChange={(e) => setConfig({ model: e.target.value })}
+                    onChange={(e) => updateConfig({ model: e.target.value })}
                     placeholder="或手动输入模型名（列表中没有的型号）"
                     className="mt-1.5 w-full px-3 py-1.5 bg-bg-base border border-border rounded-lg text-text-primary text-xs focus:outline-none focus:border-accent transition-colors"
                   />
@@ -324,7 +342,7 @@ export default function AIConfigPanel() {
                 <input
                   type="text"
                   value={config.model}
-                  onChange={(e) => setConfig({ model: e.target.value })}
+                  onChange={(e) => updateConfig({ model: e.target.value })}
                   className="w-full px-3 py-2 bg-bg-base border border-border rounded-lg text-text-primary text-sm focus:outline-none focus:border-accent transition-colors"
                 />
               )}
@@ -342,7 +360,7 @@ export default function AIConfigPanel() {
                 max={2}
                 step={0.1}
                 value={config.temperature}
-                onChange={(e) => setConfig({ temperature: Number(e.target.value) })}
+                onChange={(e) => updateConfig({ temperature: Number(e.target.value) })}
                 className="w-full accent-accent"
               />
             </div>
@@ -359,7 +377,7 @@ export default function AIConfigPanel() {
                   <input
                     type="checkbox"
                     checked={config.maxTokens === 0}
-                    onChange={(e) => setConfig({ maxTokens: e.target.checked ? 0 : 8192 })}
+                    onChange={(e) => updateConfig({ maxTokens: e.target.checked ? 0 : 8192 })}
                     className="accent-accent"
                   />
                   不限
@@ -371,7 +389,7 @@ export default function AIConfigPanel() {
                     max={65536}
                     step={1024}
                     value={config.maxTokens}
-                    onChange={(e) => setConfig({ maxTokens: Number(e.target.value) })}
+                    onChange={(e) => updateConfig({ maxTokens: Number(e.target.value) })}
                     className="w-full accent-accent"
                   />
                 )}
@@ -396,7 +414,7 @@ export default function AIConfigPanel() {
               type="number"
               min={0}
               value={config.contextWindow || ''}
-              onChange={(e) => setConfig({ contextWindow: Number(e.target.value) || undefined })}
+              onChange={(e) => updateConfig({ contextWindow: Number(e.target.value) || undefined })}
               placeholder="本地/自定义模型请按实际填写，如 131072；留空 = 用内置预设"
               className="w-full px-3 py-2 bg-bg-base border border-border rounded text-sm text-text-primary focus:outline-none focus:border-accent"
             />

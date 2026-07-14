@@ -52,7 +52,7 @@ export async function readStoryforgeBackups(bindingId: string): Promise<FolderBa
     purpose: 'project-backup',
   })
   const out: FolderBackupFile[] = []
-  for (const file of files) {
+  for await (const file of files) {
     try {
       const text = new TextDecoder().decode(file.bytes)
       out.push({ name: file.name, data: JSON.parse(text) as ProjectExportData })

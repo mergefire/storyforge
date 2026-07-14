@@ -12,6 +12,16 @@ async function freshStore() {
   return mod.useAIConfigStore
 }
 
+async function freshStoreWithFakeRuntime() {
+  vi.resetModules()
+  const runtimeApi = await import('../../src/runtime')
+  const { createFakeRuntime } = await import('../../src/runtime/fake')
+  const runtime = createFakeRuntime()
+  runtimeApi.setRuntimeAdapter(runtime)
+  const { useAIConfigStore } = await import('../../src/stores/ai-config')
+  return { runtime, useAIConfigStore }
+}
+
 afterEach(() => {
   localStorage.clear()
   sessionStorage.clear()
@@ -31,7 +41,7 @@ describe('R-AI-CONFIG · API Key 存储策略', () => {
 
   it('显式记住本机时才把 API Key 写入 localStorage', async () => {
     const useAIConfigStore = await freshStore()
-    useAIConfigStore.getState().setRememberApiKey(true)
+    await useAIConfigStore.getState().setRememberApiKey(true)
     useAIConfigStore.getState().setConfig({ apiKey: 'sk-local' })
 
     expect(useAIConfigStore.getState().rememberApiKey).toBe(true)
@@ -75,8 +85,88 @@ describe('R-AI-CONFIG · API Key 存储策略', () => {
     expect(preset.maxOutput).toBe(128_000)
 
     const useAIConfigStore = await freshStore()
-    useAIConfigStore.getState().switchProvider('longcat')
+    await useAIConfigStore.getState().switchProvider('longcat')
     expect(useAIConfigStore.getState().config.baseUrl).toBe('https://api.longcat.chat/openai/v1')
     expect(useAIConfigStore.getState().config.model).toBe('LongCat-2.0')
+  })
+
+  it('显式清空或取消记住会删除 vault secret 并使旧引用失效', async () => {
+    const { runtime, useAIConfigStore } = await freshStoreWithFakeRuntime()
+    await useAIConfigStore.getState().setConfig({ apiKey: 'sk-primary' })
+    const primaryDescriptor = {
+      key: 'storyforge.ai.primary' as const,
+      persistence: 'device' as const,
+      scope: {
+        kind: 'ai' as const,
+        provider: 'deepseek' as const,
+        profileId: 'primary',
+        operation: 'chat-completions' as const,
+        configuredBaseUrl: 'https://api.deepseek.com/v1',
+      },
+    }
+    const oldReference = await runtime.secrets.put(primaryDescriptor, 'sk-primary')
+
+    await useAIConfigStore.getState().setConfig({ apiKey: '' })
+    expect(await runtime.secrets.has(primaryDescriptor.key)).toBe(false)
+    await expect(runtime.ai.execute({
+      endpoint: primaryDescriptor.scope,
+      credentialId: oldReference,
+      body: {},
+    })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' })
+
+    await useAIConfigStore.getState().setRememberApiKey(true)
+    await runtime.secrets.put(primaryDescriptor, 'sk-primary')
+    await runtime.secrets.put({
+      key: 'storyforge.ai.embedding',
+      persistence: 'device',
+      scope: {
+        kind: 'ai',
+        provider: 'ollama',
+        profileId: 'embedding',
+        operation: 'embeddings',
+        configuredBaseUrl: 'http://localhost:11434/v1',
+      },
+    }, 'sk-embedding')
+    await useAIConfigStore.getState().setRememberApiKey(false)
+    expect(await runtime.secrets.has('storyforge.ai.primary')).toBe(false)
+    expect(await runtime.secrets.has('storyforge.ai.embedding')).toBe(false)
+  })
+
+  it('切换供应商或不同端点预设不会继承并重绑定旧供应商 key', async () => {
+    const { runtime, useAIConfigStore } = await freshStoreWithFakeRuntime()
+    await useAIConfigStore.getState().setConfig({ apiKey: 'sk-deepseek' })
+    await runtime.secrets.put({
+      key: 'storyforge.ai.primary',
+      persistence: 'session',
+      scope: {
+        kind: 'ai',
+        provider: 'deepseek',
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: 'https://api.deepseek.com/v1',
+      },
+    }, 'sk-deepseek')
+
+    await useAIConfigStore.getState().switchProvider('openai')
+    expect(useAIConfigStore.getState().config.apiKey).toBe('')
+    expect(await runtime.secrets.has('storyforge.ai.primary')).toBe(false)
+
+    useAIConfigStore.setState({
+      config: { ...useAIConfigStore.getState().config, provider: 'deepseek', apiKey: 'sk-deepseek' },
+      presets: [{
+        id: 'openai-preset',
+        name: 'OpenAI',
+        config: {
+          provider: 'openai',
+          apiKey: '',
+          model: 'gpt-4o',
+          baseUrl: 'https://api.openai.com/v1',
+          temperature: 0.7,
+          maxTokens: 1024,
+        },
+      }],
+    })
+    await useAIConfigStore.getState().applyPreset('openai-preset')
+    expect(useAIConfigStore.getState().config.apiKey).toBe('')
   })
 })

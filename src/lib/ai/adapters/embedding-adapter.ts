@@ -53,6 +53,10 @@ export async function embedTexts(
     const credentialId = await bindAiCredential({
       key: 'storyforge.ai.embedding',
       apiKey: cfg.apiKey,
+      provider: cfg.provider,
+      profileId: 'embedding',
+      operation: 'embeddings',
+      configuredBaseUrl: cfg.baseUrl,
     })
     const res = await executeAiRequest({
       provider: cfg.provider,

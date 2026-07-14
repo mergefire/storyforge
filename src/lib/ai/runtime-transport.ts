@@ -14,6 +14,10 @@ import { normalizeOpenAIBaseUrl } from './openai-endpoint'
 export interface BindAiCredentialOptions {
   key: Extract<SecretKey, `storyforge.ai.${string}`>
   apiKey: string
+  provider: AIProvider
+  profileId: string
+  operation: AiOperation
+  configuredBaseUrl: string
   persistence?: SecretDescriptor['persistence']
 }
 
@@ -37,10 +41,31 @@ export interface ExecuteAiRequestOptions {
 export async function bindAiCredential({
   key,
   apiKey,
+  provider,
+  profileId,
+  operation,
+  configuredBaseUrl,
   persistence = 'session',
 }: BindAiCredentialOptions): Promise<CredentialId | undefined> {
   if (!apiKey) return undefined
-  return await getRuntime().secrets.put({ key, persistence }, apiKey)
+  return await getRuntime().secrets.put({
+    key,
+    persistence,
+    scope: {
+      kind: 'ai',
+      provider,
+      profileId,
+      operation,
+      configuredBaseUrl: normalizeOpenAIBaseUrl(configuredBaseUrl).baseUrl,
+    },
+  }, apiKey)
+}
+
+/** Explicit settings lifecycle only; request-time anonymous calls must not delete. */
+export function deleteAiCredential(
+  key: Extract<SecretKey, `storyforge.ai.${string}`>,
+): Promise<void> {
+  return getRuntime().secrets.delete(key)
 }
 
 /** Performs one transport attempt. Retry policy belongs to the TypeScript caller. */
