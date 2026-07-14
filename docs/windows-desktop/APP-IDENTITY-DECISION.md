@@ -1,9 +1,9 @@
 # StoryForge Windows 应用身份与支持范围决议
 
 > 任务：D0.2  
-> 决议版本：D0.2-1  
+> 决议版本：D0.2-2
 > 日期：2026-07-14  
-> 状态：**IN PROGRESS**；技术身份与支持边界已冻结，仅正式 Authenticode 发布者/证书 Subject 待作者确认
+> 状态：**IN PROGRESS**；技术身份、支持边界和首个作者自用候选的本机自签名边界已冻结，待本次决议提交与独立审查闭环
 
 ## 1. 决议结论
 
@@ -17,9 +17,9 @@
 - 开发、自用、beta、stable 的数据隔离规则；
 - 进入真实数据后的身份不可变项、升级和回滚规则。
 
-D0.2 只剩一个作者决策：**正式 Authenticode 证书的 Subject/法定持有人名称**。Windows installer 的 publisher 显示值必须由该 Subject 派生并与证书一致，不能由实现者猜测。
+作者已确认：首个 D4.1 作者自用候选采用**仅作者机器信任的本机自签名 Authenticode 证书**，不等待公开发行所需的受信任 CA/组织证书。固定本机证书 Subject 为 `CN=StoryForge Self-Use`；它只是开发/自用身份，不是法定发布主体。自用候选可以表述为“本机自签名”，不得表述为“受公共信任”或“可公开发布”。
 
-该未决项阻止 D0.2 标记 `PASS`，但不阻止已经由 D0.1 放行的 D0.3、D0.4 并行开发。确认前只允许开发身份和合成数据；不得把作者真实浏览器数据导入任何桌面 profile。
+正式 Authenticode 证书、完整 Subject/法定持有人名称及由其派生的 installer publisher 延后到 D5.2，在进入 beta/公开分发前由作者确认。它们不再是 D0.2 的完成依赖。D0.2 在本次决议提交并完成独立审查前仍保持 `IN PROGRESS`。D4.1 之前仍须完成 D2、D3 和其余硬依赖；真实数据只能按 D4.2 的受控迁移流程进入正式 profile。
 
 ## 2. 事实依据与命名原则
 
@@ -50,6 +50,7 @@ Tauri `identifier` 会参与 bundle/system 配置和 WebView 数据目录定位�
 | Windows 架构 | x64 | x64 |
 | 允许的数据 | 假数据、迁移夹具、测试哨兵 | 作者真实数据与未来公开用户数据 |
 | 发布通道 | dev/test | self-use → beta → stable；同一数据身份 |
+| Authenticode | 不作为发布产物 | 首个 self-use 候选使用 `CN=StoryForge Self-Use` 本机自签名证书且仅供作者本人；beta/stable 必须按 D5.2 使用受信任证书 |
 | 项目/发行命名空间 | `github.com/yuanbw2025/storyforge` | `github.com/yuanbw2025/storyforge` |
 
 实际绝对目录由 Tauri 路径解析器按当前 Windows 用户解析，配置、文档、日志和测试均不得写死盘符、用户名或某台机器的 `%APPDATA%` 路径。
@@ -132,20 +133,16 @@ architecture = windows-x86_64
 - 原正式 UDF 和恢复点在新目标验证完成前不得删除；
 - 每次恢复必须产生可追溯 receipt，记录 source version、target version、表计数、正文/Blob hash 和激活结果。
 
-## 8. 唯一作者待确认项
+## 8. 签名与发布边界（作者已确认）
 
-作者需要提供或确认一个值：
+1. 首个 D4.1 作者自用候选使用 Subject 为 `CN=StoryForge Self-Use` 的本机自签名 Code Signing 证书签署，只允许作者本人安装和验证。证书及其信任链只安装到作者当前用户的证书存储，不写入仓库、不上传 artifact，也不导出私钥。
+2. 自用签名验证必须在作者机器上由 `Get-AuthenticodeSignature` 返回 `Valid`；证书不受公共信任，换机或未导入公钥信任的环境仍可能显示未知发布者。这一结果只证明包在本机未被篡改，不代表 SmartScreen 信誉或公开发布资格。
+3. 未配置 Tauri Updater 签名时不得启用自动更新；本机自签名 self-use artifact 不得进入 beta/stable、提供给其他测试者或宣传为“受公共信任的签名版本”。
+4. 正式 Authenticode publisher/证书 Subject 当前**不设值**。不得因为 GitHub owner 是 `yuanbw2025` 就把它伪装成法定证书主体，也不得用 `CN=StoryForge Self-Use` 或 self-use artifact 反向猜测该值。
+5. D5.2 启动前必须取得适用于公开发布的受信任代码签名证书，由证书的完整 Subject 派生 installer publisher，并同时完成 Authenticode 与 Tauri Updater 双签名、可信时间戳和验证。
+6. 若 D5.2 的正式证书与发布主体尚未就绪，项目只能停留在作者自用阶段；这不重开 D0.2，也不允许绕过 D5.2 进入 beta 或公开 stable。更换签名证书不改变正式 identifier、dataDirectory 或数据身份。
 
-> **正式 Authenticode 证书中用于 StoryForge 的完整 Subject/法定持有人名称是什么？**
-
-该值确认后：
-
-- Windows installer 的 publisher 显示值从证书 Subject 派生并保持一致；
-- 不得因为 GitHub owner 是 `yuanbw2025` 就把它伪装成法定证书主体；
-- 若尚未取得证书，D0.2 保持 `IN PROGRESS`，开发包保持未签名且带 Dev 标识；
-- 自用未签名构建、beta 或公开 stable 均不得被用来反向猜测正式 Subject。
-
-除该项外，本决议没有第二个作者选择题。正式 identifier 已依据公开仓库命名空间冻结，不与法定 publisher 绑定。
+正式 identifier 仍依据公开仓库命名空间冻结，与未来法定 publisher 不绑定。
 
 ## 9. D0.2 验证与后续执行门
 
@@ -156,7 +153,8 @@ architecture = windows-x86_64
 - 正式通道不存在 `.beta`/`.stable` 第二数据身份；
 - identity/UDF/支持边界/升级/回滚均已指定唯一值，没有占位状态或并列替代值；
 - 实施规划不再要求在 Tauri 壳创建前完成运行时 profile 验证，消除 D0.2 → D0.5 → D1 → D0.2 的依赖循环；
-- 正式 publisher/Subject 被明确保留为唯一阻塞项。
+- self-use 本机自签名 Subject、作者本人限定、私钥边界和禁止自动更新/公开分发均有唯一结论；
+- 正式 publisher/Subject 未被猜测，并作为 D5.2 的显式前置而非 D0.2 阻塞项。
 
 ### 9.2 D1.3 必须补交的运行证据
 
@@ -176,7 +174,7 @@ architecture = windows-x86_64
 - **涉及哪些表生命周期**：不触达 Dexie schema、PROJECT_TABLES 或任何用户表。
 - **是否需要补注册表**：不新增表、字段、AI source 或 action，无需修改三注册表。
 
-本任务不建立 Tauri 壳、不创建 UDF、不导入数据、不配置证书、不决定 updater endpoint，也不声明 Windows 客户端已经可用。
+本任务不建立 Tauri 壳、不创建 UDF、不导入数据、不创建或安装证书、不决定 updater endpoint，也不声明 Windows 客户端已经可用；`CN=StoryForge Self-Use` 证书在 D4.1 构建候选包时按本决议生成和验证。
 
 ## 11. 官方技术依据
 

@@ -466,7 +466,7 @@ beta/stable 的 PWA 回归是 D4/D5 发布阶段的独立质量要求，不把 i
 
 - D0.1 已 PASS。
 - 读取 package.json、PWA manifest、README 的现有品牌与公开仓库事实。
-- 正式 Authenticode publisher/证书 Subject 必须由作者确认；这是 D0.2 PASS 的唯一剩余作者决策，不阻止 D0.3/D0.4 并行。
+- 作者已确认首个 D4.1 自用候选使用 `CN=StoryForge Self-Use` 本机自签名 Authenticode 证书、仅供作者本人；正式 publisher/受公共信任证书 Subject 延后到 D5.2，不是 D0.2 的完成依赖。
 
 **改法**
 
@@ -489,7 +489,8 @@ beta/stable 的 PWA 回归是 D4/D5 发布阶段的独立质量要求，不把 i
 - 决议与 package.json、PWA manifest、README 的品牌和仓库命名空间一致。
 - 开发/正式 identifier 合法且不同；self-use/beta/stable 没有第二正式数据身份。
 - productName、displayName、identifier、label、dataDirectory、支持边界、升级不可变项和回滚规则均有唯一值。
-- 正式 Authenticode publisher/证书 Subject 无占位或猜测；作者确认前任务保持 IN PROGRESS。
+- 首个 self-use 候选明确为仅作者机器信任的本机自签名版本，私钥不得导出或进入仓库/artifact；未配置 Tauri Updater 签名时不得启用自动更新，self-use artifact 不得进入 beta/stable。
+- 正式 Authenticode publisher/证书 Subject 无占位或猜测，并明确登记为 D5.2 的公开发布前置。
 
 **D1.3 延后运行验证（失败会重开 D0.2，并阻止 G1/真实数据）**
 
@@ -500,7 +501,7 @@ beta/stable 的 PWA 回归是 D4/D5 发布阶段的独立质量要求，不把 i
 
 **完成判据**
 
-应用身份、UDF、支持矩阵和回滚策略形成不可随意修改的决议，作者确认正式证书 Subject 后 D0.2 才可标 PASS。运行时验证由 D1.3 补交，避免 D0.2 与 D1 的依赖循环；失败时必须重开本任务。
+应用身份、UDF、支持矩阵、回滚策略及作者自用本机自签名边界形成不可随意修改的决议；本次决议提交、静态验证和独立审查闭环后 D0.2 可标 PASS。受公共信任的正式证书 Subject 在 D5.2 冻结，不反向阻塞 D0.2。运行时验证由 D1.3 补交，避免 D0.2 与 D1 的依赖循环；失败时必须重开本任务。
 
 ---
 
@@ -1436,13 +1437,15 @@ WebView 和业务数据库中无长期明文凭据，所有认证由 Rust 注入
 **改法**
 
 - 生成 Windows x64 NSIS 候选包。
-- 自用阶段可暂不做 Authenticode，但必须明确仅供作者本人。
+- 自用阶段使用 `CN=StoryForge Self-Use` 本机自签名 Authenticode 证书：私钥只保留在 `CurrentUser\\My` 且不可导出，公钥证书只加入作者账户的 `CurrentUser\\TrustedPeople`；不得写入仓库、日志或 artifact，并明确仅供作者本人。
 - 未配置 Tauri Updater 签名时不得启用自动更新。
 - 创建迁移前客户端恢复/清空工具，只能作用于未激活客户端库。
 
 **验证**
 
 - 干净安装、关闭、重启、覆盖安装、卸载重装。
+- 安装包及主程序的 `Get-AuthenticodeSignature` 均为 `Valid`，Signer Subject 精确为 `CN=StoryForge Self-Use`；报告只记录证书 thumbprint、artifact SHA-256 和验证结果，不记录私钥。
+- 在未信任该自签名证书的环境中不得把候选包判成公共可信；对候选包做字节篡改后签名验证必须失败。
 - 安装程序不要求日常管理员权限。
 - 无 Vite/Node 服务仍可完整运行。
 - 用冻结夹具进入全部 3 个生产路由、36 个当前侧栏 leaf、兼容 module 和右侧属性面板；不存在空白、占位、置灰或“请用网页版”。

@@ -2313,7 +2313,7 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 3. 专项规划提供本节已登记任务的详细施工规格；若与本节或 `CLAUDE.md` 冲突，立即停止并先修正文档，不得自行择一执行。
 4. 功能等价动作清单的机器可读事实源在 D0.5 建立：`docs/windows-desktop/feature-parity-baseline.json`；专项规划 §5 是其人工初始矩阵，不复制进本蓝图维护第二份 68 项清单。
 5. D0.4 `d0.4-v2` 以当前生产 `web-tab` 作为唯一必需参考基线；installed PWA 仅为可选补充，缺失不阻塞 D0.4、D0.5 或 D1。该调整不放宽夹具、功能、规范化数据 hash、性能、恢复、安全或功能零丢失硬门。
-6. 本专项当前状态为 **D0 进行中**。D0.1 已由 Codex 交付并于 2026-07-14 通过 Claude 独立治理审查；D0.2～D0.4 进行中，D0.5～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过桌面验证”。
+6. 本专项当前状态为 **D0 进行中**。D0.1 已由 Codex 交付并于 2026-07-14 通过 Claude 独立治理审查；D0.2 已冻结作者自用本机自签名边界，仍待本次决议提交与独立审查，D0.3～D0.4 进行中；D0.5～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过桌面验证”。
 
 ### 17.2 功能等价与数据迁移永久红线
 
@@ -2335,7 +2335,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 | ID | 任务 | 硬依赖 / 接口依赖 | 当前状态 |
 |---|---|---|---|
 | D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | PASS（2026-07-14；Claude 独立审查无阻断项） |
-| D0.2 | 冻结应用身份与支持范围 | D0.1；正式 Authenticode publisher/证书 Subject 由作者确认 | IN PROGRESS（技术身份、UDF、支持矩阵及回滚已冻结；仅正式证书 Subject 待作者确认） |
+| D0.2 | 冻结应用身份与支持范围 | D0.1；作者自用候选签名边界已确认；正式 Authenticode publisher/受公共信任证书 Subject 延后到 D5.2 | IN PROGRESS（技术身份、UDF、支持矩阵、回滚及 `CN=StoryForge Self-Use` 本机自签名边界已冻结；待本次决议提交与独立审查） |
 | D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | IN PROGRESS（浏览器专属能力与 PoC 风险盘点完成） |
 | D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议已落地；`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验，`small-v1` 嵌套引用及规范化往返业务 hash 均为 PASS；large/blob/legacy 完整夹具与生产 `web-tab` 实测尚未齐全；installed PWA 可选） |
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
@@ -2417,7 +2417,7 @@ G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量�
 - **验证**：专项规划与本蓝图均包含 31 个唯一任务 ID；权威关系、依赖、链接和状态由 Claude 只读复核；无 TypeScript、Rust、Windows 客户端或 Web 运行时变更；
 - **Codex 交付状态**：PASS；独立 checkout `storyforge-desktop-d0`，分支 `refactor/phase-desktop-task-d0`；
 - **Claude 审查状态**：APPROVE，无阻断发现；两项非阻断观察为 D0.2/D0.4 草案须继续标 Draft、治理内容须提交并推送。审查证据见 [`windows-desktop/D0.1-CLAUDE-REVIEW.md`](./windows-desktop/D0.1-CLAUDE-REVIEW.md)；
-- **未决风险**：D0.2 正式 publisher/证书主体尚待作者确认；D0.3/D0.4 仍在进行中；D0.5～D5.5 未开始，G1/G2 未通过，尚无可用于真实数据的 Windows 客户端。
+- **未决风险**：D0.2 已选择首个作者自用候选使用仅作者机器信任的 `CN=StoryForge Self-Use` 自签名 Authenticode，正式 publisher/受公共信任证书主体延后到 D5.2 且不得据仓库 owner 猜测；D0.3/D0.4 仍在进行中；D0.5～D5.5 未开始，G1/G2 未通过，尚无可用于真实数据的 Windows 客户端。
 
 ---
 
