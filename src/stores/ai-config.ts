@@ -4,6 +4,14 @@ import { PROVIDER_PRESETS } from '../lib/types'
 import { createLog, updateLog } from '../lib/ai/logger'
 import { nanoid } from '../lib/utils/id'
 import { buildOpenAIEndpoint, normalizeOpenAIBaseUrl } from '../lib/ai/openai-endpoint'
+import {
+  bindAiCredential,
+  executeAiRequest,
+  isAiAbortError,
+  isAiNetworkError,
+  isSuccessfulAiResponse,
+  readAiResponseText,
+} from '../lib/ai/runtime-transport'
 
 const STORAGE_KEY = 'storyforge-ai-config'
 const PRESETS_KEY = 'storyforge-ai-presets'
@@ -262,7 +270,7 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   },
 
   testConnection: async (): Promise<TestResult> => {
-    const { config } = get()
+    const { config, rememberApiKey } = get()
     const normalized = normalizeOpenAIBaseUrl(config.baseUrl)
     if (normalized.changed) {
       const newConfig = { ...config, baseUrl: normalized.baseUrl }
@@ -284,23 +292,28 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     })
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
+      const credentialId = await bindAiCredential({
+        key: 'storyforge.ai.primary',
+        apiKey: config.apiKey,
+        persistence: rememberApiKey ? 'device' : 'session',
+      })
+      const response = await executeAiRequest({
+        provider: config.provider,
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: normalized.baseUrl,
+        credentialId,
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.apiKey}`,
-        },
-        body: JSON.stringify({
+        body: {
           model: config.model,
           messages: [{ role: 'user', content: '请回复"连接成功"' }],
-        }),
+        },
       })
 
       const duration = Date.now() - startTime
-      const bodyText = await response.text()
+      const bodyText = await readAiResponseText(response.body)
 
-      if (response.ok) {
+      if (isSuccessfulAiResponse(response)) {
         updateLog(log.id, { status: 'success', statusCode: response.status, duration, responseBody: bodyText.slice(0, 200) })
         const prefix = normalized.warnings.length ? `${normalized.warnings.join(' ')} ` : ''
         return { ok: true, message: `✅ ${prefix}连接成功`, statusCode: response.status, duration }
@@ -344,9 +357,9 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
       const error = err as Error
       let errorMsg: string
 
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      if (isAiNetworkError(err)) {
         errorMsg = '网络错误 — 可能原因：1) 网络不通 2) 该平台不支持浏览器直接调用(CORS) 3) Base URL 错误'
-      } else if (error.name === 'AbortError') {
+      } else if (isAiAbortError(err)) {
         errorMsg = '请求超时'
       } else {
         errorMsg = error.message || '未知错误'

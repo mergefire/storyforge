@@ -8,6 +8,7 @@ import {
 } from '../stores/ai-generation-session'
 import type { AIConfig, ChatMessage } from '../lib/types'
 import type { TokenUsage } from '../lib/ai/logger'
+import { isAiAbortError } from '../lib/ai/runtime-transport'
 
 export interface UseAIStreamReturn {
   /** 当前累积的输出文本（正文，不含思考过程） */
@@ -125,7 +126,8 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
       ? { ...baseConfig, ...overrideConfig }
       : baseConfig
 
-    if (!config.apiKey) {
+    const acceptsAnonymousEndpoint = config.provider === 'custom' || config.provider === 'ollama'
+    if (!config.apiKey && !acceptsAnonymousEndpoint) {
       const errMsg = '请先在左侧栏底部「⚙️ 设置」中配置 AI API Key，选择服务商并填入密钥'
       console.warn('[AI] 未配置 API Key，provider:', config.provider)
       if (sessionKey) {
@@ -165,7 +167,7 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
         }
       }
     } catch (err: unknown) {
-      if ((err as Error).name === 'AbortError') {
+      if (isAiAbortError(err)) {
         // 用户主动停止，不算错误
       } else {
         const errMsg = err instanceof Error ? err.message : '未知错误'
