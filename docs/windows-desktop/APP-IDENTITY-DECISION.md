@@ -60,12 +60,12 @@ Tauri `identifier` 会参与 bundle/system 配置和 WebView 数据目录定位�
 
 ### 4.1 首版支持
 
-- 最低兼容边界：**Windows 10 22H2 x64，build 19045**；
+- 最低兼容验证边界：**Windows 10 22H2 x64，build 19045**；
 - 正式支持：处于 Microsoft 支持周期内的 Windows 11 x64 版本；
 - 必需组件：Microsoft Edge WebView2 Evergreen Runtime；缺失或过旧时由后续安装器流程检测并修复，不允许白屏启动；
 - 权限：普通用户、per-user 安装和用户可写的数据目录；业务功能不得要求管理员权限。
 
-Windows 10 build 19045 是项目明确保留的兼容下限，不等于项目为已结束 Microsoft 常规支持的操作系统提供安全维护承诺。公开发布前仍须按 D5 在真实 Windows 10 build 19045 和 Windows 11 x64 上执行安装、升级、恢复和全量功能矩阵。
+Windows 10 22H2 Home/Pro 已于 2025-10-14 结束 Microsoft 常规支持。build 19045 是项目为作者现有环境保留的**技术兼容验证下限**，不等于 StoryForge 能替操作系统提供安全维护，也不应在公开 stable 页面写成仍受 Microsoft 常规支持。作者自用时应使用仍受支持的 Windows 版本或有效 ESU；公开发布前仍须按 D5 在真实 Windows 10 build 19045 和 Windows 11 x64 上执行安装、升级、恢复和全量功能矩阵，并把二者分别标成“兼容验证”与“正式支持”。
 
 ### 4.2 不在首版支持范围
 
@@ -185,3 +185,4 @@ architecture = windows-x86_64
 - Tauri WebView versions：https://v2.tauri.app/reference/webview-versions/
 - Tauri Windows installer：https://v2.tauri.app/distribute/windows-installer/
 - Microsoft WebView2 UDF：https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder
+- Microsoft Windows 10 结束支持公告：https://learn.microsoft.com/en-us/lifecycle/announcements/windows-10-end-of-support
