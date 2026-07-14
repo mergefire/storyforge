@@ -1,4 +1,5 @@
 node_modules
+.qa-reports/
 dist/
 .DS_Store
 *.local

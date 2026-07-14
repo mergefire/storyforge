@@ -14,9 +14,11 @@
     "gen:ai-manual": "node scripts/generate-ai-manual.mjs",
     "check:ai-manual": "node scripts/generate-ai-manual.mjs --check",
     "check:architecture": "node scripts/check-architecture.mjs",
+    "check:desktop-baseline": "node scripts/windows-desktop-baseline.mjs check",
+    "baseline:collect-static": "node scripts/windows-desktop-baseline.mjs collect-static",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "ci": "npm run check:required-tables && npm run check:ai-manual && npm run check:architecture && npx tsc --noEmit && npm run test:coverage && npm run build"
+    "ci": "npm run check:required-tables && npm run check:ai-manual && npm run check:architecture && npm run check:desktop-baseline && npx tsc --noEmit && npm run test:coverage && npm run build"
   },
   "dependencies": {
     "@tiptap/extension-placeholder": "^3.22.3",

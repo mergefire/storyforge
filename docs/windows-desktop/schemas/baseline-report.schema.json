@@ -1,0 +1,915 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://storyforge.local/schemas/windows-desktop/baseline-report.schema.json",
+  "title": "StoryForge Windows desktop baseline report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "protocolVersion",
+    "reportId",
+    "reportKind",
+    "generatedAt",
+    "source",
+    "mode",
+    "environment",
+    "fixtures",
+    "functional",
+    "comparison",
+    "performance",
+    "security",
+    "overall"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "protocolVersion": {
+      "const": "d0.4-v1"
+    },
+    "reportId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reportKind": {
+      "enum": [
+        "STATIC_ONLY",
+        "FULL_BASELINE"
+      ]
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "appVersion",
+        "sourceCommit"
+      ],
+      "properties": {
+        "appVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceCommit": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "mode": {
+      "enum": [
+        "web-tab",
+        "installed-pwa",
+        "tauri-dev",
+        "desktop-production",
+        "not-launched"
+      ]
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "captureStatus",
+        "factsPath",
+        "unresolvedFields"
+      ],
+      "properties": {
+        "captureStatus": {
+          "enum": [
+            "COMPLETE",
+            "PARTIAL_STATIC",
+            "NOT_MEASURED"
+          ]
+        },
+        "factsPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unresolvedFields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "fixtures": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "specVersion",
+        "manifestPath",
+        "registryTableCount",
+        "registryFingerprint",
+        "states"
+      ],
+      "properties": {
+        "specVersion": {
+          "const": "d0.4-fixtures-v1"
+        },
+        "manifestPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "registryTableCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "registryFingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "states": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "required",
+              "artifactStatus",
+              "manifestSha256"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "artifactStatus": {
+                "enum": [
+                  "GENERATED_VALID",
+                  "GENERATED_INVALID",
+                  "NOT_GENERATED",
+                  "NOT_AVAILABLE"
+                ]
+              },
+              "manifestSha256": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "functional": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "baselineSource",
+        "futureManifest",
+        "status",
+        "reasonCode",
+        "verdict",
+        "aggregateRowCount",
+        "actionCount",
+        "evidence"
+      ],
+      "properties": {
+        "required": {
+          "const": true
+        },
+        "baselineSource": {
+          "const": "docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md"
+        },
+        "futureManifest": {
+          "const": "docs/windows-desktop/feature-parity-baseline.json"
+        },
+        "status": {
+          "$ref": "#/$defs/collectionStatus"
+        },
+        "reasonCode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verdict": {
+          "$ref": "#/$defs/scenarioVerdict"
+        },
+        "aggregateRowCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "actionCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "NOT_MEASURED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "verdict": {
+                "const": "NOT_EVALUATED"
+              },
+              "aggregateRowCount": {
+                "type": "null"
+              },
+              "actionCount": {
+                "type": "null"
+              },
+              "evidence": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "MEASURED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "null"
+              },
+              "verdict": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "aggregateRowCount": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reasonCode",
+        "referenceModes",
+        "referenceReportIds",
+        "evidence"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "COMPLETE",
+            "INCOMPLETE"
+          ]
+        },
+        "reasonCode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "referenceModes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "web-tab",
+              "installed-pwa"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "referenceReportIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "INCOMPLETE"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "COMPLETE"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "null"
+              },
+              "referenceModes": {
+                "minItems": 2,
+                "contains": {
+                  "const": "web-tab"
+                }
+              },
+              "referenceReportIds": {
+                "minItems": 2
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "performance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/performanceScenario"
+      }
+    },
+    "security": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/securityScenario"
+      }
+    },
+    "overall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligibility",
+        "reasonCodes",
+        "healthScore",
+        "requiredScenarioCounts"
+      ],
+      "properties": {
+        "eligibility": {
+          "enum": [
+            "ELIGIBLE_GO",
+            "ELIGIBLE_NO_GO",
+            "NOT_ELIGIBLE"
+          ]
+        },
+        "reasonCodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "healthScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "requiredScenarioCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "total",
+            "measured",
+            "passed",
+            "failed",
+            "notEvaluated"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "passed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "notEvaluated": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "collectionStatus": {
+      "enum": [
+        "MEASURED",
+        "NOT_MEASURED",
+        "BLOCKED",
+        "INVALID"
+      ]
+    },
+    "scenarioVerdict": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "NOT_EVALUATED"
+      ]
+    },
+    "nullableNumber": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "aggregates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "p50",
+        "p95",
+        "p99",
+        "max",
+        "mean",
+        "standardDeviation"
+      ],
+      "properties": {
+        "min": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "p50": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "p95": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "p99": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "max": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "mean": {
+          "$ref": "#/$defs/nullableNumber"
+        },
+        "standardDeviation": {
+          "$ref": "#/$defs/nullableNumber"
+        }
+      }
+    },
+    "performanceScenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "required",
+        "status",
+        "reasonCode",
+        "verdict",
+        "unit",
+        "sampleCount",
+        "aggregates",
+        "thresholds",
+        "rawSamplesPath",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^PERF-[A-Z0-9-]+$"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/$defs/collectionStatus"
+        },
+        "reasonCode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verdict": {
+          "$ref": "#/$defs/scenarioVerdict"
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sampleCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "aggregates": {
+          "$ref": "#/$defs/aggregates"
+        },
+        "thresholds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rawSamplesPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "NOT_MEASURED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "verdict": {
+                "const": "NOT_EVALUATED"
+              },
+              "sampleCount": {
+                "const": 0
+              },
+              "rawSamplesPath": {
+                "type": "null"
+              },
+              "evidence": {
+                "maxItems": 0
+              },
+              "aggregates": {
+                "properties": {
+                  "min": {
+                    "type": "null"
+                  },
+                  "p50": {
+                    "type": "null"
+                  },
+                  "p95": {
+                    "type": "null"
+                  },
+                  "p99": {
+                    "type": "null"
+                  },
+                  "max": {
+                    "type": "null"
+                  },
+                  "mean": {
+                    "type": "null"
+                  },
+                  "standardDeviation": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "MEASURED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "null"
+              },
+              "verdict": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "sampleCount": {
+                "minimum": 1
+              },
+              "rawSamplesPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "aggregates": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "p50": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "p50"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "mean": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "mean"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "standardDeviation": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "standardDeviation"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "aggregates"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sampleCount": {
+                "minimum": 30
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "aggregates": {
+                "properties": {
+                  "p95": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "p95"
+                ]
+              }
+            },
+            "required": [
+              "aggregates"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sampleCount": {
+                "minimum": 200
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "aggregates": {
+                "properties": {
+                  "p99": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "p99"
+                ]
+              }
+            },
+            "required": [
+              "aggregates"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sampleCount": {
+                "minimum": 1000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "securityScenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "required",
+        "status",
+        "reasonCode",
+        "verdict",
+        "observations",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^SEC-[A-Z0-9-]+$"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/$defs/collectionStatus"
+        },
+        "reasonCode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verdict": {
+          "$ref": "#/$defs/scenarioVerdict"
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "NOT_MEASURED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "verdict": {
+                "const": "NOT_EVALUATED"
+              },
+              "observations": {
+                "maxItems": 0
+              },
+              "evidence": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "MEASURED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "null"
+              },
+              "verdict": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "observations": {
+                "minItems": 1
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
