@@ -40,6 +40,7 @@ export type FakeRuntimeOperation =
   | 'durability.inspect'
   | 'durability.requestPersistence'
   | 'distribution.getInfo'
+  | 'updates.initialize'
   | 'updates.check'
   | 'updates.install'
   | 'diagnostics.snapshot'
@@ -56,6 +57,7 @@ export interface FakeRuntimeState {
   bindings: Map<string, BackupBinding>
   bindingFiles: Map<string, Map<string, Uint8Array>>
   diagnosticEvents: DiagnosticEvent[]
+  updatesInitialized: boolean
   update: AvailableUpdate | null
 }
 
@@ -127,6 +129,7 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
       bindings: new Map(),
       bindingFiles: new Map(),
       diagnosticEvents: [],
+      updatesInitialized: false,
       update: null,
     }
   }
@@ -351,6 +354,10 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
   }
 
   readonly updates: RuntimeAdapter['updates'] = {
+    initialize: async () => {
+      this.assertNoFailure('updates.initialize')
+      this.state.updatesInitialized = true
+    },
     check: async () => {
       this.assertNoFailure('updates.check')
       return this.state.update ? { ...this.state.update } : null

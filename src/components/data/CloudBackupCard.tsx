@@ -9,6 +9,7 @@ import { Cloud, CloudUpload, CloudDownload, Check, Loader2, LogOut, ExternalLink
 import { useGistStore } from '../../stores/gist'
 import type { GistBackupMeta, GistRevisionMeta } from '../../lib/export/gist-export'
 import { useDialog } from '../shared/Dialog'
+import { getRuntime } from '../../runtime'
 
 interface Props {
   projectId: number
@@ -21,9 +22,19 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
   const [patInput, setPatInput] = useState('')
   const [rememberPatInput, setRememberPatInput] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
+  const [externalError, setExternalError] = useState<string | null>(null)
   const [backups, setBackups] = useState<GistBackupMeta[] | null>(null)
   const [revisions, setRevisions] = useState<GistRevisionMeta[] | null>(null)
   const proj = projBackup(projectId)
+
+  const handleOpenTokenHelp = async () => {
+    setExternalError(null)
+    try {
+      await getRuntime().external.open({ kind: 'github-gist-token' })
+    } catch (openError) {
+      setExternalError(openError instanceof Error ? openError.message : '无法打开 GitHub Token 页面')
+    }
+  }
 
   const handleConnect = async () => {
     if (!patInput.trim()) return
@@ -95,10 +106,10 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
               className="px-3 py-1.5 rounded bg-sky-500/80 text-white text-sm hover:bg-sky-500 disabled:opacity-50 flex items-center gap-1.5">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />} 连接 GitHub
             </button>
-            <a href="https://github.com/settings/tokens/new?scopes=gist&description=storyforge-backup" target="_blank" rel="noreferrer"
+            <button type="button" onClick={handleOpenTokenHelp}
               className="text-xs text-sky-400 hover:underline flex items-center gap-0.5">
               如何创建 Token <ExternalLink className="w-3 h-3" />
-            </a>
+            </button>
           </div>
           <label className="flex items-start gap-2 text-[11px] text-text-secondary cursor-pointer">
             <input
@@ -196,8 +207,10 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
         </div>
       )}
 
-      {(msg || error) && (
-        <p className={`text-xs mt-2 ${error ? 'text-error' : 'text-success'}`}>{error || msg}</p>
+      {(msg || error || externalError) && (
+        <p className={`text-xs mt-2 ${error || externalError ? 'text-error' : 'text-success'}`}>
+          {error || externalError || msg}
+        </p>
       )}
     </div>
   )

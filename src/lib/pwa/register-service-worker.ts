@@ -1,17 +1,8 @@
-const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]'])
+import { getRuntime } from '../../runtime'
 
-export function shouldRegisterStoryForgeServiceWorker(hostname = globalThis.location?.hostname ?? ''): boolean {
-  return !LOCAL_HOSTNAMES.has(hostname)
-}
+export { shouldRegisterStoryForgeServiceWorker } from '../../runtime/web/service-worker-policy'
 
-export function registerStoryForgeServiceWorker() {
-  if (!shouldRegisterStoryForgeServiceWorker()) return
-  if (!('serviceWorker' in navigator)) return
-
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/storyforge/sw.js', { scope: '/storyforge/' })
-      .catch(error => {
-        console.warn('[pwa] service worker 注册失败:', error)
-      })
-  })
+/** @deprecated Application bootstrap now calls RuntimeAdapter directly. */
+export function registerStoryForgeServiceWorker(): Promise<void> {
+  return getRuntime().updates.initialize()
 }

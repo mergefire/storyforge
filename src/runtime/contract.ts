@@ -244,6 +244,8 @@ export interface AvailableUpdate {
 }
 
 export interface AppUpdate {
+  /** One idempotent startup lifecycle for Web Service Worker or native updater setup. */
+  initialize(): Promise<void>
   check(): Promise<AvailableUpdate | null>
   install(releaseId: string, signal?: AbortSignal): Promise<void>
 }
