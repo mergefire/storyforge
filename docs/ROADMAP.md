@@ -23,7 +23,7 @@
 | 项目 | 当前状态 | 下一完成条件 |
 |---|---|---|
 | D0.1 纳入唯一施工权威 | ✅ PASS：2026-07-14 Claude 独立审查无阻断项 | 治理提交推送后保持唯一施工权威 |
-| D0.2 身份与支持范围 | 🟠 进行中：开发身份草案已建立 | 作者确认正式 publisher/证书主体；冻结 productName、identifier 与 UDF |
+| D0.2 身份与支持范围 | 🟠 进行中：技术身份、UDF、支持矩阵及回滚已冻结 | 唯一剩余项：作者确认正式 Authenticode 证书 Subject/法定持有人名称 |
 | D0.3 RuntimeAdapter 契约 | 🟠 进行中：浏览器专属能力与 PoC 风险盘点完成 | 落地 contract、fake 与 Web wrapper，并通过架构检查 |
 | D0.4 功能/性能/安全基线 | 🟠 进行中：`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验；`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS | 补 large/blob/legacy 冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
 | D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
