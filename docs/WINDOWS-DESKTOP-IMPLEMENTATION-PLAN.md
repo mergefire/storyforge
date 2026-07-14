@@ -462,30 +462,43 @@ flowchart LR
 
 **前置**
 
-- 确认产品名、publisher 和公开分发主体。
+- D0.1 已 PASS。
+- 读取 package.json、PWA manifest、README 的现有品牌与公开仓库事实。
+- 正式 Authenticode publisher/证书 Subject 必须由作者确认；这是 D0.2 PASS 的唯一剩余作者决策，不阻止 D0.3/D0.4 并行。
 
 **改法**
 
-1. 冻结：
+1. 在 [`windows-desktop/APP-IDENTITY-DECISION.md`](./windows-desktop/APP-IDENTITY-DECISION.md) 冻结：
    - productName。
+   - 产品显示名与主窗口标题。
    - 正式 identifier。
    - 开发 identifier。
-   - Windows x64 首发。
+   - 主窗口 label。
+   - Windows 10 build 19045 / Windows 11 x64 首发支持边界。
    - 正式 UDF/dataDirectory 策略。
 2. 开发构建只使用假数据和开发 profile。
 3. 在真实数据迁移前切换并冻结正式 identifier；进入真实数据后不得改名。
 4. 自用、beta、stable 使用同一正式数据身份，避免公开发布前再次迁库。
 5. CDP 调试端口和调试 profile 严格遵守 AGENTS.md：动态端口、独立 profile、记录 PID、按记录清理。
+6. 身份变更和版本回滚只走应用层备份/FullMigrationArchive；禁止复制或修改 WebView2 UDF/LevelDB 文件。
 
-**验证**
+**D0.2 静态验证**
+
+- 决议与 package.json、PWA manifest、README 的品牌和仓库命名空间一致。
+- 开发/正式 identifier 合法且不同；self-use/beta/stable 没有第二正式数据身份。
+- productName、displayName、identifier、label、dataDirectory、支持边界、升级不可变项和回滚规则均有唯一值。
+- 正式 Authenticode publisher/证书 Subject 无占位或猜测；作者确认前任务保持 IN PROGRESS。
+
+**D1.3 延后运行验证（失败会重开 D0.2，并阻止 G1/真实数据）**
 
 - 开发版与正式版 profile 互不可见。
 - 同 identifier 覆盖升级后 Dexie 数据仍在。
-- 修改 identifier 的测试能明确表现为另一个空 profile，不会被误诊为数据丢失。
+- 修改 identifier/dataDirectory 的测试能明确表现为另一个空 profile；恢复原身份后原数据重新出现，不会被误诊为数据丢失。
+- 卸载/重装保留数据，UDF 不可写、磁盘不足和 WebView2 缺失路径安全失败。
 
 **完成判据**
 
-应用身份、UDF 和支持矩阵形成不可随意修改的决议。
+应用身份、UDF、支持矩阵和回滚策略形成不可随意修改的决议，作者确认正式证书 Subject 后 D0.2 才可标 PASS。运行时验证由 D1.3 补交，避免 D0.2 与 D1 的依赖循环；失败时必须重开本任务。
 
 ---
 
@@ -719,16 +732,19 @@ Web 和 Desktop 两种构建各自正确，且只由单一 runtime target 控制
 3. 验证 schema upgrade fixtures。
 4. 确认桌面启动顺序不会在迁移检查前 seed 用户 Prompt/Workflow。
 5. 不改变现有 Dexie 数据模型，不引入 SQLite。
+6. 补交 D0.2 的运行验证：dev/stable 双向哨兵隔离、同正式身份覆盖升级、测试 identifier/dataDirectory 空 profile 与恢复原身份。
+7. 验证卸载/重装默认保留正式 UDF，以及 UDF 不可写、磁盘不足、WebView2 缺失时不激活半初始化库。
 
 **验证**
 
 - 重启和覆盖安装后数据仍在。
 - REQUIRED_TABLES、PROJECT_TABLES 和 Dexie 双向一致。
 - 生产路径不因 schema 检测异常删除数据库。
+- D0.2 身份矩阵的运行验证全部通过；任一失败立即重开 D0.2，并阻止 G1 和真实数据迁移。
 
 **完成判据**
 
-WebView2 内 Dexie 能稳定承担现有业务数据，且 UDF 身份明确。
+WebView2 内 Dexie 能稳定承担现有业务数据，UDF 身份明确，且 D0.2 延后运行验证有可复现证据。
 
 ---
 

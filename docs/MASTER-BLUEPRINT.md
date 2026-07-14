@@ -2333,7 +2333,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 | ID | 任务 | 硬依赖 / 接口依赖 | 当前状态 |
 |---|---|---|---|
 | D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | PASS（2026-07-14；Claude 独立审查无阻断项） |
-| D0.2 | 冻结应用身份与支持范围 | D0.1；产品名、publisher、公开分发主体决策 | IN PROGRESS（开发身份草案已建立；正式 publisher 待作者确认） |
+| D0.2 | 冻结应用身份与支持范围 | D0.1；正式 Authenticode publisher/证书 Subject 由作者确认 | IN PROGRESS（技术身份、UDF、支持矩阵及回滚已冻结；仅正式证书 Subject 待作者确认） |
 | D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | IN PROGRESS（浏览器专属能力与 PoC 风险盘点完成） |
 | D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（协议与参考环境草案已建立；实测尚未采集） |
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
