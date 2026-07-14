@@ -4,6 +4,7 @@
 > 替代 `docs/ARCHITECTURE-REFACTOR.md`（v1，已部分失效，见 §0.4）。
 > 目标读者：任何接手该项目的开发者或 AI 模型。
 > 创建：2026-06-04 ｜ v2 修订基线：仓库 `main` 分支 HEAD（commit `1d28158` 后）。
+> Windows Desktop 专项纳入：2026-07-14（见 §17；当前处于 D0 治理阶段，未完成客户端实现）。
 
 ---
 
@@ -22,6 +23,7 @@
 - 接手指南（任何模型/任何人）
 - 完成判据
 - 维护规约
+- Windows Desktop 专项的权威入口、依赖、闸门与阶段记录（详细施工规格引用专项规划，不复制为第二份蓝图）
 
 ### 0.2 你应该如何读
 
@@ -47,6 +49,7 @@
 | `CODEX-REDESIGN.md` | 🟢 待实施 | Phase 35 词条化（本蓝图后续） |
 | `CONSISTENCY-CHECK-DESIGN.md` | 🟢 待实施 | Phase 38/39（本蓝图后续） |
 | `AI-COPILOT-DESIGN.md` | 🟢 远期 | Phase 27 Agent 化（不在本蓝图覆盖） |
+| `WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md` | 🟠 专项详细规格 | Windows Desktop D0–D5 的逐任务改法、功能等价矩阵与验收证据；其项目级授权、依赖、闸门和状态以本文 §17 为准 |
 
 ### 0.4 v1 → v2 重大变更
 
@@ -1707,6 +1710,7 @@ jobs:
 - 改完代码本地数据库出现损坏
 - 不确定一个动作是否会丢用户数据
 - 文档与代码冲突且不知如何裁决
+- Windows Desktop 功能清单仍有未登记、非 PASS 或缺失证据，却准备进入 G2、beta 或 stable
 
 → 停下，写到 ROADMAP，开 issue，等决策。
 
@@ -2293,6 +2297,120 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 
 - 本次未跑真实浏览器/API 生成验收；新增能力主要是确定性数据/上下文/审核闭环，专项测试覆盖未来泄漏、stale、异常复核和导入导出；
 - 层级摘要 v1 是 deterministic roll-up，不是额外 AI/RAPTOR 压缩。这样先保证可重建、低成本、无未来泄漏；如后续要引入 AI 压缩，必须继续沿用本表的 sourceHash/status 红线。
+
+---
+
+## 十七、Windows Desktop 客户端专项（D0～D5 · 2026-07-14 纳入）
+
+### 17.1 权威关系与当前状态
+
+本节是 Windows Desktop 专项在**唯一施工权威**中的项目级入口，登记授权边界、任务依赖、阶段闸门、停止信号和完成记录。逐任务的「位置 / 前置 / 改法 / 验证 / 完成判据」、初始功能矩阵及技术细节见 [`WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](./WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md)。
+
+两份文档按以下规则协作，禁止形成双权威：
+
+1. `CLAUDE.md` 的三注册表、四问、数据红线和 DoD 永远优先。
+2. 本节决定专项是否获准施工、任务依赖是否满足、G1/G2/stable 是否放行，以及当前阶段事实。
+3. 专项规划提供本节已登记任务的详细施工规格；若与本节或 `CLAUDE.md` 冲突，立即停止并先修正文档，不得自行择一执行。
+4. 功能等价动作清单的机器可读事实源在 D0.5 建立：`docs/windows-desktop/feature-parity-baseline.json`；专项规划 §5 是其人工初始矩阵，不复制进本蓝图维护第二份 68 项清单。
+5. 本专项当前状态为 **D0 进行中**。D0.1 的治理改动由 Codex 起草，**尚待 Claude 审查**；D0.2～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过桌面验证”。
+
+### 17.2 功能等价与数据迁移永久红线
+
+Windows 客户端只改变承载方式，不改变产品能力。以下条款是发布硬门，不是建议：
+
+1. 以 D0.5 冻结 commit 的生产构建为基线，实际可达的路由、侧栏模块、面板动作、对话框、快捷键、文件格式、AI/Embedding 动作和后台任务必须逐一登记 `actionId + FP ID`；代码事实优先于滞后说明书。
+2. “等价”必须同时满足入口可达、动作可完成、持久化业务语义一致、真实客户端重启后仍成立、失败/取消可恢复。页面能渲染但按钮无行为、数据不保存或只能查看，不算等价。
+3. 任何当前功能不得被隐藏、置灰、删除、弱化、改成占位、要求回浏览器完成，或用手工搬文件、改库、运行脚本、启动 Vite/Node/代理补足。桌面机制不同的能力必须登记为等价的 `DESKTOP_REPLACEMENT`，不得标 N/A。
+4. `REAUTHORIZE` 仅允许目录、AI/Embedding Key、GitHub PAT 等外部安全授权首次重新确认；项目数据、Prompt/Workflow、AI 用量、非密设置、主题、排版和草稿必须自动迁入，授权完成后不得每次启动重复询问。
+5. 旧浏览器数据迁移由 Codex 执行，源库始终只读保留。目标必须为空；未通过逐表、正文、引用和 Blob hash 验证的目标库不得激活；失败不能留下用户可见半导入数据。
+6. 桌面适配仍受三注册表约束：AI 读经 `CONTEXT_SOURCES/assembleContext`，AI 写经 `FIELD_REGISTRY + AdoptionSchema/adopt`，表生命周期和迁移分类经 `PROJECT_TABLES` 派生；Rust 不直接读写 StoryForge 业务表。
+7. 共享前端改造必须同时通过 Web/PWA 回归。一个动作失败就使所属 FP 行失败；通过比例、健康分或“作者暂时不用”不能抵消缺失项。
+
+### 17.3 任务登记、依赖与并行边界
+
+状态词固定为：`NOT STARTED`、`IN PROGRESS`、`PASS`、`BLOCKED`。只有完成专项规划规定的全部验证并有证据，任务才能记为 `PASS`。
+
+| ID | 任务 | 硬依赖 / 接口依赖 | 当前状态 |
+|---|---|---|---|
+| D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | IN PROGRESS（Codex 已起草治理改动，待 Claude 审查） |
+| D0.2 | 冻结应用身份与支持范围 | D0.1；产品名、publisher、公开分发主体决策 | NOT STARTED |
+| D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | NOT STARTED |
+| D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | NOT STARTED |
+| D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
+| D1.1 | 建立正式 Tauri 2 壳 | D0.1～D0.5 全部 PASS | NOT STARTED |
+| D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | NOT STARTED |
+| D1.3 | 验证 Dexie/WebView2 数据持久化 | D1.2；仅合成夹具 | NOT STARTED |
+| D1.4 | 验证 IPC、流式和文件最短闭环 | D0.3、D1.1；不得接真实密钥/数据 | NOT STARTED |
+| D1.5 / G1 | WebView2 Go/No-Go | D0.5、D1.1～D1.4 | NOT STARTED |
+| D2.1 | 冻结迁移数据分类 | G1=Go；现有项目 JSON 继续只作项目级协议 | NOT STARTED |
+| D2.2 | 定义迁移包和类型保真协议 | D2.1 | NOT STARTED |
+| D2.3 | 实现旧网页全量导出器 | D2.2；生产旧 origin 仍可访问 | NOT STARTED |
+| D2.4 | 实现客户端首次导入状态机 | D2.3；客户端沿用当前 Dexie schema | NOT STARTED |
+| D2.5 | 实现源—目标验证器与 MigrationReceipt | D2.4 | NOT STARTED |
+| D2.6 | 迁移失败注入和旧版本矩阵 | D2.1～D2.5 | NOT STARTED |
+| D2.7 | 文件主路径与后续一键增强 | D2.2～D2.6 全绿 | NOT STARTED |
+| D3.1 | Rust 流式 AI/Embedding Transport | G1=Go、D1.4；现有 TS 流/取消语义有回归 | NOT STARTED |
+| D3.2 | Windows Credential Manager | D3.1 网络 broker 接口稳定 | NOT STARTED |
+| D3.3 | 原生文件与自动备份 | G1=Go、D0.3、D1.4；PROJECT_TABLES 生命周期 API 保持权威 | NOT STARTED |
+| D3.4 | CSP、Capability 与导航封锁 | D1.2、D3.1、D3.3；本地 UI/网络/文件 broker 可用 | NOT STARTED |
+| D3.5 | 隐私安全日志与诊断包 | D3.1～D3.4；与 D2.4 迁移事件契约并行协调，D5.3 再接更新事件 | NOT STARTED |
+| D4.1 | 自用候选构建 | D2、D3 全部 PASS；正式 identifier 冻结；manifest 无 UNKNOWN/BLOCKED/PARTIAL | NOT STARTED |
+| D4.2 | Codex 执行作者真实数据迁移 | D4.1；复制的真实库夹具演练通过；作者确认正确浏览器 profile | NOT STARTED |
+| D4.3 | 观察期与回滚 | D4.2 verified | NOT STARTED |
+| D4.4 / G2 | 进入公开发布判定 | D4.1～D4.3；receipt、观察、恢复、性能及逐项证据齐全 | NOT STARTED |
+| D5.1 | Windows CI 与可重复 NSIS | G2=Go | NOT STARTED |
+| D5.2 | 双签名与发布通道 | D5.1；代码签名证书、更新源及 updater 私钥恢复演练就绪 | NOT STARTED |
+| D5.3 | 更新、恢复点与启动健康标记 | D5.2 | NOT STARTED |
+| D5.4 | 系统化 QA 与发布矩阵 | 功能冻结；D5.1～D5.3 形成待测候选 | NOT STARTED |
+| D5.5 | 公开稳定版准入 | D5.1～D5.4；beta 观察完成；同一 artifact hash 冻结 | NOT STARTED |
+
+允许并行的边界只有两处：
+
+- D0.2、D0.3、D0.4 可在 D0.1 PASS 后由独立 checkout 并行；D0.5 等三者全部完成后统一冻结。
+- G1=Go 后，D2 与 D3 可按上表并行；共享类型/事件契约先定接口，D4 必须等待两条线全部 PASS。
+
+除上表明确允许外不得越过硬依赖。并行任务必须各占独立 checkout、各自分支和 PR；合入 `main` 仍按 `COLLAB-WORKFLOW.md` 串行 rebase、验证、审查。
+
+### 17.4 G1、G2 与 stable 三道硬门
+
+| 闸门 | 证明什么 | 必须满足 | 失败后的动作 |
+|---|---|---|---|
+| G1 · D1.5 | WebView2 能承载**全部**现有功能 | 动作 manifest 覆盖率 100%；每个 FP 行已分类并有可执行 Desktop 路径；全部生产面板完成真实 WebView2 smoke；无 UNKNOWN、BLOCKED、兼容性 PARTIAL；编辑器、Worker、流式、文件、画布和性能门槛通过 | 停止 Tauri 主线，另开 Electron 单独评估；不得双栈并行或删功能求通过 |
+| G2 · D4.4 | 作者真实数据下客户端已实现功能等价 | 第 5 节聚合 FP 与 D0.5 全部 actionId 在 production client、正式 profile、真实数据上 100% PASS；仅 PASS 可放行，BASELINED/IMPLEMENTED/PARTIAL/UNKNOWN/BLOCKED/未经作者修改目标的范围变更均为零；迁移、恢复、AI、文件、备份、Web/PWA 回归和观察期全部通过 | 继续停留作者自用，不得封测或公开分发 |
+| stable · D5.5 | 同一已签名 artifact 可公开发布 | Full/Regression QA 100% PASS；Windows 10/11 安装升级恢复矩阵、Web/PWA 回归、双签名、更新恢复点、安全与隐私材料全部有可追溯证据；S1/S2 为零 | 不发布；修复后重过受影响闸门，不得用健康分或人工豁免掩盖功能缺失 |
+
+G1 只证明“全部功能可实现”，不等于客户端已经完成。任何公开“完成”声明必须至少引用 G2；任何公开 stable 声明必须引用 D5.5 的同一 artifact 证据。
+
+### 17.5 分支、PR 与交付证据
+
+- 每个 D-task 单独分支，命名使用 `refactor/phase-desktop-task-N`；任务间共享接口先通过最小独立 PR 落定。
+- Codex 负责开发，Claude 负责独立审查；Claude 未给出审查结论前，不得在阶段记录中写“已审查”。
+- 每个 PR 必须列出任务 ID、四问、触达的 FP/actionId、验证命令、Windows smoke、Web/PWA 回归、失败注入、风险和回滚；跨栈任务必须同时验证 TypeScript 与 Rust。
+- `main` 一推即生产；仍执行 `COLLAB-WORKFLOW.md` 的串行合并、合前 rebase 和全闸门规则。桌面专项不得借“独立客户端”绕过 Web 生产安全。
+
+### 17.6 Desktop 专项停止信号
+
+除 `CLAUDE.md` 与 §8.3 的全局停止信号外，出现以下任一情况必须停止当前任务并回到设计/审查：
+
+- 需要复制/修改 Chrome、Edge 或 WebView2 的 LevelDB/UDF 文件，或在 Rust 直接写 Dexie 业务表。
+- 需要绕过三注册表，维护第二份表清单、AI 上下文或写回规则。
+- 需要给 renderer 任意 HTTP、全盘文件、shell 权限或返回明文 secret。
+- 正式 identifier/UDF 未冻结却准备导入真实数据，或迁移验证未完成却准备激活目标库。
+- 任一现有功能只能隐藏、置灰、回浏览器、依赖 Vite/Node/代理、用脚本/手工改库完成，或承诺“后续补齐”。
+- 任一生产入口没有 actionId/FP ID，功能报告含 UNKNOWN/BLOCKED/PARTIAL/IMPLEMENTED/缺失证据却准备过 G2、beta 或 stable。
+- Web 与 Desktop 开始形成两套业务实现，或共享前端改动造成 Web/PWA 回归。
+- 迁移、更新或备份失败后无法自动回到最后健康状态，或测试只能看到成功提示、不能核对正文/引用/Blob/hash。
+
+### 17.7 阶段完成记录（唯一追加位置）
+
+每个 D-task、G1、G2 和 D5.5 完成后，只在本节追加一次记录，格式固定为：日期、任务/闸门、source commit、实现摘要、功能等价覆盖、数据/失败注入、TypeScript/Rust/Windows/Web 验证、未决风险、Codex 交付状态、Claude 审查状态。未满足完成判据时只能写“进行中/失败记录”，不得标 PASS。
+
+#### 🟠 D0 启动记录（2026-07-14）
+
+- 用户已确认 Windows 首版、自用后公开、Tauri 2 + WebView2 + Dexie 路线，以及由 Codex 执行旧浏览器全量迁移；
+- D0.1 治理改动在独立 checkout 中由 Codex 起草：本节登记专项、ROADMAP 建索引、协作契约完成 Codex 签字；
+- 本记录**不是 Claude 对 Windows Desktop 专项的审查结论**。D0.1 仍为 IN PROGRESS，需 Claude 审查后才能标 PASS；
+- D0.2～D5.5 未开始，G1/G2 未通过，尚无可用于真实数据的 Windows 客户端。
 
 ---
 

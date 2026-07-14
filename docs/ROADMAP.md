@@ -2,12 +2,34 @@
 
 > 🔒 **接手者必读宪法**: [`/CLAUDE.md`](../CLAUDE.md) — 三注册表铁律 + 动手前的「四问」+ 反面教材
 > 📐 **施工权威**: [`docs/MASTER-BLUEPRINT.md`](MASTER-BLUEPRINT.md) — 重构 Phase 0/1/2/3 完整流程
-> 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律。**Codex 请过目并在文末 §7 确认。**
+> 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
+> 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — D0～D5 详细规格；项目级授权、依赖、闸门与状态见 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-02（追加社区反馈待开发批次：角色弧光自动填充、英文混入、卷纲依据、本地模型配置、中文输入粘连、流派 ID 约束、多模型任务路由、本地模型列表刷新等；施工权威见 MASTER-BLUEPRINT）
-> **说明**: 本文档是唯一的功能规划文档。旧文档已归档至 `docs/archive/`。
+> **最后更新**: 2026-07-14（新增 Windows Desktop D0 进行中索引；专项尚未完成 Claude 审查，D1～D5 未开始）
+> **说明**: 本文档是任务索引，不是施工权威。旧文档已归档至 `docs/archive/`；实施与放行以 MASTER-BLUEPRINT 为准。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
+
+---
+
+# ═══ 当前执行焦点 ═══
+
+## 🟠 Windows Desktop D0 · 治理、契约与基线（进行中，未完成）
+
+> **目标**：Windows 10/11 x64 首版，先作者自用验证、再封闭测试与公开发布；Tauri 2 + React/Vite + WebView2，首版继续使用 Dexie/IndexedDB。
+>
+> **功能红线**：冻结生产版全部可达动作必须在 Windows 客户端保持等价。G1 要求 100% 登记且无 UNKNOWN/BLOCKED/兼容性 PARTIAL；G2 与 stable 要求动作级 manifest 100% PASS，并同时通过 Web/PWA 回归。
+
+| 项目 | 当前状态 | 下一完成条件 |
+|---|---|---|
+| D0.1 纳入唯一施工权威 | 🟠 进行中：Codex 已起草治理改动，Claude 专项审查 pending | Claude 审查通过后才可标 PASS |
+| D0.2 身份与支持范围 | ⬜ 未开始 | D0.1 PASS；冻结 productName、publisher、正式/开发 identifier 与 UDF |
+| D0.3 RuntimeAdapter 契约 | ⬜ 未开始 | D0.1 PASS；浏览器专属能力盘点与四问完成 |
+| D0.4 功能/性能/安全基线 | ⬜ 未开始 | D0.1 PASS；参考 Windows 环境与夹具冻结 |
+| D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
+| D1～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
+
+当前没有可导入真实数据或可公开分发的 Windows 客户端。不得把“规划完成”“D0 开始”写成“客户端已完成”；阶段记录只追加到 MASTER-BLUEPRINT §17.7。
 
 ---
 
