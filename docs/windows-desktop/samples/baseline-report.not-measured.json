@@ -25,7 +25,7 @@
     "specVersion": "d0.4-fixtures-v1",
     "manifestPath": "fixture-manifest.json",
     "registryTableCount": 42,
-    "registryFingerprint": "587b820158bf8770b4f586f3728d3c97a8bd865df3feeaa982b0bba549dbdf1b",
+    "registryFingerprint": "accc1516093f20d1599ca280af299674b8a43530e01247596b8dde6f8df51676",
     "states": [
       {
         "id": "empty-v1",

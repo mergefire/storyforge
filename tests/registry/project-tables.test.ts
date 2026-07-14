@@ -12,7 +12,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { db } from '../../src/lib/db/schema'
 import { PROJECT_TABLES, REGISTRY_BY_NAME } from '../../src/lib/registry/project-tables'
-import { checkRegistry } from '../../src/lib/registry/validate'
+import { checkPortableRefContracts, checkRegistry } from '../../src/lib/registry/validate'
+import type { RefSpec, TableSpec } from '../../src/lib/registry/types'
 import {
   projectScopedTables, worldScopedTables, exportableTables,
   transactionTablesFor, cascadeDeleteProject, cascadeDeleteGroup, stampPrimaryWorld,
@@ -33,6 +34,138 @@ describe('Phase 1.1a · PROJECT_TABLES 注册表', () => {
     it('每张表名唯一', () => {
       const names = PROJECT_TABLES.map(s => s.name)
       expect(new Set(names).size).toBe(names.length)
+    })
+
+    it('五类嵌套引用声明 portable=require,且目标由 array/json 契约解析', () => {
+      const contracts = PROJECT_TABLES.flatMap((spec) =>
+        (spec.refs ?? []).flatMap((ref) => {
+          if ((ref.kind !== 'array' && ref.kind !== 'json') || !ref.portable) return []
+          const target = ref.kind === 'array'
+            ? ref.itemTarget
+            : ref.target.match(/^(\w+)\[/)?.[1]
+          return [{
+            source: spec.name,
+            field: ref.field,
+            kind: ref.kind,
+            target,
+            onUnmapped: ref.portable.onUnmapped,
+          }]
+        }),
+      )
+
+      expect(contracts).toEqual([
+        { source: 'detailedOutlines', field: 'appearingCharacterIds', kind: 'array', target: 'characters', onUnmapped: 'require' },
+        { source: 'detailedOutlines', field: 'foreshadowIds', kind: 'array', target: 'foreshadows', onUnmapped: 'require' },
+        { source: 'detailedOutlines', field: 'scenes', kind: 'json', target: 'characters', onUnmapped: 'require' },
+        { source: 'creativeRules', field: 'citedReferenceIds', kind: 'array', target: 'references', onUnmapped: 'require' },
+        { source: 'codexEntries', field: 'refs', kind: 'json', target: 'codexEntries', onUnmapped: 'require' },
+      ])
+
+      for (const contract of contracts) {
+        expect(REGISTRY_BY_NAME.get(contract.source)?.exportable).toBe(true)
+        expect(contract.target).toBeTruthy()
+        expect(REGISTRY_BY_NAME.get(contract.target!)?.exportable).toBe(true)
+      }
+    })
+
+    it('角色反向冗余声明已移除,portals 继续只走既有 exportRefRemap', () => {
+      const characterRefs = REGISTRY_BY_NAME.get('characters')?.refs ?? []
+      expect(characterRefs.some(ref =>
+        ref.kind === 'array' && ref.field === 'appearingCharacterIds',
+      )).toBe(false)
+
+      const worldNodes = REGISTRY_BY_NAME.get('worldNodes')!
+      const portalsRef = worldNodes.refs?.find(ref =>
+        ref.kind === 'json' && ref.field === 'portalsJSON',
+      )
+      expect(portalsRef?.kind).toBe('json')
+      if (portalsRef?.kind === 'json') expect(portalsRef.portable).toBeUndefined()
+      expect(worldNodes.exportRefRemap).toContainEqual({
+        field: 'portalsJSON', remapVia: 'worldNodes', kind: 'portals',
+      })
+    })
+
+    it('portable 纯校验拒绝错误引用类型、不可导出源/目标、缺失和畸形目标', () => {
+      const illegalSimple = {
+        kind: 'simple',
+        field: 'id',
+        target: 'characterRelations[fromCharacterId]',
+        onDelete: 'cascade',
+        portable: { onUnmapped: 'require' },
+      } as unknown as RefSpec
+
+      const invalidSpecs: TableSpec[] = PROJECT_TABLES.map((spec): TableSpec => {
+        if (spec.name === 'characters') {
+          return {
+            ...spec,
+            refs: [...(spec.refs ?? []), illegalSimple],
+            exportRemap: [
+              ...(spec.exportRemap ?? []),
+              {
+                field: 'unstableOwnerId',
+                remapVia: 'worldGroups',
+                exportAs: '_unstableOwnerExportId',
+                onUnmapped: 'drop',
+              },
+            ],
+          }
+        }
+        if (spec.name === 'snapshots') {
+          return {
+            ...spec,
+            refs: [{
+              kind: 'array', field: 'cachedCharacterIds', itemTarget: 'characters',
+              onDelete: 'keep', portable: { onUnmapped: 'require' },
+            }],
+          }
+        }
+        if (spec.name === 'detailedOutlines') {
+          return {
+            ...spec,
+            exportRefRemap: [
+              ...(spec.exportRefRemap ?? []),
+              { field: 'scenes', remapVia: 'worldNodes', kind: 'portals' },
+            ],
+            refs: [
+              ...(spec.refs ?? []),
+              {
+                kind: 'array', field: 'missingIds', itemTarget: 'missingPortableTarget',
+                onDelete: 'keep', portable: { onUnmapped: 'require' },
+              },
+              {
+                kind: 'array', field: 'localOnlyIds', itemTarget: 'promptTemplates',
+                onDelete: 'keep', portable: { onUnmapped: 'require' },
+              },
+              {
+                kind: 'json', field: 'malformedRefs', jsonPath: '$.*', target: 'characters[',
+                onDelete: 'keep', portable: { onUnmapped: 'require' },
+              },
+              {
+                kind: 'json', field: 'nonPrimaryRefs', jsonPath: '$.*', target: 'characters[name]',
+                onDelete: 'keep', portable: { onUnmapped: 'require' },
+              },
+            ],
+          }
+        }
+        return spec
+      })
+
+      const result = checkPortableRefContracts(invalidSpecs)
+      expect(result.ok).toBe(false)
+      expect(result.errors).toContain('characters.refs portable 仅支持 array/json,当前为 simple')
+      expect(result.errors).toContain('snapshots.refs(cachedCharacterIds) portable 源表必须 exportable')
+      expect(result.errors).toContain('detailedOutlines.refs(missingIds) portable target 不存在: missingPortableTarget')
+      expect(result.errors).toContain('detailedOutlines.refs(localOnlyIds) portable target 必须 exportable: promptTemplates')
+      expect(result.errors).toContain('detailedOutlines.refs(malformedRefs) portable target 格式非法')
+      expect(result.errors).toContain(
+        'detailedOutlines.refs(nonPrimaryRefs) portable JSON target 必须指向主键 [id]',
+      )
+      expect(result.errors).toContain(
+        'detailedOutlines.refs(scenes) portable 不得与 exportRefRemap 重复登记',
+      )
+      expect(result.errors).toContain(
+        'detailedOutlines.refs(appearingCharacterIds) portable target characters 可丢行时必须声明 exportIdField',
+      )
     })
   })
 

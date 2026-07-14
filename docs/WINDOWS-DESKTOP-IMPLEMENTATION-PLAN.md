@@ -382,7 +382,7 @@ flowchart LR
 | FP-DATA-01 | Dexie 自动保存、重开与项目隔离 | 所有 PROJECT_TABLES 数据、关系、主键、富文本和 Blob 可持续编辑且重启不丢 | SHARED | DATA+RESTART+RECOVERY+REAL | G1 |
 | FP-DATA-02 | version-history 版本历史/快照 | 手动快照备注、列表/查看/恢复为新项目/删除保留；手动快照不受自动上限清理，自动快照每项目仅保留最新 20 个 | SHARED | NAV+ACT+DATA+RECOVERY+RESTART | G2 |
 | FP-DATA-03 | import-doc 文档导入 | 粘贴文本及 TXT≤5MB、MD≤5MB、CSV≤2MB、PDF≤20MB、DOCX≤10MB 保留；DOC 明确拒绝。切块/成本时间/分卷预览、当前项目/项目参考/目标世界、浅/深分析、活动记录和报告保留 | SHARED/ADAPTED | NAV+ACT+FILE+AI+DATA+RECOVERY | G1 |
-| FP-DATA-04 | export 数据管理：项目可移植导入导出 | 当前项目 JSON v3 导出、v1/v2/v3 导入兼容及 Markdown/TXT 正文导出保留；所有导入重映射 ID/FK 并创建新项目，绝不覆盖当前项目 | ADAPTED | NAV+ACT+FILE+DATA+RECOVERY | G1 |
+| FP-DATA-04 | export 数据管理：项目可移植导入导出 | 当前项目 JSON v4 导出（嵌套引用 marker=`export-index-v1`）、v1/v2/v3 导入兼容及 Markdown/TXT 正文导出保留；v4 重映射登记的 ID/FK 与嵌套引用并创建新项目，绝不覆盖当前项目；旧 v1-v3 嵌套 raw IDs 原样保留且不得猜测为 v4 序号 | ADAPTED | NAV+ACT+FILE+DATA+RECOVERY | G1 |
 | FP-DATA-05 | 本地自动快照与恢复 | 5 分钟自动、最多 20 个自动快照，以及手动创建、列表、恢复为新项目、删除等现有行为保留 | SHARED/ADAPTED | ACT+DATA+RECOVERY+RESTART | G1 |
 | FP-DATA-06 | 文件夹绑定、自动备份与首页恢复 | 改为原生目录选择和原子写入；记住目录、立即保存、进入即写、每 5 分钟写入、失效后重新绑定、解绑保留；首页枚举 storyforge-*.json，跳过坏文件并逐个恢复为新项目 | ADAPTED/REAUTHORIZE | ACT+FILE+DATA+RECOVERY+REAL | G1 |
 | FP-DATA-07 | GitHub Gist 云备份 | PAT 验证、记住/仅会话、连接/断开、创建/更新私密 Gist、列表、revision 回溯、恢复为新项目及每 10 分钟自动备份保留；PAT 可一次重授权 | ADAPTED/REAUTHORIZE | ACT+DATA+RECOVERY+REAL | G2 |
@@ -582,7 +582,7 @@ interface RuntimeAdapter {
 
 **完成判据**
 
-D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前确定性夹具核心已落地，但 `small-v1` 仍受 `AUDIT-1b` 嵌套引用重映射与往返业务 hash 归一化缺口阻塞，动态实测也未齐，不得标 PASS。
+D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前确定性夹具核心已落地，`small-v1` 嵌套引用重映射已 PASS；往返业务 hash 归一化仍未实现，动态实测也未齐，不得标 PASS。
 
 ---
 

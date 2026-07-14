@@ -1,8 +1,70 @@
+import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-import {
+const baselineModuleUrl = pathToFileURL(path.resolve(
+  process.cwd(),
+  'scripts',
+  'windows-desktop-baseline.mjs',
+)).href
+const bridgeSource = `
+import fs from 'node:fs'
+import * as baseline from ${JSON.stringify(baselineModuleUrl)}
+const request = JSON.parse(fs.readFileSync(0, 'utf8'))
+let result
+switch (request.action) {
+  case 'constants':
+    result = {
+      AGGREGATE_MINIMUM_SAMPLES: baseline.AGGREGATE_MINIMUM_SAMPLES,
+      FIXTURE_IDS: baseline.FIXTURE_IDS,
+      LEGACY_PROTOCOL_VERSIONS: baseline.LEGACY_PROTOCOL_VERSIONS,
+      PERFORMANCE_PASS_REQUIREMENTS: baseline.PERFORMANCE_PASS_REQUIREMENTS,
+      PERFORMANCE_SCENARIO_IDS: baseline.PERFORMANCE_SCENARIO_IDS,
+      PROTOCOL_VERSION: baseline.PROTOCOL_VERSION,
+      REQUIRED_REFERENCE_MODES: baseline.REQUIRED_REFERENCE_MODES,
+      SECURITY_SCENARIO_IDS: baseline.SECURITY_SCENARIO_IDS,
+      SUPPLEMENTAL_REFERENCE_MODES: baseline.SUPPLEMENTAL_REFERENCE_MODES,
+    }
+    break
+  case 'readDatabaseSchemaVersionFacts':
+    result = baseline.readDatabaseSchemaVersionFacts()
+    break
+  case 'readRegistryFacts':
+    result = baseline.readRegistryFacts()
+    break
+  case 'validateReport':
+    result = baseline.validateReport(
+      request.payload.report,
+      request.payload.fixtureSpec,
+      request.payload.registryFacts,
+    )
+    break
+  case 'validateStaticContract':
+    result = baseline.validateStaticContract()
+    break
+  default:
+    throw new Error('Unknown baseline bridge action: ' + request.action)
+}
+process.stdout.write(JSON.stringify(result))
+`
+
+function runBaselineBridge<T>(action: string, payload?: unknown): T {
+  return JSON.parse(execFileSync(
+    process.execPath,
+    ['--input-type=module', '--eval', bridgeSource],
+    {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      input: JSON.stringify({ action, payload }),
+    },
+  )) as T
+}
+
+const baselineConstants = runBaselineBridge<Record<string, any>>('constants')
+
+const {
   AGGREGATE_MINIMUM_SAMPLES,
   FIXTURE_IDS,
   LEGACY_PROTOCOL_VERSIONS,
@@ -12,11 +74,23 @@ import {
   REQUIRED_REFERENCE_MODES,
   SECURITY_SCENARIO_IDS,
   SUPPLEMENTAL_REFERENCE_MODES,
-  readDatabaseSchemaVersionFacts,
-  readRegistryFacts,
-  validateReport,
-  validateStaticContract,
-} from '../../scripts/windows-desktop-baseline.mjs'
+} = baselineConstants
+
+function readDatabaseSchemaVersionFacts(): any {
+  return runBaselineBridge('readDatabaseSchemaVersionFacts')
+}
+
+function readRegistryFacts(): any {
+  return runBaselineBridge('readRegistryFacts')
+}
+
+function validateReport(report: any, fixtureSpec: any, registryFacts: any): string[] {
+  return runBaselineBridge('validateReport', { report, fixtureSpec, registryFacts })
+}
+
+function validateStaticContract(): string[] {
+  return runBaselineBridge('validateStaticContract')
+}
 
 const root = process.cwd()
 const fixtureSpecPath = path.join(

@@ -10,6 +10,7 @@ import { migrateCharactersToAxes, CHARACTER_AXES_SNAPSHOT_KIND } from '../../src
 import { finalizeCharacterAxesMigrationSnapshots } from '../../src/lib/migrations/finalize-character-axes-snapshots'
 import { adopt } from '../../src/lib/registry/adopt'
 import { exportProjectJSON, importProjectJSON } from '../../src/lib/export/json-export'
+import { NESTED_REF_ENCODING, PROJECT_EXPORT_VERSION } from '../../src/lib/export/export-format'
 
 const fixtureNames: string[] = []
 
@@ -146,7 +147,8 @@ describe('R-R1-character-axes', () => {
     await finalizeCharacterAxesMigrationSnapshots()
     const snapshot = await db.snapshots.get(snapshotId)
     const restored = JSON.parse(snapshot!.data)
-    expect(restored.version).toBe(3)
+    expect(restored.version).toBe(PROJECT_EXPORT_VERSION)
+    expect(restored.nestedRefEncoding).toBe(NESTED_REF_ENCODING)
     expect(restored.characters[0]).toMatchObject({
       name: '旧反派',
       role: 'antagonist',

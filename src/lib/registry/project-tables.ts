@@ -71,10 +71,9 @@ export const PROJECT_TABLES: TableSpec[] = [
   { table: db.characters, name: 'characters', owner: 'project', homeWorldScoped: true,
     exportable: true,
     refs: [
-      // 删角色 → 关系级联删 + 细纲数组引用清理(Phase 2.6 实现 JSON/array 级联)
+      // 删角色 → 关系级联删；细纲内引用由 detailedOutlines 正向声明。
       { kind: 'simple', field: 'id', target: 'characterRelations[fromCharacterId]', onDelete: 'cascade' },
       { kind: 'simple', field: 'id', target: 'characterRelations[toCharacterId]', onDelete: 'cascade' },
-      { kind: 'array', field: 'appearingCharacterIds', itemTarget: 'detailedOutlines', onDelete: 'removeItem' },
     ],
     exportRemap: [{ field: 'homeWorldGroupId', remapVia: 'worldGroups', exportAs: '_homeWorldGroupExportId' }] },
 
@@ -112,9 +111,9 @@ export const PROJECT_TABLES: TableSpec[] = [
 
   { table: db.detailedOutlines, name: 'detailedOutlines', owner: 'project', exportable: true,
     refs: [
-      { kind: 'array', field: 'appearingCharacterIds', itemTarget: 'characters', onDelete: 'removeItem' },
-      { kind: 'array', field: 'foreshadowIds', itemTarget: 'foreshadows', onDelete: 'removeItem' },
-      { kind: 'json', field: 'scenes', jsonPath: '$[].characterIds[]', target: 'characters[id]', onDelete: 'remap' },
+      { kind: 'array', field: 'appearingCharacterIds', itemTarget: 'characters', onDelete: 'removeItem', portable: { onUnmapped: 'require' } },
+      { kind: 'array', field: 'foreshadowIds', itemTarget: 'foreshadows', onDelete: 'removeItem', portable: { onUnmapped: 'require' } },
+      { kind: 'json', field: 'scenes', jsonPath: '$[].characterIds[]', target: 'characters[id]', onDelete: 'remap', portable: { onUnmapped: 'require' } },
     ],
     exportRemap: [{ field: 'outlineNodeId', remapVia: 'outlineNodes', exportAs: '_outlineExportId', onUnmapped: 'require' }] },
 
@@ -140,7 +139,7 @@ export const PROJECT_TABLES: TableSpec[] = [
 
   { table: db.creativeRules, name: 'creativeRules', owner: 'project', exportable: true,
     refs: [
-      { kind: 'array', field: 'citedReferenceIds', itemTarget: 'references', onDelete: 'removeItem' },
+      { kind: 'array', field: 'citedReferenceIds', itemTarget: 'references', onDelete: 'removeItem', portable: { onUnmapped: 'require' } },
     ] },
 
   // (itemSystems 表已于 DB v29 并入 codex.artifact 词条并删除)
@@ -157,7 +156,7 @@ export const PROJECT_TABLES: TableSpec[] = [
 
   { table: db.codexEntries, name: 'codexEntries', owner: 'project', worldScoped: true,
     exportable: true,
-    refs: [{ kind: 'json', field: 'refs', jsonPath: '$.*', target: 'codexEntries[id]', onDelete: 'remap' }],
+    refs: [{ kind: 'json', field: 'refs', jsonPath: '$.*', target: 'codexEntries[id]', onDelete: 'remap', portable: { onUnmapped: 'require' } }],
     exportRemap: [
       { field: 'categoryId', remapVia: 'codexCategories', exportAs: '_categoryExportId', onUnmapped: 'require' },
       { field: 'worldGroupId', remapVia: 'worldGroups', exportAs: '_worldGroupExportId' },

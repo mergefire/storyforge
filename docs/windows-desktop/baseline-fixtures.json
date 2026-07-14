@@ -6,6 +6,12 @@
     "rule": "At generation time, derive every current project table and its owner/export policy from PROJECT_TABLES. Do not copy a table-name list into this specification.",
     "required": true
   },
+  "projectExportFormat": {
+    "currentVersion": 4,
+    "nestedRefEncoding": "export-index-v1",
+    "portableNestedReferenceRule": "Only version 4 with the exact marker encodes nested references as export indexes.",
+    "legacyCompatibility": "Versions 1-3 remain importable. Their nested numbers are historical raw database IDs and must be preserved without guessing or index reinterpretation."
+  },
   "determinism": {
     "seed": "storyforge-windows-d0.4-v1",
     "clock": "2026-01-01T00:00:00.000Z",
@@ -56,9 +62,14 @@
         "sourceAndImportedPrimaryKeysMustDiffer": true
       },
       "currentValidation": {
-        "status": "BLOCKED_SEMANTIC_REFERENCE_REMAP_AND_HASH_NORMALIZATION",
+        "status": "BLOCKED_HASH_NORMALIZATION",
         "evidence": "tests/desktop-contract/D0.4-fixtures.test.ts",
-        "knownPaths": [
+        "referenceRemapStatus": "PASS",
+        "referenceRemapEvidence": [
+          "tests/regression/R-export-nested-reference-remap.test.ts",
+          "tests/desktop-contract/D0.4-fixtures.test.ts"
+        ],
+        "verifiedPaths": [
           "detailedOutlines[].appearingCharacterIds[]",
           "detailedOutlines[].scenes[].characterIds[]",
           "detailedOutlines[].foreshadowIds[]",
@@ -67,7 +78,7 @@
         ],
         "roundtripHashStatus": "NOT_IMPLEMENTED",
         "roundtripHashGap": "The canonicalizer is deterministic and fail-closed, but business normalization for remapped IDs and the imported project-name suffix is not implemented. Current source/re-export hashes are diagnostic only and intentionally differ.",
-        "rule": "Keep artifactStatus NOT_GENERATED until every imported reference resolves inside the imported project and normalized source/re-export business hashes are equal. Row counts and raw diagnostic hashes cannot override either gap."
+        "rule": "Keep artifactStatus NOT_GENERATED until normalized source/re-export business hashes are equal. Reference remap is PASS, but row counts and raw diagnostic hashes cannot override the remaining normalization gap."
       }
     },
     {

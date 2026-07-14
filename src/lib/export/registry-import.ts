@@ -17,6 +17,24 @@ import { migrateStateCardsToTemporalFactCandidates } from '../migrations/state-c
 import type { TableSpec } from '../registry/types'
 import type { ProjectExportData } from './json-export'
 import { normalizeCharacterAxes } from '../character/character-axes'
+import { usesPortableNestedReferences } from './export-format'
+import {
+  portableRefTargetTable,
+  remapPortableReferenceValue,
+} from './registry-ref-remap'
+import type { PortableReferenceRef } from './registry-ref-remap'
+
+interface PendingPortableRefRemap {
+  spec: TableSpec
+  newId: number
+  refs: PortableReferenceRef[]
+  stashed: Record<string, unknown>
+}
+
+function portableRefsFor(spec: TableSpec): PortableReferenceRef[] {
+  return (spec.refs ?? []).filter((ref): ref is PortableReferenceRef =>
+    (ref.kind === 'array' || ref.kind === 'json') && ref.portable !== undefined)
+}
 
 /** 表级拓扑排序:被 remapVia 指向的表必须先导入(selfTree 不算表间依赖) */
 function deriveImportOrder(specs: TableSpec[]): TableSpec[] {
@@ -84,6 +102,7 @@ function patchSelfIdPaths(obj: Record<string, any>, paths: string[], newId: numb
  */
 export async function deriveImportProjectJSON(data: ProjectExportData): Promise<number> {
   if (!data.version || !data.project) throw new Error('无效的导出文件格式')
+  const remapPortableRefs = usesPortableNestedReferences(data)
   const now = Date.now()
   const specs = PROJECT_TABLES.filter(s => s.exportable && s.name !== 'projects')
   const order = deriveImportOrder(specs)
@@ -104,6 +123,7 @@ export async function deriveImportProjectJSON(data: ProjectExportData): Promise<
     }
 
     const newIdMaps = new Map<string, Map<number, number>>()
+    const pendingPortableRefRemaps: PendingPortableRefRemap[] = []
 
     for (const spec of order) {
       const rawRows: any[] = (data as any)[spec.name] ?? []
@@ -146,6 +166,14 @@ export async function deriveImportProjectJSON(data: ProjectExportData): Promise<
           Object.assign(obj, normalizeCharacterAxes(obj))
         }
 
+        const portableRefs = remapPortableRefs ? portableRefsFor(spec) : []
+        const portableStashed: Record<string, unknown> = {}
+        for (const ref of portableRefs) {
+          if (!Object.prototype.hasOwnProperty.call(obj, ref.field)) continue
+          portableStashed[ref.field] = obj[ref.field]
+          delete obj[ref.field]
+        }
+
         // JSON 引用字段(portals)先剥离,待全表映射建好后两阶段回填
         let stashed: Record<string, any> | null = null
         if ((spec.exportRefRemap ?? []).length > 0) {
@@ -163,6 +191,14 @@ export async function deriveImportProjectJSON(data: ProjectExportData): Promise<
         const key = spec.exportIdField ? exportId : exportIndex
         if (key != null) newIdMap.set(key, newId)
         if (stashed) pendingRefRemap.push({ newId, stashed })
+        if (Object.keys(portableStashed).length > 0) {
+          pendingPortableRefRemaps.push({
+            spec,
+            newId,
+            refs: portableRefs,
+            stashed: portableStashed,
+          })
+        }
       }
 
       // 两阶段:JSON 引用重映射(portals 自引用,需本表 newIdMap 已全)
@@ -177,6 +213,26 @@ export async function deriveImportProjectJSON(data: ProjectExportData): Promise<
       }
 
       newIdMaps.set(spec.name, newIdMap)
+    }
+
+    // v4 portable nested refs use export indexes. Resolve only after every table map exists,
+    // so forward references, self references and cycles never affect table import order.
+    for (const pending of pendingPortableRefRemaps) {
+      const patch: Record<string, unknown> = {}
+      for (const ref of pending.refs) {
+        if (!Object.prototype.hasOwnProperty.call(pending.stashed, ref.field)) continue
+        const targetTable = portableRefTargetTable(ref)
+        const targetMap = newIdMaps.get(targetTable)
+        patch[ref.field] = remapPortableReferenceValue(
+          pending.stashed[ref.field],
+          ref,
+          (exportIndex: number) => targetMap?.get(exportIndex),
+          { operation: 'import', table: pending.spec.name, row: pending.newId },
+        )
+      }
+      if (Object.keys(patch).length > 0) {
+        await (db as any)[pending.spec.name].update(pending.newId, patch)
+      }
     }
 
     // NS-4：旧备份可能只有 stateCards、没有 temporalFacts。导入后用新项目内的

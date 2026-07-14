@@ -34,6 +34,8 @@ const smallFixtureSpec = fixtureSpec.fixtures.find(
 ) as {
   artifactStatus: string
   currentValidation: {
+    referenceRemapEvidence: string[]
+    referenceRemapStatus: string
     roundtripHashStatus: string
     status: string
   }
@@ -262,7 +264,7 @@ describe('D0.4 deterministic fixture contract', () => {
     }
   })
 
-  it('keeps small-v1 invalid while semantic FK remap blockers remain visible', async () => {
+  it('passes semantic reference remap while keeping small-v1 blocked on hash normalization', async () => {
     const source = await seedFullProject({
       fixtureId: 'small-v1',
       projectName: 'D0.4 small-v1',
@@ -276,6 +278,10 @@ describe('D0.4 deterministic fixture contract', () => {
       orderAxis: 'neutral',
     })
     const exported = await exportProjectJSON(source.projectId)
+    expect(exported).toMatchObject({
+      version: 4,
+      nestedRefEncoding: 'export-index-v1',
+    })
     const sourceKeys = await collectExportablePrimaryKeys()
 
     await db.delete()
@@ -315,24 +321,16 @@ describe('D0.4 deterministic fixture contract', () => {
     }
 
     const dangling = await collectDanglingFixtureReferences(importedProjectId)
-    const expectedDangling = [
-      ...Array.from({ length: smallFixtureSpec.expected.chapters }, (_, index) => (
-        `detailedOutlines[${index}].appearingCharacterIds[0]`
-      )),
-      ...Array.from({ length: smallFixtureSpec.expected.chapters }, (_, index) => (
-        `detailedOutlines[${index}].scenes[0].characterIds[0]`
-      )),
-      ...Array.from({ length: smallFixtureSpec.expected.chapters }, (_, index) => (
-        `detailedOutlines[${index}].foreshadowIds[0]`
-      )),
-      'creativeRules[0].citedReferenceIds[0]',
-      'codexEntries[0].refs.related[0]',
-    ].sort()
-    expect(dangling).toEqual(expectedDangling)
+    expect(dangling).toEqual([])
 
     expect(smallFixtureSpec.artifactStatus).toBe('NOT_GENERATED')
-    expect(smallFixtureSpec.currentValidation.status).toBe(
-      'BLOCKED_SEMANTIC_REFERENCE_REMAP_AND_HASH_NORMALIZATION',
+    expect(smallFixtureSpec.currentValidation.status).toBe('BLOCKED_HASH_NORMALIZATION')
+    expect(smallFixtureSpec.currentValidation.referenceRemapStatus).toBe('PASS')
+    expect(smallFixtureSpec.currentValidation.referenceRemapEvidence).toEqual(
+      expect.arrayContaining([
+        'tests/regression/R-export-nested-reference-remap.test.ts',
+        'tests/desktop-contract/D0.4-fixtures.test.ts',
+      ]),
     )
     expect(smallFixtureSpec.currentValidation.roundtripHashStatus).toBe('NOT_IMPLEMENTED')
     const sourceDiagnosticHash = fixtureSha256(exported)

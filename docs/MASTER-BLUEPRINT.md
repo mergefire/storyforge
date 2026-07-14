@@ -2337,7 +2337,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 | D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | PASS（2026-07-14；Claude 独立审查无阻断项） |
 | D0.2 | 冻结应用身份与支持范围 | D0.1；产品名、publisher、公开分发主体决策 | IN PROGRESS（开发身份草案已建立；正式 publisher 待作者确认） |
 | D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | IN PROGRESS（浏览器专属能力与 PoC 风险盘点完成） |
-| D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议与确定性夹具核心已落地；`small-v1` 检出 `AUDIT-1b` 嵌套引用未重映射，往返业务 hash 归一化尚未实现，完整夹具与生产 `web-tab` 实测尚未齐全；installed PWA 可选） |
+| D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议与确定性夹具核心已落地；`small-v1` 嵌套引用重映射已 PASS，往返业务 hash 归一化尚未实现，完整夹具与生产 `web-tab` 实测尚未齐全；installed PWA 可选） |
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
 | D1.1 | 建立正式 Tauri 2 壳 | D0.1～D0.5 全部 PASS | NOT STARTED |
 | D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | NOT STARTED |

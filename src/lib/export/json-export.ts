@@ -13,6 +13,7 @@
  */
 import { deriveExportProjectJSON } from './registry-export'
 import { deriveImportProjectJSON } from './registry-import'
+import type { NestedRefEncoding } from './export-format'
 import type {
   Project, Worldview, StoryCore, PowerSystem,
   Character, OutlineNode, Chapter,
@@ -47,9 +48,12 @@ type HomeWorldGroupExportRef = {
  *   1 — 初始版本（14 张表）
  *   2 — 补全全部项目数据（2026-05-27）
  *   3 — 多世界系统（2026-06-02，Phase 25.4）
+ *   4 — 嵌套引用改用导出序号，并以 nestedRefEncoding 显式标记（2026-07-15）
  */
 export interface ProjectExportData {
   version: number
+  /** v4: nested array/JSON references contain export indexes, never source DB IDs. */
+  nestedRefEncoding?: NestedRefEncoding
   exportedAt: number
   project: Omit<Project, 'id'>
 

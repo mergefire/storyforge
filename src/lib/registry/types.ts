@@ -36,6 +36,8 @@ export interface JsonRef {
   jsonPath: string   // 简化 path,如 '$.characterId' 或 '$[].characterIds[]'
   target: string     // 'tableName[fieldName]'
   onDelete: 'cascade' | 'setNull' | 'keep' | 'remap'
+  /** 导出/导入时也必须按目标表的新主键重映射。 */
+  portable?: { onUnmapped: 'require' | 'drop-item' }
 }
 
 /** 数组字段内的多引用(字段本身就是 number[]) */
@@ -44,6 +46,8 @@ export interface ArrayRef {
   field: string       // 数组字段名(或 JSON 数组字符串字段名)
   itemTarget: string  // 数组元素指向哪张表
   onDelete: 'removeItem' | 'setNullItem' | 'keep'
+  /** 导出/导入时也必须按目标表的新主键重映射。 */
+  portable?: { onUnmapped: 'require' | 'drop-item' }
 }
 
 /** 间接归属(本表没有 projectId,通过另一张表的字段间接挂项目) */

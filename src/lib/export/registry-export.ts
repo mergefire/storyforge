@@ -13,9 +13,12 @@ import { PROJECT_TABLES, REGISTRY_BY_NAME } from '../registry/project-tables'
 import { remapWorldPortalTargets } from '../utils/world-portals'
 import type { TableSpec } from '../registry/types'
 import type { ProjectExportData } from './json-export'
-
-/** 当前导出格式版本(与手写版保持一致) */
-const EXPORT_VERSION = 3
+import { NESTED_REF_ENCODING, PROJECT_EXPORT_VERSION } from './export-format'
+import {
+  portableRefTargetTable,
+  remapPortableReferenceValue,
+} from './registry-ref-remap'
+import type { PortableReferenceRef } from './registry-ref-remap'
 
 /** 取一张 exportable 表的库内记录(项目级按 projectId;direct-child 经 projectResolver) */
 async function queryRows(spec: TableSpec, projectId: number): Promise<any[]> {
@@ -58,6 +61,19 @@ function toExportRow(
 
   if (spec.exportIdField) obj._exportId = index
 
+  for (const ref of spec.refs ?? []) {
+    if ((ref.kind !== 'array' && ref.kind !== 'json') || !ref.portable) continue
+    const portableRef = ref as PortableReferenceRef
+    const targetTable = portableRefTargetTable(portableRef)
+    const targetMap = idMaps.get(targetTable)
+    obj[ref.field] = remapPortableReferenceValue(
+      obj[ref.field],
+      portableRef,
+      (sourceId: number) => targetMap?.get(sourceId),
+      { operation: 'export', table: spec.name, row: index },
+    )
+  }
+
   for (const rr of spec.exportRefRemap ?? []) {
     if (rr.kind === 'portals') {
       const map = idMaps.get(rr.remapVia)
@@ -91,7 +107,8 @@ export async function deriveExportProjectJSON(projectId: number): Promise<Projec
   // 第二遍:逐行转导出对象
   const { id: _pid, ...projectData } = project
   const result: any = {
-    version: EXPORT_VERSION,
+    version: PROJECT_EXPORT_VERSION,
+    nestedRefEncoding: NESTED_REF_ENCODING,
     exportedAt: Date.now(),
     project: projectData,
   }

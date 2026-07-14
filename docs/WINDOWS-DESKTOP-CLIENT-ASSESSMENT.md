@@ -266,8 +266,8 @@ Dexie v37、42 张 required tables、注册表和迁移夹具是强基础。最�
 
 **[S2] 现有 ProjectExportData 不能作为零丢失迁移协议**
 
-- **Evidence:** src/lib/export/registry-export.ts:18、74-95 仍产出 version 3 项目导出；src/lib/registry/project-tables.ts:199-207、234-256 将缓存、导入 Blob/会话、快照、全局 Prompt/Workflow、usage 标为 exportable:false；tests/regression/R-export-fullcoverage.test.ts:81-87 明确保留 detailedOutlines 角色引用未重映射的已知缺陷。
-- **Impact:** 直接批量执行当前导出/导入可能静默遗漏数据，或在新主键下留下错误引用。
+- **Evidence:** 普通项目 JSON 已升级为 version 4，并用 `nestedRefEncoding: "export-index-v1"` 修复登记的数组/JSON 嵌套引用重映射；`R-export-nested-reference-remap` 与 D0.4 `small-v1` 已验证新主键下无悬空引用。旧 v1-v3 嵌套数字按 raw database ID 原样保留且不猜测。与此同时，`PROJECT_TABLES` 仍将可重建缓存、导入 Blob/会话、快照、全局 Prompt/Workflow 与 usage 标为 `exportable:false`。
+- **Impact:** 普通 v4 项目分享 JSON 已消除 AUDIT-1b 的新导出引用缺陷，但仍不能覆盖完整资料迁移范围；把它直接当成零丢失全量迁移协议仍会静默遗漏这些非 exportable 数据，旧 v1-v3 也无法凭空推断嵌套 raw ID 的可移植映射。
 - **Recommendation:** 新增独立 FullMigrationArchive，不替换普通项目分享 JSON。空目标库导入时保留原始主键；manifest 包含 app/schema/format 版本、逐表 count/hash、Blob size/hash 和 omittedAsRebuildable。
 
 **[S3] 禁止物理复制 Chrome/Edge IndexedDB**

@@ -25,7 +25,7 @@
 | D0.1 纳入唯一施工权威 | ✅ PASS：2026-07-14 Claude 独立审查无阻断项 | 治理提交推送后保持唯一施工权威 |
 | D0.2 身份与支持范围 | 🟠 进行中：开发身份草案已建立 | 作者确认正式 publisher/证书主体；冻结 productName、identifier 与 UDF |
 | D0.3 RuntimeAdapter 契约 | 🟠 进行中：浏览器专属能力与 PoC 风险盘点完成 | 落地 contract、fake 与 Web wrapper，并通过架构检查 |
-| D0.4 功能/性能/安全基线 | 🟠 进行中：`d0.4-v2` 协议与确定性夹具核心已落地；`small-v1` 检出 `AUDIT-1b`，往返业务 hash 归一化尚未实现 | 修复嵌套引用重映射并完成 hash 等值断言，生成全部冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
+| D0.4 功能/性能/安全基线 | 🟠 进行中：`d0.4-v2` 协议与确定性夹具核心已落地；`small-v1` 嵌套引用重映射已 PASS，往返业务 hash 归一化尚未实现 | 完成 hash 等值断言并生成全部冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
 | D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
 | D1～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
 
@@ -1292,12 +1292,11 @@ for each character:
 - **安全网（数据红线）**：`R-export-fullcoverage`（全 31 表 + 双世界组往返）锁当前行为 → `R-export-derive-equivalence`（派生导出 ≡ 真实旧格式 fixture，逐字段）→ `R-export-derive-roundtrip`（派生往返 + 旧 fixture 向后兼容）。等价仅两处无害差异：派生版去掉了旧版冗余的 outlineNodes/worldNodes 原始 parentId 死字段。
 - **验收达成**：新增 exportable 表只登记注册表即自动进出导出/导入；旧备份/Gist 云存档格式不变（fixture 锁死）；往返测试全绿。
 
-### 🟠 AUDIT-1b（AUDIT-1 派生时发现 · 待修）— 细纲数组/JSON 内的角色引用导入未重映射
-- **现状**：`detailedOutlines.appearingCharacterIds`（number[]）与 `scenes[].characterIds`（JSON 内）当前导入**未重映射**到新角色 id（注册表 `refs` 已声明为 character 引用，但导出/导入只处理 `exportRemap` 字段，不处理 refs 里的 array/json 引用）。同类还包括 `detailedOutlines.foreshadowIds` → foreshadows、JSON-string `creativeRules.citedReferenceIds` → references，以及 `codexEntries.refs` 的词条自引用。
-- **D0.4 证据（2026-07-15）**：`tests/desktop-contract/D0.4-fixtures.test.ts` 用固定 `small-v1` 做导出→清库→导入，稳定复现 10 个 `appearingCharacterIds`、10 个 `scenes[].characterIds`、10 个 `foreshadowIds`、1 个 JSON-string `citedReferenceIds` 与 1 个 Codex 自引用悬空；测试精确锁定现状，禁止行数或哈希检查掩盖语义错误。
-- **影响**：导入后细纲「本章出场角色」可能指向错误/不存在的角色。它不阻塞确定性夹具基础设施继续开发，但会阻止 `small-v1` 从 `NOT_GENERATED` 升级，并且在修复前不得通过 D0.4 的引用完整性门。
-- **改法**：派生引擎已统一架构，后续可让 `refs` 中 `kind: 'array' | 'json'` 且指向 exportable 表的引用也纳入导出/导入重映射（开启后 `R-export-fullcoverage` 里被锁的 `appearingCharacterIds` 断言可恢复为「重映射到新 id」）。
-- **优先级**：🟠 Windows Desktop D0.4 当前数据完整性阻塞项（不阻塞其他独立开发切片；修复须保持旧导出格式兼容并补往返回归）。
+### ✅ AUDIT-1b（AUDIT-1 派生时发现 · 2026-07-15 已修）— 数组/JSON 嵌套引用可移植重映射
+- **实现**：`PROJECT_TABLES.refs` 的 `kind: 'array' | 'json'` 可登记 portable 规则；项目 JSON 升级为 `version: 4`，并以 `nestedRefEncoding: "export-index-v1"` 显式声明嵌套引用使用目标表导出序号。导入在所有目标表映射建立后统一回填，覆盖 `detailedOutlines.appearingCharacterIds`、`scenes[].characterIds`、`foreshadowIds`、JSON-string `creativeRules.citedReferenceIds` 与 `codexEntries.refs` 自引用。
+- **数据边界**：v4 marker 缺失或错误时 fail closed，非法序号使整个导入事务回滚且不留下半数据。旧 v1/v2/v3 仍可导入，但其嵌套数字缺乏可移植映射元数据，只按历史 raw database ID 原样保留，绝不猜测为 v4 export index。
+- **验证证据**：`tests/regression/R-export-nested-reference-remap.test.ts` 覆盖高位非连续源主键、export index 0、重复值、多场景、JSON-string、非法序号原子回滚、legacy v3 与 marker fail-closed；`tests/desktop-contract/D0.4-fixtures.test.ts` 的固定 `small-v1` 导出→清库→导入得到 `dangling=[]`，`referenceRemapStatus=PASS`。
+- **D0.4 剩余项**：本项不再阻塞引用完整性门；`small-v1` 仍保持 `artifactStatus=NOT_GENERATED`，因为规范化 source/re-export 业务 hash 等值尚未实现，不能据此宣称 D0.4 完成。
 
 ### ✅ AUDIT-2（已完成 2026-06-16 · 核实收尾）— 原生 alert/confirm/prompt 全面替换为 Dialog
 - **现状核实（2026-06-16）**：UI 层（`src/components` / `hooks` / `pages`）原生弹窗**已全部替换**——`Dialog` 组件已被 **22 个文件**使用，`check:architecture` ⑥号守卫（禁 UI 层 `alert/confirm/prompt`）持续绿。审查报告时的"约 23 文件"已在商业审查 P0/P1 批次及后续逐步替换完毕。
