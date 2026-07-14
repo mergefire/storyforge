@@ -2312,7 +2312,7 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 2. 本节决定专项是否获准施工、任务依赖是否满足、G1/G2/stable 是否放行，以及当前阶段事实。
 3. 专项规划提供本节已登记任务的详细施工规格；若与本节或 `CLAUDE.md` 冲突，立即停止并先修正文档，不得自行择一执行。
 4. 功能等价动作清单的机器可读事实源在 D0.5 建立：`docs/windows-desktop/feature-parity-baseline.json`；专项规划 §5 是其人工初始矩阵，不复制进本蓝图维护第二份 68 项清单。
-5. 本专项当前状态为 **D0 进行中**。D0.1 的治理改动由 Codex 起草，**尚待 Claude 审查**；D0.2～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过桌面验证”。
+5. 本专项当前状态为 **D0 进行中**。D0.1 已由 Codex 交付并于 2026-07-14 通过 Claude 独立治理审查；D0.2～D0.4 进行中，D0.5～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过桌面验证”。
 
 ### 17.2 功能等价与数据迁移永久红线
 
@@ -2332,10 +2332,10 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 
 | ID | 任务 | 硬依赖 / 接口依赖 | 当前状态 |
 |---|---|---|---|
-| D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | IN PROGRESS（Codex 已起草治理改动，待 Claude 审查） |
-| D0.2 | 冻结应用身份与支持范围 | D0.1；产品名、publisher、公开分发主体决策 | NOT STARTED |
-| D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | NOT STARTED |
-| D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | NOT STARTED |
+| D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | PASS（2026-07-14；Claude 独立审查无阻断项） |
+| D0.2 | 冻结应用身份与支持范围 | D0.1；产品名、publisher、公开分发主体决策 | IN PROGRESS（开发身份草案已建立；正式 publisher 待作者确认） |
+| D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | IN PROGRESS（浏览器专属能力与 PoC 风险盘点完成） |
+| D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（协议与参考环境草案已建立；实测尚未采集） |
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
 | D1.1 | 建立正式 Tauri 2 壳 | D0.1～D0.5 全部 PASS | NOT STARTED |
 | D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | NOT STARTED |
@@ -2405,12 +2405,15 @@ G1 只证明“全部功能可实现”，不等于客户端已经完成。任�
 
 每个 D-task、G1、G2 和 D5.5 完成后，只在本节追加一次记录，格式固定为：日期、任务/闸门、source commit、实现摘要、功能等价覆盖、数据/失败注入、TypeScript/Rust/Windows/Web 验证、未决风险、Codex 交付状态、Claude 审查状态。未满足完成判据时只能写“进行中/失败记录”，不得标 PASS。
 
-#### 🟠 D0 启动记录（2026-07-14）
+#### ✅ D0.1 · 纳入唯一施工权威（2026-07-14）
 
-- 用户已确认 Windows 首版、自用后公开、Tauri 2 + WebView2 + Dexie 路线，以及由 Codex 执行旧浏览器全量迁移；
-- D0.1 治理改动在独立 checkout 中由 Codex 起草：本节登记专项、ROADMAP 建索引、协作契约完成 Codex 签字；
-- 本记录**不是 Claude 对 Windows Desktop 专项的审查结论**。D0.1 仍为 IN PROGRESS，需 Claude 审查后才能标 PASS；
-- D0.2～D5.5 未开始，G1/G2 未通过，尚无可用于真实数据的 Windows 客户端。
+- **source commit**：`375a874`（治理内容）；审查结论与状态闭环由后续记录提交承载；
+- **实现摘要**：在本节登记 D0.1～D5.5 的 31 个任务、硬依赖、并行边界、G1/G2/stable 闸门、停止信号与唯一阶段记录位置；ROADMAP 建立状态索引；协作契约完成 Codex 确认；
+- **功能等价 / 数据红线**：把 100% 动作级功能等价、源库只读、空目标、hash 校验、无半导入、可回滚和三注册表约束注册为永久硬门；本任务只改文档，不读取或改写用户数据；
+- **验证**：专项规划与本蓝图均包含 31 个唯一任务 ID；权威关系、依赖、链接和状态由 Claude 只读复核；无 TypeScript、Rust、Windows 客户端或 Web 运行时变更；
+- **Codex 交付状态**：PASS；独立 checkout `storyforge-desktop-d0`，分支 `refactor/phase-desktop-task-d0`；
+- **Claude 审查状态**：APPROVE，无阻断发现；两项非阻断观察为 D0.2/D0.4 草案须继续标 Draft、治理内容须提交并推送。审查证据见 [`windows-desktop/D0.1-CLAUDE-REVIEW.md`](./windows-desktop/D0.1-CLAUDE-REVIEW.md)；
+- **未决风险**：D0.2 正式 publisher/证书主体尚待作者确认；D0.3/D0.4 仍在进行中；D0.5～D5.5 未开始，G1/G2 未通过，尚无可用于真实数据的 Windows 客户端。
 
 ---
 

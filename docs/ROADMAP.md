@@ -5,7 +5,7 @@
 > 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
 > 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — D0～D5 详细规格；项目级授权、依赖、闸门与状态见 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-14（新增 Windows Desktop D0 进行中索引；专项尚未完成 Claude 审查，D1～D5 未开始）
+> **最后更新**: 2026-07-14（Windows Desktop D0.1 已通过 Claude 独立审查；D0.2～D0.4 进行中，D1～D5 未开始）
 > **说明**: 本文档是任务索引，不是施工权威。旧文档已归档至 `docs/archive/`；实施与放行以 MASTER-BLUEPRINT 为准。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
@@ -22,10 +22,10 @@
 
 | 项目 | 当前状态 | 下一完成条件 |
 |---|---|---|
-| D0.1 纳入唯一施工权威 | 🟠 进行中：Codex 已起草治理改动，Claude 专项审查 pending | Claude 审查通过后才可标 PASS |
-| D0.2 身份与支持范围 | ⬜ 未开始 | D0.1 PASS；冻结 productName、publisher、正式/开发 identifier 与 UDF |
-| D0.3 RuntimeAdapter 契约 | ⬜ 未开始 | D0.1 PASS；浏览器专属能力盘点与四问完成 |
-| D0.4 功能/性能/安全基线 | ⬜ 未开始 | D0.1 PASS；参考 Windows 环境与夹具冻结 |
+| D0.1 纳入唯一施工权威 | ✅ PASS：2026-07-14 Claude 独立审查无阻断项 | 治理提交推送后保持唯一施工权威 |
+| D0.2 身份与支持范围 | 🟠 进行中：开发身份草案已建立 | 作者确认正式 publisher/证书主体；冻结 productName、identifier 与 UDF |
+| D0.3 RuntimeAdapter 契约 | 🟠 进行中：浏览器专属能力与 PoC 风险盘点完成 | 落地 contract、fake 与 Web wrapper，并通过架构检查 |
+| D0.4 功能/性能/安全基线 | 🟠 进行中：协议与参考环境草案已建立 | 冻结夹具并采集可复现的 Web 基线实测 |
 | D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
 | D1～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
 
