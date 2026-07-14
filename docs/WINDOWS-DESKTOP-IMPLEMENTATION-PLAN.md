@@ -293,13 +293,13 @@ flowchart LR
 
 覆盖规则：
 
-1. D0.5 从 src/App.tsx、src/components/layout/sidebar-tree.ts、WorkspacePage 的模块分派、SettingsPage、DataManagementPanel、后台 hooks 和生成版 AI manual 生成动作级 manifest。
+1. D0.5 以 src/main.tsx 为生产启动根，联合扫描 src/App.tsx、src/components/layout/sidebar-tree.ts、Sidebar 的展示归一、WorkspacePage 的真实模块分派、SettingsPage、DataManagementPanel、后台 hooks 和生成版 AI manual，生成动作级 manifest；不得执行应用模块来“发现”入口。
 2. 每个生产可达路由、SidebarModule、对话框动作和后台任务必须映射到一个 FP ID；一个聚合行只有在其 manifest 子动作全部 PASS 后才能 PASS。
 3. 开发专用、测试专用或仅存在于历史文档且生产构建不可达的入口不属于当前产品基线，但排除理由必须记录。
 4. CI 比较代码扫描结果与 manifest；新增入口或动作而未登记 FP ID 时失败，删除入口或动作时必须有作者批准的范围变更。
 5. 矩阵证据记录 commit、客户端版本、系统、夹具、步骤、结果、截图/日志位置和验证人。
 
-当前代码复核基数为 3 个生产 URL 路由、36 个可见 Sidebar leaf 和 8 个遗留/内部 module；D0.5 必须在冻结 commit 上重新计算，数量变化本身不能被当作错误或忽略依据。已知不属于当前功能基线的例子包括：DEV-only NS0 评估面板、明确不可用的 3D 地图 Labs、尚未实现的语言/备份策略设置占位、历史指南中的 HTML/EPUB 导出与 DiffViewer。它们的排除不影响当前“项目参考上传 EPUB”必须实测的要求。
+当前代码复核基数为 3 个生产 URL 路由、36 个可见 Sidebar leaf，以及 8 个非可见 `SidebarModule`：其中 `story-core`、`backup`、`detailed-outline`、`editor` 出现在 `LEGACY_ALIASES`，`geography`、`power-system`、`master-studies`、`data-management` 只存在于 Workspace 分派。`LEGACY_ALIASES` 当前仅归一 Sidebar 的高亮/展开展示，不会重写 `activeModule` 或 Workspace 分派；检查器必须单独记录 alias 与真实 dispatch 是否等价。以上数量只是当前复核结果，D0.5 必须在冻结 commit 上动态重算，不能硬编码 `3/36/4/4`，数量变化本身也不能被忽略。已知不属于当前功能基线的例子包括：DEV-only NS0 评估面板、明确不可用的 3D 地图 Labs、尚未实现的语言/备份策略设置占位、历史指南中的 HTML/EPUB 导出与 DiffViewer。它们的排除不影响当前“项目参考上传 EPUB”必须实测的要求。
 
 ### 5.3 应用壳、项目与系统交互
 
@@ -397,7 +397,7 @@ flowchart LR
 | FP-SET-02 | Embedding 设置 | 默认关闭语义、当前预设/端点/模型/Key、开启/测试、重建关键词块、章→卷→全书摘要树、向量幂等续跑/换模型补嵌，以及失败回退关键词不阻断保留 | ADAPTED/REAUTHORIZE | NAV+ACT+AI+DATA+RECOVERY+RESTART | G1 |
 | FP-SET-03 | GitHub/Gist、备份和其他当前集成设置 | 配置字段、启停、测试和状态展示保留，敏感项可一次重授权 | ADAPTED/REAUTHORIZE | NAV+ACT+RECOVERY+REAL | G2 |
 | FP-SET-04 | 欢迎引导与重置入口 | 当前引导、重置和再次打开行为保留 | SHARED | NAV+ACT+RESTART | G2 |
-| FP-COMPAT-01 | geography、power-system、story-core、backup、data-management、editor、detailed-outline、master-studies 八个遗留/内部 module | 不重复建设旧产品；持久化旧 module id 映射到 world-map/worldview-origin/story-design/export/chapters-list/现有场景细纲/references 等等价现行入口，不白屏、不丢上下文 | SHARED | NAV+DATA+RESTART | G1 |
+| FP-COMPAT-01 | 非可见兼容模块：alias-map 组 story-core、backup、detailed-outline、editor；dispatch-only 组 geography、power-system、master-studies、data-management | 保留冻结 commit 的真实 Workspace 分派语义，不白屏、不丢上下文；分别验证两组，并记录 Sidebar 展示归一与真实 dispatch 的差异，不能把 `LEGACY_ALIASES` 当作完整路由重定向表 | SHARED | NAV+DATA+RESTART | G1 |
 
 ### 5.9 数据语义硬门
 
@@ -515,7 +515,8 @@ beta/stable 的 PWA 回归是 D4/D5 发布阶段的独立质量要求，不把 i
 
 **前置**
 
-- 盘点浏览器专属能力：HTTP、流式响应、文件、目录备份、外链、剪贴板、凭据、更新、诊断。
+- 盘点浏览器专属能力：AI/Embedding HTTP 与流式响应、GitHub/Gist、文件、目录备份、外链、剪贴板、凭据、存储持久性、PWA/Service Worker 分发、更新、诊断。
+- 盘点已持久化的相对 Vite proxy `baseUrl`；桌面实现必须用精确 alias 映射到受控 origin，不能把请求发往 Tauri 自身 origin。
 - 逐项回答 CLAUDE.md 四问。
 
 **改法**
@@ -526,9 +527,13 @@ beta/stable 的 PWA 回归是 D4/D5 发布阶段的独立质量要求，不把 i
 interface RuntimeAdapter {
   kind: 'web' | 'tauri'
   ai: AiTransport
+  gist: GistTransport
   files: FileTransport
   secrets: SecretStore
+  clipboard: ClipboardTransport
   external: ExternalLink
+  durability: DataDurability
+  distribution: DistributionRuntime
   updates: AppUpdate
   diagnostics: Diagnostics
 }
@@ -538,19 +543,24 @@ interface RuntimeAdapter {
 
 - Web 实现包装现有浏览器能力和 Vite proxy。
 - Tauri 实现通过窄类型 command/channel 调用 Rust。
+- AI 只允许固定 chat/embedding POST；GitHub/Gist 使用独立 fixed-host broker。禁止暴露任意 URL、method、header、路径、shell 或动态 command-name 接口。
 - 使用一个构建时 runtime target 选择实现。
 - 业务组件不得直接访问 Tauri 插件。
 - Rust 不访问 Dexie 业务数据；需要项目数据时由注册表派生的 TypeScript 层提供最小 DTO。
+- Prompt/body 构造、SSE 解析、业务重试、usage 记账和 adopt 留在共享 TypeScript；Tauri Channel 只传原始字节，AbortSignal 必须能取消真实底层请求。
+- SecretStore 只提供 set/delete/exists，网络请求只传 credentialId，不提供读取明文 secret 的接口；preset/Gist 删除时同步删除对应凭据。
+- 文件公开接口使用 purpose union；目录持久授权只向业务层暴露 bindingId，禁止 `readFile(path)` / `writeFile(path)` 这类绝对路径万能接口。
 
 **验证**
 
-- Fake RuntimeAdapter 可在 Vitest 中覆盖成功、取消、超时和权限拒绝。
-- 架构检查禁止业务目录导入 Tauri API。
+- Fake RuntimeAdapter 可在 Vitest 中覆盖成功、用户取消、Abort、超时、权限拒绝和磁盘错误。
+- 覆盖中文 UTF-8 跨 chunk、真实 abort、proxy alias、Gist fixed-host、文件取消/原子写失败和 secret canary。
+- 架构检查禁止业务目录导入 Tauri API，并阻断残留的直接 fetch、File System Access、clipboard、Service Worker 和万能 IPC。
 - Web adapter 接入后当前生产 `web-tab` 行为、Web/PWA 构建契约和 npm run ci 不回归；installed PWA 动态实测为可选补充。
 
 **完成判据**
 
-所有桌面差异有唯一入口，业务代码没有散落运行时判断。
+所有已盘点 browser-only 调用都有唯一 owner；业务目录零直接 fetch/File System Access/clipboard/Service Worker/Tauri import，且不存在万能 IPC 或散落运行时判断。
 
 ---
 
@@ -617,10 +627,10 @@ D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能
 
 **改法**
 
-1. 扫描并登记：
-   - src/App.tsx 的生产路由。
+1. 使用 TypeScript compiler API 做静态 AST 扫描，不执行应用模块；扫描并登记：
+   - 以 src/main.tsx 为根可达的启动动作，以及 src/App.tsx 的生产路由。
    - src/components/layout/sidebar-tree.ts 的每个叶子 SidebarModule。
-   - WorkspacePage 的模块分派、lazy panel 和兼容别名。
+   - SidebarModule 联合、Sidebar 展示 alias-map、WorkspacePage 的真实模块分派与 lazy panel；动态分类 visible、alias-map、dispatch-only，并记录 aliasDispatchDivergence。
    - SettingsPage、DataManagementPanel、导入/导出/版本历史对话框。
    - 自动保存、本地快照、文件夹备份、Gist 备份等后台 hooks。
    - 所有生产可达按钮、菜单、快捷键、拖放区、文件格式、AI 动作和错误恢复动作。
@@ -630,7 +640,9 @@ D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能
    - 新增路由、SidebarModule、Workspace 分支或显式 feature action 未登记时失败。
    - manifest 指向不存在的入口时失败。
    - 当前可达动作被删除但没有 APPROVED_SCOPE_CHANGE 记录时失败。
+   - 可见 module 无 Workspace 分派、非可见 module 未分类、alias 环/目标缺失或 alias 与真实 dispatch 差异未登记时失败。
    - UNKNOWN/BLOCKED 不能通过阶段闸门。
+   - 当前路由、leaf 或兼容 module 的数量只能用于报告，不得硬编码为通过条件。
 5. 把冻结 Web 夹具、最大项目、含 Blob 项目和真实数据匿名验证摘要绑定到 baselineVersion 和 sourceCommit。
 6. 由 Claude 复核“是否漏功能”，Codex 修正清单；分歧升级给作者决定产品范围。
 
@@ -638,6 +650,7 @@ D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能
 
 - npm run check:desktop-parity 通过。
 - 人为增加一个未登记侧栏模块、路由和动作时检查分别失败。
+- 人为增加未分类非可见 module、缺少 Workspace 分派、alias 环/无目标及未登记 alias/dispatch divergence 时检查分别失败。
 - 人为删除一个 manifest 行或改成 UNKNOWN/BLOCKED 时闸门检查失败。
 - 第 5 节每个聚合 FP 行至少有一个 actionId，所有实际侧栏叶子都有唯一映射。
 - manifest、人工报告和源码扫描数量一致；排除项都有生产不可达证据。
@@ -1448,7 +1461,7 @@ WebView 和业务数据库中无长期明文凭据，所有认证由 Rust 注入
 - 在未信任该自签名证书的环境中不得把候选包判成公共可信；对候选包做字节篡改后签名验证必须失败。
 - 安装程序不要求日常管理员权限。
 - 无 Vite/Node 服务仍可完整运行。
-- 用冻结夹具进入全部 3 个生产路由、36 个当前侧栏 leaf、兼容 module 和右侧属性面板；不存在空白、占位、置灰或“请用网页版”。
+- 用冻结 baseline 动态列出的全部生产路由、可见侧栏 leaf、alias-map、dispatch-only module 和右侧属性面板逐项进入；不存在空白、占位、置灰或“请用网页版”。
 
 **完成判据**
 
@@ -1947,5 +1960,4 @@ Windows package smoke
 - [Microsoft WebView2 User Data Folder](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder)
 - [Chromium IndexedDB backing store](https://chromium.googlesource.com/chromium/src/+/master/content/browser/indexed_db/docs/README.md)
 - [Electron Process Model（回退评估用）](https://www.electronjs.org/docs/latest/tutorial/process-model)
-
 
