@@ -261,15 +261,39 @@ describe('AI callers use RuntimeAdapter without losing protocol semantics', () =
     expect(bodies[5]).toMatchObject({ enable_thinking: true })
   })
 
-  it('removes stale primary and embedding credentials when a key is cleared', async () => {
+  it('keeps anonymous requests from revoking an in-flight keyed request', async () => {
     const runtime = createFakeRuntime()
     setRuntimeAdapter(runtime)
 
     for (const key of ['storyforge.ai.primary', 'storyforge.ai.embedding'] as const) {
-      expect(await bindAiCredential({ key, apiKey: 'secret' })).toBeDefined()
+      const keyedCredential = await bindAiCredential({ key, apiKey: 'secret' })
+      expect(keyedCredential).toBeDefined()
       expect(await runtime.secrets.has(key)).toBe(true)
       expect(await bindAiCredential({ key, apiKey: '' })).toBeUndefined()
-      expect(await runtime.secrets.has(key)).toBe(false)
+      expect(await runtime.secrets.has(key)).toBe(true)
+
+      await expect(runtime.ai.execute({
+        endpoint: {
+          provider: 'custom',
+          profileId: key,
+          operation: key.endsWith('embedding') ? 'embeddings' : 'chat-completions',
+          configuredBaseUrl: 'http://localhost:11434/v1',
+        },
+        credentialId: keyedCredential,
+        body: {},
+      })).resolves.toMatchObject({ status: 200 })
+
+      await runtime.secrets.delete(key)
+      await expect(runtime.ai.execute({
+        endpoint: {
+          provider: 'custom',
+          profileId: key,
+          operation: key.endsWith('embedding') ? 'embeddings' : 'chat-completions',
+          configuredBaseUrl: 'http://localhost:11434/v1',
+        },
+        credentialId: keyedCredential,
+        body: {},
+      })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' })
     }
 
     const execute = vi.spyOn(runtime.ai, 'execute').mockResolvedValue(textResponse(200, JSON.stringify({
@@ -280,10 +304,6 @@ describe('AI callers use RuntimeAdapter without losing protocol semantics', () =
       chatConfig({ apiKey: '', provider: 'custom' }),
     )).resolves.toBe('anonymous')
     expect(execute.mock.calls[0][0].credentialId).toBeUndefined()
-
-    runtime.failNext('secrets.delete', 'PERMISSION_DENIED')
-    await expect(bindAiCredential({ key: 'storyforge.ai.primary', apiKey: '' }))
-      .rejects.toMatchObject({ code: 'PERMISSION_DENIED' })
   })
 })
 
