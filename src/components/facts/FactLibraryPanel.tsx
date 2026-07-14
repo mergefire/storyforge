@@ -9,6 +9,7 @@ import { useFactLedgerStore } from '../../stores/fact-ledger'
 import { getFactPredicate } from '../../lib/registry/fact-predicate-registry'
 import type { FactStatus } from '../../lib/types/temporal-fact'
 import { exportFactMemoryMarkdown } from '../../lib/fact-ledger/human-readable-io'
+import { saveRuntimeText } from '../../lib/runtime-file'
 
 type FactTab = FactStatus | 'exceptions'
 
@@ -59,15 +60,18 @@ export default function FactLibraryPanel({ project }: { project: Project }) {
 
   const handleExport = async () => {
     if (project.id == null) return
-    const markdown = await exportFactMemoryMarkdown(project.id)
-    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `storyforge-fact-memory-${project.id}.md`
-    a.click()
-    URL.revokeObjectURL(url)
-    setIoMsg('已导出事实/派生记忆 Markdown。')
+    try {
+      const markdown = await exportFactMemoryMarkdown(project.id)
+      const outcome = await saveRuntimeText(
+        'fact-ledger',
+        `storyforge-fact-memory-${project.id}.md`,
+        markdown,
+      )
+      if (outcome.status === 'cancelled') return
+      setIoMsg('已导出事实/派生记忆 Markdown。')
+    } catch (err) {
+      setIoMsg(`导出失败：${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   const handleImportDiff = async () => {

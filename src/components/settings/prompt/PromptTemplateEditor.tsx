@@ -10,6 +10,7 @@ import PromptParametersEditor from './PromptParametersEditor'
 import PromptExamplesEditor from './PromptExamplesEditor'
 import { useDialog } from '../../shared/Dialog'
 import { useToast } from '../../shared/Toast'
+import { saveRuntimeText } from '../../../lib/runtime-file'
 
 const ALL_MODULE_KEYS: { value: PromptModuleKey; label: string }[] = [
   { value: 'worldview.dimension',         label: '世界观 · 维度生成' },
@@ -160,16 +161,17 @@ export default function PromptTemplateEditor({ template, onChanged, onDeleted, o
     onChanged()
   }
 
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(draft, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${draft.name.replace(/\s+/g, '_')}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+  const handleExport = async () => {
+    try {
+      const outcome = await saveRuntimeText(
+        'prompt-template-json',
+        `${draft.name.replace(/\s+/g, '_')}.json`,
+        JSON.stringify(draft, null, 2),
+      )
+      if (outcome.status === 'completed') toast.success('模板已导出')
+    } catch (err) {
+      toast.error(`导出失败：${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   /** 变量列表的增删 */
@@ -295,7 +297,7 @@ export default function PromptTemplateEditor({ template, onChanged, onDeleted, o
             <Copy className="w-3.5 h-3.5" /> 克隆
           </button>
           <button
-            onClick={handleExport}
+            onClick={() => void handleExport()}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-hover text-text-primary text-sm rounded hover:bg-bg-elevated"
           >
             <Download className="w-3.5 h-3.5" /> 导出

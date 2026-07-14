@@ -14,7 +14,7 @@
 |---|---|---|---|
 | `worldview.dimension` | 内置-世界观维度生成 | 为世界观的单个维度（地理/历史/社会/文化/经济/规则/摘要）生成内容。 | `projectName` `genres` `dimension` `worldContext` `worldRulesContext` `userHint` `isSummary` |
 | `character.generate` | 内置-角色完整设计 | 基于世界观和已有角色，设计一个新角色的完整资料。 | `projectName` `genres` `worldContext` `existingCharacters` `userHint` |
-| `character.dimension` | 内置-角色维度补全 | 为指定角色的某个维度（背景/性格/能力等）补充约 200-400 字的细节。 | `characterName` `characterInfo` `worldContext` `dimension` |
+| `character.dimension` | 内置-角色维度补全 | 为指定角色的某个维度（背景/性格/能力等）补充约 200-400 字的细节。 | `characterName` `characterInfo` `worldContext` `dimension` `generationHint` `fieldFormat` |
 | `outline.volume` | 内置-卷级大纲生成 | 基于世界观与故事核心生成全书的卷级大纲。 | `projectName` `genres` `targetWordCount` `worldContext` `storyCore` `characterContext` `worldRulesContext` `existingVolumesContext` `userHint` |
 | `outline.chapter` | 内置-章节大纲展开 | 将单卷展开为 15-25 章的章节大纲。 | `volumeTitle` `volumeSummary` `worldContext` `prevVolumeSummary` `characterContext` `worldRulesContext` `userHint` |
 | `chapter.content` | 内置-长篇连载（默认） | 通用男频网文风格的章节正文生成，支持基调/节奏/字数三个可调参数。 | `chapterTitle` `chapterSummary` `worldContext` `characters` `previousChapterEnding` `worldRulesContext` `userHint` |
@@ -118,7 +118,7 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 
 ## 四、AI 调用点（消耗统计 category · 在哪触发)
 
-共 44 个 category。
+共 45 个 category。
 未分类调用: 0 个。动态 category 调用: 3 个。
 
 | category | 触发文件 |
@@ -132,6 +132,7 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `chapter.memory` | `src/components/editor/ChapterEditor.tsx:258` |
 | `chapter.polish` | `src/components/editor/ChapterEditor.tsx:452` |
 | `chapter.toolbar` | `src/components/editor/FloatingToolbar.tsx:105` |
+| `character.dimension` | `src/components/character/CharacterDimensionFields.tsx:151` |
 | `character.generate` | `src/components/character/CharacterPanel.tsx:163` |
 | `character.structure` | `src/lib/ai/parse-character-output.ts:80` |
 | `character.supplement` | `src/components/character/CharacterSupplementAction.tsx:80` |
@@ -140,9 +141,9 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `emotion.beat` | `src/components/editor/EmotionBeatCard.tsx:66` |
 | `foreshadow.structure` | `src/components/foreshadow/ForeshadowPanel.tsx:66` |
 | `foreshadow.suggest` | `src/components/foreshadow/ForeshadowPanel.tsx:215` |
-| `geography.concept-map` | `src/components/geography/GeographyPanel.tsx:127` |
+| `geography.concept-map` | `src/components/geography/GeographyPanel.tsx:128` |
 | `geography.world-map` | `src/components/geography/WorldMapPanel.tsx:103` |
-| `inspiration.reverse` | `src/components/project/InspirationPanel.tsx:107` |
+| `inspiration.reverse` | `src/components/project/InspirationPanel.tsx:110` |
 | `inventory.extract` | `src/components/items/InventoryPanel.tsx:84` |
 | `location.extract` | `src/components/location/LocationPanel.tsx:104` |
 | `outline.chapter` | `src/components/outline/OutlinePanel.tsx:376`<br/>`src/lib/ai/batch-outline-runner.ts:123` |
@@ -164,7 +165,7 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `style.learn` | `src/components/style/StyleLearningPanel.tsx:76` |
 | `world-group.expand` | `src/components/world-group/WorldGroupDetail.tsx:98` |
 | `world-group.suggest` | `src/components/world-group/WorldGroupOverview.tsx:57` |
-| `worldview.dimension` | `src/components/worldview/WorldviewHumanityPanel.tsx:236`<br/>`src/components/worldview/WorldviewNaturalPanel.tsx:269`<br/>`src/components/worldview/WorldviewOriginPanel.tsx:287` |
+| `worldview.dimension` | `src/components/worldview/WorldviewHumanityPanel.tsx:236`<br/>`src/components/worldview/WorldviewNaturalPanel.tsx:305`<br/>`src/components/worldview/WorldviewOriginPanel.tsx:287` |
 | `worldview.divine` | `src/components/worldview/WorldviewOriginPanel.tsx:386` |
 | `worldview.divine.split` | `src/components/worldview/WorldviewOriginPanel.tsx:410` |
 
@@ -172,8 +173,8 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 
 - `src/components/editor/ReviewPanel.tsx:128 · ai.start`
 - `src/components/settings/NS0EvalPanel.tsx:49 · chat`
-- `src/components/settings/prompt/WorkflowRunner.tsx:273 · ai.start`
+- `src/components/settings/prompt/WorkflowRunner.tsx:274 · ai.start`
 
 ---
 
-生成时间基准:commit `619756a`
+生成时间基准:commit `unknown`

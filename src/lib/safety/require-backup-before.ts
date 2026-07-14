@@ -22,6 +22,7 @@
  */
 
 import { exportProjectJSON } from '../export/json-export'
+import { saveRuntimeText } from '../runtime-file'
 
 export interface RequireBackupOptions {
   /** 操作名称(显示给用户) */
@@ -81,7 +82,11 @@ export async function requireBackupBefore(
     case 'proceed-backup-now':
       if (options.projectId != null) {
         try {
-          await downloadProjectBackup(options.projectId, options.operation)
+          const saved = await downloadProjectBackup(options.projectId, options.operation)
+          if (!saved) {
+            console.info(`[Safety] 用户取消备份文件保存，中止高危操作: ${options.operation}`)
+            return false
+          }
           console.info(`[Safety] 已下载备份,继续高危操作: ${options.operation}`)
         } catch (err) {
           console.error('[Safety] 备份下载失败,中止操作', err)
@@ -143,25 +148,19 @@ async function promptUserChoiceFallback(options: RequireBackupOptions): Promise<
 }
 
 /**
- * 导出项目 JSON 并触发浏览器下载。
+ * 导出项目 JSON，并交由当前运行时保存。
  */
-async function downloadProjectBackup(projectId: number, operation: string): Promise<void> {
+async function downloadProjectBackup(projectId: number, operation: string): Promise<boolean> {
   const data = await exportProjectJSON(projectId)
   const json = JSON.stringify(data, null, 2)
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-
-  const a = document.createElement('a')
-  a.href = url
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const safeOp = operation.replace(/[^\w一-龥-]/g, '_')
-  a.download = `storyforge-backup-before-${safeOp}-${timestamp}.json`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-
-  // 释放内存(下个 tick,确保下载已触发)
-  setTimeout(() => URL.revokeObjectURL(url), 100)
+  const outcome = await saveRuntimeText(
+    'pre-destructive-backup',
+    `storyforge-backup-before-${safeOp}-${timestamp}.json`,
+    json,
+  )
+  return outcome.status === 'completed'
 }
 
 /**

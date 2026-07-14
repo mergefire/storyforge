@@ -4,10 +4,11 @@ import { Flame, Github, X, ChevronDown, ChevronRight, FolderOpen, Loader2 } from
 import { useProjectStore } from '../stores/project'
 import WelcomeGuide from '../components/guide/WelcomeGuide'
 import {
-  isFSASupported, pickFolder, ensureFolderPermission, readStoryforgeBackups,
+  HOME_RESTORE_BINDING_ID, readStoryforgeBackups,
 } from '../lib/storage/folder-backup'
 import { importProjectJSON } from '../lib/export/json-export'
 import { APP_VERSION } from '../lib/version'
+import { getRuntime } from '../runtime'
 import {
   GENRE_OPTIONS, PROJECT_STATUS_LABELS,
   type ProjectStatus, type CreateProjectInput,
@@ -63,13 +64,16 @@ export default function HomePage() {
 
   // 从本地文件夹恢复：读回文件夹里所有 storyforge-*.json，各自导入成新项目（不覆盖现有）
   const handleRestoreFromFolder = async () => {
-    if (!isFSASupported()) { setRestoreMsg('当前浏览器不支持本地文件夹，请用 Chrome / Edge') ; return }
-    const h = await pickFolder()
-    if (!h) return
-    setRestoring(true); setRestoreMsg('正在读取文件夹…')
+    setRestoring(true); setRestoreMsg('正在选择并读取文件夹…')
     try {
-      if (!(await ensureFolderPermission(h, false))) { setRestoreMsg('未获文件夹读取授权'); return }
-      const files = await readStoryforgeBackups(h)
+      const outcome = await getRuntime().files.bindBackupDirectory(HOME_RESTORE_BINDING_ID)
+      if (outcome.status === 'cancelled') { setRestoreMsg(null); return }
+      let binding = outcome.value
+      if (binding.permission !== 'granted') {
+        binding = await getRuntime().files.requestBackupPermission(HOME_RESTORE_BINDING_ID, false)
+      }
+      if (binding.permission !== 'granted') { setRestoreMsg('未获文件夹读取授权'); return }
+      const files = await readStoryforgeBackups(HOME_RESTORE_BINDING_ID)
       if (files.length === 0) { setRestoreMsg('该文件夹里没找到 storyforge 备份文件'); return }
       let ok = 0
       for (const f of files) {
@@ -81,6 +85,14 @@ export default function HomePage() {
       setRestoreMsg(`恢复失败：${(e as Error).message}`)
     } finally {
       setRestoring(false)
+    }
+  }
+
+  const handleOpenRepository = async () => {
+    try {
+      await getRuntime().external.open({ kind: 'project-repository' })
+    } catch (error) {
+      console.error('[external] 打开项目仓库失败:', error)
     }
   }
 
@@ -167,15 +179,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        <a
-          href="https://github.com/yuanbw2025/storyforge"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => void handleOpenRepository()}
           className="p-2 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors ml-auto"
           title="GitHub"
         >
           <Github className="w-4 h-4" />
-        </a>
+        </button>
       </header>
 
       {/* ── 主体 ──────────────────────────────────────── */}
@@ -204,17 +214,15 @@ export default function HomePage() {
               }
             </p>
             <div className="flex items-center gap-2">
-              {isFSASupported() && (
-                <button
-                  onClick={handleRestoreFromFolder}
-                  disabled={restoring}
-                  title="从你之前绑定的本地文件夹里读回备份，导入成项目（不覆盖现有）"
-                  className="px-3 py-2 border border-border text-text-secondary rounded-lg hover:bg-bg-hover hover:text-text-primary transition-colors text-sm flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderOpen className="w-4 h-4" />}
-                  从本地文件夹恢复
-                </button>
-              )}
+              <button
+                onClick={() => void handleRestoreFromFolder()}
+                disabled={restoring}
+                title="从本地文件夹里读回备份，导入成项目（不覆盖现有）"
+                className="px-3 py-2 border border-border text-text-secondary rounded-lg hover:bg-bg-hover hover:text-text-primary transition-colors text-sm flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderOpen className="w-4 h-4" />}
+                从本地文件夹恢复
+              </button>
               <button
                 onClick={() => setShowCreate(true)}
                 className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors text-sm font-medium flex items-center gap-1.5"

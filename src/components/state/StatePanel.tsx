@@ -17,6 +17,8 @@ import { useItemLedgerStore } from '../../stores/item-ledger'
 import { useCodexStore } from '../../stores/codex'
 import { aggregateInventory } from '../../lib/types/item-ledger'
 import { CInput } from '../shared/CompositionInput'
+import { saveRuntimeText } from '../../lib/runtime-file'
+import { useToast } from '../shared/Toast'
 
 interface Props {
   project: Project
@@ -39,6 +41,7 @@ export default function StatePanel({ project }: Props) {
   const { entries: itemEntries, loadAll: loadItems } = useItemLedgerStore()
   const { categories, entries: codexEntries, loadAll: loadCodex } = useCodexStore()
   const [editingCharacter, setEditingCharacter] = useState<number | null>(null)
+  const toast = useToast()
 
   useEffect(() => {
     void Promise.all([
@@ -71,15 +74,15 @@ export default function StatePanel({ project }: Props) {
       .map(entry => entry.name)
   }, [categories, codexEntries])
 
-  const handleExportText = () => {
-    const text = buildStateContext()
-    if (!text) return
-    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${project.name}_角色状态卡.txt`
-    link.click()
-    URL.revokeObjectURL(url)
+  const handleExportText = async () => {
+    try {
+      const text = buildStateContext()
+      if (!text) return
+      const outcome = await saveRuntimeText('state-cards-text', `${project.name}_角色状态卡.txt`, text)
+      if (outcome.status === 'completed') toast.success('角色状态卡已导出')
+    } catch (err) {
+      toast.error(`导出失败：${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   return (
@@ -94,7 +97,7 @@ export default function StatePanel({ project }: Props) {
           </p>
         </div>
         <button
-          onClick={handleExportText}
+          onClick={() => void handleExportText()}
           disabled={!characterCards.length}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-border bg-bg-elevated text-text-secondary disabled:opacity-40"
         >
