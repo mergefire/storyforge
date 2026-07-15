@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   initializeApplicationData,
+  prepareApplicationData,
   type ApplicationDataBootstrapDependencies,
 } from '../../src/lib/db/bootstrap'
 import { REQUIRED_TABLES } from '../../src/lib/db/ensure-schema'
@@ -30,6 +31,17 @@ describe('D1.3 application data bootstrap order', () => {
     await initializeApplicationData(false, dependencies(events))
 
     expect(events).toEqual(['schema', 'open', 'finalize', 'prompt-seed', 'workflow-seed'])
+  })
+
+  it('can hold seed writers behind the desktop first-run migration choice', async () => {
+    const events: string[] = []
+    const deps = dependencies(events)
+
+    await prepareApplicationData(false, deps)
+
+    expect(events).toEqual(['schema', 'open', 'finalize'])
+    expect(deps.initializePromptStore).not.toHaveBeenCalled()
+    expect(deps.initializeWorkflowStore).not.toHaveBeenCalled()
   })
 
   it('does not open or seed when the production schema check is blocked', async () => {

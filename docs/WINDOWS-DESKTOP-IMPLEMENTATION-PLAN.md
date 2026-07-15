@@ -12,7 +12,7 @@
 | --- | --- |
 | 规划日期 | 2026-07-14 |
 | 技术路线 | 已由用户确认 |
-| 当前状态 | M0、M1 PASS；下一里程碑 M2 · 完整迁移演练 NOT STARTED |
+| 当前状态 | M0～M2 PASS；下一里程碑 M3 · 作者真实数据切换 NOT STARTED |
 | 第一平台 | Windows 10/11 x64 |
 | 第一验证人 | 项目作者本人 |
 | 数据迁移责任 | Codex 开发迁移工具、执行首次迁移并出具验证结果 |
@@ -26,7 +26,7 @@
 | --- | --- | --- |
 | M0 · 稳定开发壳 | stable artifact 预启动拒绝调试；隔离外部 WebView2 参数、Cache/Service Worker/UDF；补 pdf.js worker 运行证据；修复 AI manual 漂移；保留持久化 smoke | PASS |
 | M1 · 合成数据全功能 | 生成唯一动作验收清单；完成窄 IPC、流式/取消、Credential Manager、不透明 secret 引用、受限文件/备份/外链和最小诊断；全部现有功能用合成数据验收 | PASS |
-| M2 · 完整迁移演练 | 一个 `FullMigrationArchive` 纵向切片完成只读导出、空目标导入、hash/Blob/设置验证、重授权、激活、receipt 与回滚 | NOT STARTED |
+| M2 · 完整迁移演练 | 一个 `FullMigrationArchive` 纵向切片完成只读导出、空目标导入、hash/Blob/设置验证、重授权、激活、receipt 与回滚 | PASS |
 | M3 · 作者真实数据切换 | 固定 stable identity 的 portable 自用候选；明确授权后执行真实迁移、验收、观察和回滚验证 | NOT STARTED |
 | 未来公开发布 | G2、NSIS、受信任签名、Updater、beta/stable、完整 Windows/卸载矩阵和公开材料 | DEFERRED |
 
@@ -45,6 +45,7 @@
 - D1.3 已在新构建 dev artifacts 上通过合成项目、outline、章节正文 1.5 秒自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile、非密 localStorage 哨兵，以及 `3.7.5` → `3.7.6` 同 identifier/同临时 exe 路径覆盖升级验证；五条真实 Dexie upgrade fixtures 和“迁移检查早于 Prompt/Workflow seed”顺序门回归也已通过。自动化/CDP 仍只允许 dev identity，stable 默认 UDF 未打开或覆盖。卸载保留、stable 非 CDP 身份矩阵和失败注入仍待实测，证据见 `windows-desktop/D1.3-PERSISTENCE-STATUS.md`。
 - M0 已收口：真实 dev/stable artifacts 证明 stable 在启动前拒绝调试且未被启动；Rust 启动层清除外部 WebView2 参数，dev 调试只接受项目自有的临时 profile 与动态 localhost 端口；Web/dev/stable 构建目录、PWA/Service Worker、Cache、identity 与 UDF 边界已隔离；打包内 pdf.js worker 在真实 WebView2 中完成请求和合成 PDF 解析；AI manual 与代码重新一致，dev 持久化 smoke 保持通过。当前状态与放行口径仍只看主蓝图 §17。
 - M1 已收口：生产 TypeScript AST 生成 1,351 个唯一 `actionId + FP ID` 并由 CI 防漂移；受限 Tauri IPC、Credential Manager dev/stable 命名空间、文件/备份、AI/Embedding/Gist、外链/剪贴板和脱敏诊断已落地；真实 dev identity smoke 覆盖 35 个可见模块、合成项目/章节重启、独立 profile、AI 流/取消、100 MiB Blob hash 和失败恢复。核心使用实跑 18.2 分钟/35 轮无失败后，作者明确豁免剩余时长；该豁免不等于自动跑满 30 分钟。当前状态与放行口径仍只看主蓝图 §17。
+- M2 已收口：新增独立 `.storyforge-migrate` 格式和逐表迁移策略；旧网页入口只读导出，桌面首次启动只向空库导入，Rust 仅保存业务库外 journal/receipt，不接触业务表。合成 legacy 标记资料完成正常导入、2 MiB Blob、敏感配置剔除、失败清理、进程中断恢复和激活后回滚各一次；未反复跑相同场景，未启动浏览器、真实 profile 或默认正式 UDF。TypeScript、Web/dev/stable UI build、Rust 默认/全特性 test、fmt/clippy、确定性夹具与 1,361 项 parity 清单通过；独立 Claude 审查待进行。当前状态与放行口径仍只看主蓝图 §17。
 
 用户于 2026-07-15 进一步选择“1+2”：以最快形成作者可长期使用的 Windows 客户端为当前目标，同时保留全部现有功能和安全迁移。该最新授权取代原 D0～D5 对作者自用阶段的串行排期；旧任务仍保留为范围映射和未来公开发布参考，不再要求为每个 D-task 建独立分支、状态文档或审批门。
 
@@ -1967,7 +1968,7 @@ Windows package smoke
 3. **M2 · 完整迁移演练**：用 `FullMigrationArchive` 一次打通 preflight → import → verify → activate → rollback；只使用合成或明确复制的夹具。
 4. **M3 · 作者真实数据切换**：作者明确授权并确认正确 profile 后，才创建 portable 自用候选、执行真实迁移、验收和观察；通过后状态记为 `SELF_USE_READY`。
 
-公开发布路线（G2、D5、NSIS、受信任签名、Updater、beta/stable 和完整 Windows/卸载矩阵）等作者另行启动。M2 完整验证器和失败注入完成前，禁止读取真实浏览器数据或向任何正式客户端 profile 导入数据。
+公开发布路线（G2、D5、NSIS、受信任签名、Updater、beta/stable 和完整 Windows/卸载矩阵）等作者另行启动。M2 完整验证器和失败注入已完成；在作者明确启动 M3、确认正确源 profile 并单独授权前，仍禁止读取真实浏览器数据或向任何正式客户端 profile 导入数据。
 
 ---
 

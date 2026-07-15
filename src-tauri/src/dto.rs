@@ -162,3 +162,74 @@ pub struct WriteSessionStarted {
 pub struct BackupEntry {
     pub name: String,
 }
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum MigrationJournalPhase {
+    AwaitingChoice,
+    ArchiveReceived,
+    ArchiveVerified,
+    Importing,
+    DataVerified,
+    Activated,
+    Failed,
+    RolledBack,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MigrationJournal {
+    pub phase: MigrationJournalPhase,
+    pub export_id: Option<String>,
+    pub archive_sha256: Option<String>,
+    pub updated_at: String,
+    pub error_code: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MigrationWriteJournalRequest {
+    pub journal: MigrationJournal,
+    pub expected_phase: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MigrationTableResult {
+    pub name: String,
+    pub expected_count: u64,
+    pub actual_count: u64,
+    pub expected_sha256: String,
+    pub actual_sha256: String,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MigrationBlobResult {
+    pub table: String,
+    pub primary_key: Value,
+    pub field: String,
+    pub expected_size: u64,
+    pub actual_size: i64,
+    pub expected_sha256: String,
+    pub actual_sha256: String,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MigrationReceipt {
+    pub export_id: String,
+    pub archive_sha256: String,
+    pub source_app_version: String,
+    pub source_schema_version: u64,
+    pub target_app_version: String,
+    pub imported_at: String,
+    pub table_results: Vec<MigrationTableResult>,
+    pub blob_results: Vec<MigrationBlobResult>,
+    pub rebuild_queue: Vec<String>,
+    pub reauthorization: Vec<String>,
+    pub integrity_errors: Vec<String>,
+    pub status: String,
+}

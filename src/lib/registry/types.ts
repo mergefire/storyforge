@@ -20,6 +20,24 @@ export type TableOwner =
   | 'blob'         // Blob 存储,特殊 owner(如 importFiles 复用为 master blob)
   | 'global'       // 全局(不绑项目,不参与 deleteProject 级联)
 
+export type MigrationPolicy =
+  | 'required'
+  | 'optional-history'
+  | 'operational'
+  | 'omit-and-rebuild'
+
+export type MigrationRecordFilterId = 'user-scope-only'
+
+export interface TableMigrationSpec {
+  policy: MigrationPolicy
+  /** Blob fields are stored as independent archive entries, never base64 JSON. */
+  binaryFields?: string[]
+  /** Closed filter registry; arbitrary table-local callbacks are forbidden. */
+  recordFilterId?: MigrationRecordFilterId
+  /** Required for every omitted/rebuildable table. */
+  recoveryAction?: string
+}
+
 /** 简单外键引用(table[field] 形式) */
 export interface SimpleRef {
   kind: 'simple'
@@ -138,6 +156,8 @@ export interface TableSpec<T = any> {
   refs?: RefSpec[]
   /** 是否纳入 JSON 备份导出 */
   exportable: boolean
+  /** Full-profile migration policy. Every Dexie table must declare one here. */
+  migration: TableMigrationSpec
   /** 导出时需要的 ID 重映射 */
   exportRemap?: ExportRemapField[]
   /**

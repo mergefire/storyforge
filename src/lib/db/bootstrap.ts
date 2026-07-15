@@ -36,6 +36,16 @@ export async function initializeApplicationData(
   allowReset: boolean,
   dependencies: ApplicationDataBootstrapDependencies = defaultDependencies,
 ): Promise<SchemaResult> {
+  const schema = await prepareApplicationData(allowReset, dependencies)
+  await initializeApplicationSeeds(dependencies)
+  return schema
+}
+
+/** Opens and finalizes the database without writing first-run seed records. */
+export async function prepareApplicationData(
+  allowReset: boolean,
+  dependencies: ApplicationDataBootstrapDependencies = defaultDependencies,
+): Promise<SchemaResult> {
   const schema = await dependencies.ensureSchema(REQUIRED_TABLES, { allowReset })
   if (schema.blocked) {
     throw new Error(`[bootstrap] schema initialization blocked; missing stores: ${schema.missing.join(', ')}`)
@@ -43,8 +53,13 @@ export async function initializeApplicationData(
 
   await dependencies.openDatabase()
   await dependencies.finalizeMigrations()
+  return schema
+}
+
+/** Writes defaults only after the desktop migration gate has been resolved. */
+export async function initializeApplicationSeeds(
+  dependencies: ApplicationDataBootstrapDependencies = defaultDependencies,
+): Promise<void> {
   await dependencies.initializePromptStore()
   await dependencies.initializeWorkflowStore()
-
-  return schema
 }

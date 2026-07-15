@@ -591,12 +591,24 @@
       "visibility": "visible"
     },
     {
+      "actionId": "route:5bc3cb2557f34f7a",
+      "fpId": "FP-ROUTE-81C605791E51",
+      "kind": "route",
+      "signature": "route:/migration-export",
+      "source": "src/App.tsx",
+      "line": 34,
+      "column": 7,
+      "status": "REGISTERED_M1",
+      "evidence": "npm run check:desktop-routes",
+      "route": "/migration-export"
+    },
+    {
       "actionId": "route:5f13a158ffec937b",
       "fpId": "FP-ROUTE-AFB399254B95",
       "kind": "route",
       "signature": "route:/settings",
       "source": "src/App.tsx",
-      "line": 10,
+      "line": 33,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -608,7 +620,7 @@
       "kind": "route",
       "signature": "route:/workspace/:projectId",
       "source": "src/App.tsx",
-      "line": 11,
+      "line": 35,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -620,7 +632,7 @@
       "kind": "route",
       "signature": "route:/",
       "source": "src/App.tsx",
-      "line": 9,
+      "line": 32,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -654,7 +666,7 @@
       "kind": "runtime",
       "signature": "input.addEventListener|'change',onChange",
       "source": "src/runtime/web/index.ts",
-      "line": 479,
+      "line": 484,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -775,7 +787,7 @@
       "kind": "runtime",
       "signature": "request.signal?.addEventListener|'abort',onAbort,{ once: true }",
       "source": "src/runtime/tauri/index.ts",
-      "line": 273,
+      "line": 274,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -918,7 +930,7 @@
       "kind": "runtime",
       "signature": "request.signal?.addEventListener|'abort',onAbort,{ once: true }",
       "source": "src/runtime/web/index.ts",
-      "line": 478,
+      "line": 483,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -995,7 +1007,7 @@
       "kind": "runtime",
       "signature": "window.addEventListener|'load',() => { void registerManagedServiceWorker().then(resolve, reject) },{ once: true }",
       "source": "src/runtime/web/index.ts",
-      "line": 1357,
+      "line": 1362,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1237,7 +1249,7 @@
       "kind": "runtime",
       "signature": "window.addEventListener|'focus',onFocus",
       "source": "src/runtime/web/index.ts",
-      "line": 481,
+      "line": 486,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1413,7 +1425,7 @@
       "kind": "runtime",
       "signature": "window.setTimeout|() => { if (!settled && !input.files?.length) onCancel() },FILE_PICKER_FOCUS_CANCEL_DELAY_MS",
       "source": "src/runtime/web/index.ts",
-      "line": 469,
+      "line": 474,
       "column": 20,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1457,7 +1469,7 @@
       "kind": "runtime",
       "signature": "signal?.addEventListener|'abort',onAbort,{ once: true }",
       "source": "src/runtime/tauri/index.ts",
-      "line": 123,
+      "line": 124,
       "column": 3,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1622,7 +1634,7 @@
       "kind": "runtime",
       "signature": "input.addEventListener|'cancel',onCancel",
       "source": "src/runtime/web/index.ts",
-      "line": 480,
+      "line": 485,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1798,7 +1810,7 @@
       "kind": "runtime",
       "signature": "signal?.addEventListener|'abort',abort,{ once: true }",
       "source": "src/runtime/tauri/index.ts",
-      "line": 185,
+      "line": 186,
       "column": 3,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -3556,6 +3568,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:17f51fa76fc9d52e",
+      "fpId": "FP-UI-4628BCA7E63C",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => setStep('idle')}",
+      "source": "src/components/migration/FirstRunMigration.tsx",
+      "line": 216,
+      "column": 39,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:17f6ac34775b67a1",
       "fpId": "FP-UI-2D04171669C9",
       "kind": "ui",
@@ -4546,6 +4569,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:2c19e5b13f5449c7",
+      "fpId": "FP-UI-55F122F245FB",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => void exportProfile()}",
+      "source": "src/pages/MigrationExportPage.tsx",
+      "line": 86,
+      "column": 17,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:2c431d24b8f079ff",
       "fpId": "FP-UI-8892E473D176",
       "kind": "ui",
@@ -4597,6 +4631,17 @@
       "source": "src/components/outline/OutlinePanel.tsx",
       "line": 659,
       "column": 19,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:2d400af8aff60e9e",
+      "fpId": "FP-UI-14D456A1D7AD",
+      "kind": "ui",
+      "signature": "onReady|FirstRunMigration|{async (receipt?: MigrationReceipt) => { await initializeSeeds() setMigrationState({ status: 'ready', ...(receipt ? { receipt } : {}) }) }}",
+      "source": "src/App.tsx",
+      "line": 22,
+      "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -7582,6 +7627,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:69c97b164219a234",
+      "fpId": "FP-UI-A8F590719140",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => void enterMigratedProfile()}",
+      "source": "src/components/migration/FirstRunMigration.tsx",
+      "line": 143,
+      "column": 15,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:6a1eccf3e6424f90",
       "fpId": "FP-UI-04DB6606E06E",
       "kind": "ui",
@@ -7831,6 +7887,17 @@
       "source": "src/components/system/import/ImportUnfinishedBanner.tsx",
       "line": 58,
       "column": 15,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:70539aec8f0f5da9",
+      "fpId": "FP-UI-8658E01BCCC8",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => void importArchive()}",
+      "source": "src/components/migration/FirstRunMigration.tsx",
+      "line": 178,
+      "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -8667,6 +8734,17 @@
       "source": "src/components/character/CharacterDimensionPicker.tsx",
       "line": 51,
       "column": 72,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:7e7ec63088d82980",
+      "fpId": "FP-UI-E966F9FFE972",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => void selectArchive()}",
+      "source": "src/components/migration/FirstRunMigration.tsx",
+      "line": 196,
+      "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -10403,7 +10481,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => { resetWelcomeGuide(); setGuideReset(true) }}",
       "source": "src/components/settings/SettingsPage.tsx",
-      "line": 29,
+      "line": 47,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10438,6 +10516,17 @@
       "source": "src/components/outline/CharacterDrivenPlotPanel.tsx",
       "line": 342,
       "column": 15,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:a3d762aaf0bd5211",
+      "fpId": "FP-UI-31E407F7F325",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => void startFresh()}",
+      "source": "src/components/migration/FirstRunMigration.tsx",
+      "line": 215,
+      "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -12290,6 +12379,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:cc3cce8b5ebf52e6",
+      "fpId": "FP-UI-97CEE1F18D48",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => setStep('fresh-confirm')}",
+      "source": "src/components/migration/FirstRunMigration.tsx",
+      "line": 221,
+      "column": 17,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:cc910b8e156a1a56",
       "fpId": "FP-UI-86AC142AAA3F",
       "kind": "ui",
@@ -13837,6 +13937,17 @@
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
       "line": 323,
       "column": 38,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:e9389c36e00f9e6a",
+      "fpId": "FP-UI-2A2BFC4BD71D",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => { setPreflight(null); setStep('idle') }}",
+      "source": "src/components/migration/FirstRunMigration.tsx",
+      "line": 185,
+      "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },

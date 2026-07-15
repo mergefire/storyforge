@@ -26,6 +26,7 @@ import {
   sameCredentialScope,
 } from './credential-scope'
 import { RuntimeError, type RuntimeErrorCode, throwIfAborted } from './errors'
+import type { MigrationJournal, MigrationReceipt } from '../lib/migration/archive-types'
 
 export type FakeRuntimeOperation =
   | 'ai.execute'
@@ -54,6 +55,10 @@ export type FakeRuntimeOperation =
   | 'updates.check'
   | 'updates.install'
   | 'diagnostics.snapshot'
+  | 'migration.readJournal'
+  | 'migration.writeJournal'
+  | 'migration.writeReceipt'
+  | 'migration.deleteReceipt'
 
 export interface FakeRuntimeState {
   aiRequests: AiTransportRequest[]
@@ -69,6 +74,8 @@ export interface FakeRuntimeState {
   diagnosticEvents: DiagnosticEvent[]
   updatesInitialized: boolean
   update: AvailableUpdate | null
+  migrationJournal: MigrationJournal | null
+  migrationReceipts: Map<string, MigrationReceipt>
 }
 
 export interface FakeRuntimeOptions {
@@ -143,6 +150,8 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
       diagnosticEvents: [],
       updatesInitialized: false,
       update: null,
+      migrationJournal: null,
+      migrationReceipts: new Map(),
     }
   }
 
@@ -426,6 +435,41 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
         distribution: await this.distribution.getInfo(),
         events: this.state.diagnosticEvents.map(event => ({ ...event })),
       }
+    },
+  }
+
+  readonly migration: RuntimeAdapter['migration'] = {
+    policy: {
+      canExportProfile: true,
+      requiresFirstRunChoice: true,
+      journalOutsideBusinessDatabase: true,
+    },
+    readJournal: async () => {
+      this.assertNoFailure('migration.readJournal')
+      return this.state.migrationJournal ? { ...this.state.migrationJournal } : null
+    },
+    writeJournal: async (journal, expectedPhase) => {
+      this.assertNoFailure('migration.writeJournal')
+      const currentPhase = this.state.migrationJournal?.phase ?? null
+      if (expectedPhase !== undefined && currentPhase !== expectedPhase) {
+        throw runtimeFailure('BUSY', 'migration.writeJournal')
+      }
+      this.state.migrationJournal = { ...journal }
+    },
+    clearJournal: async () => {
+      this.state.migrationJournal = null
+    },
+    readReceipt: async exportId => {
+      const receipt = this.state.migrationReceipts.get(exportId)
+      return receipt ? structuredClone(receipt) : null
+    },
+    writeReceipt: async receipt => {
+      this.assertNoFailure('migration.writeReceipt')
+      this.state.migrationReceipts.set(receipt.exportId, structuredClone(receipt))
+    },
+    deleteReceipt: async exportId => {
+      this.assertNoFailure('migration.deleteReceipt')
+      this.state.migrationReceipts.delete(exportId)
     },
   }
 }

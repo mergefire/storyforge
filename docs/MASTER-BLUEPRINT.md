@@ -4,7 +4,7 @@
 > 替代 `docs/ARCHITECTURE-REFACTOR.md`（v1，已部分失效，见 §0.4）。
 > 目标读者：任何接手该项目的开发者或 AI 模型。
 > 创建：2026-06-04 ｜ v2 修订基线：仓库 `main` 分支 HEAD（commit `1d28158` 后）。
-> Windows Desktop 专项纳入：2026-07-14（见 §17；M0、M1 已 PASS，下一里程碑为 M2，尚未达到 `SELF_USE_READY`）。
+> Windows Desktop 专项纳入：2026-07-14（见 §17；M0～M2 已 PASS，下一里程碑为 M3，尚未达到 `SELF_USE_READY`）。
 
 ---
 
@@ -2315,17 +2315,17 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 5. 功能动作事实源在 M1 从当前生产代码生成；专项规划 §5 是人工初始矩阵。本蓝图不维护第二份逐动作清单。
 6. 当前生产 `web-tab` 是 Web 回归基线；installed PWA 只作可选补充。M0～M3 不因缺少 installed PWA 实测阻塞，但任何已知回归仍必须修复。
 7. 用户于 2026-07-15 选择“**1+2**”：以最快形成作者可长期使用的 Windows 客户端为当前目标，同时保留全部现有功能和安全迁移；公开发布、受信任签名、Updater、NSIS/卸载全矩阵及 beta/stable 运营后移。该决定取代旧的作者自用施工顺序，不删除其功能、安全和数据要求。
-8. 当前状态为 **M1 · 合成数据全功能（PASS）**，下一里程碑 **M2 · 完整迁移演练（NOT STARTED）**。M1 已从生产 AST 生成 1,351 个唯一 `actionId + FP ID`，补齐受限 AI/Embedding/Gist、Credential Manager、文件/备份、外链/剪贴板和脱敏诊断 IPC；dev identity 实机完成 35 个当前可见侧栏模块、合成项目/章节重启、独立空 profile、流式 UTF-8、原生取消、Credential Manager 重启复用、100 MiB Blob hash 和大合成项目验证。30 分钟核心使用项实跑 18.2 分钟/35 轮无失败后，作者于 2026-07-15 明确豁免剩余时长并判定该项通过；不得把此记录表述为自动跑满 30 分钟。尚未达到 `SELF_USE_READY`，不得连接真实密钥、真实浏览器数据或默认正式 UDF。
+8. 当前状态为 **M2 · 完整迁移演练（PASS）**，下一里程碑 **M3 · 作者真实数据切换（NOT STARTED）**。M2 已完成独立 `.storyforge-migrate` 容器、`PROJECT_TABLES.migration` 全表策略、只读一致性导出、空目标批量导入、逐表/正文/引用/Blob/设置 hash 校验、外置原子 journal/receipt、secret/device-bound 重授权清单、首次启动选择、失败清理、进程中断恢复和激活后显式回滚。验证只使用合成/legacy 标记数据：正常迁移、2 MiB Blob、敏感配置零导出、失败、进程中断恢复和回滚均各执行一次，没有反复耐久循环；未读取、复制或改写作者真实浏览器数据，也未启动默认正式 UDF。动作登记随生产代码更新为 1,361 个唯一 `actionId + FP ID`。M1 的 30 分钟核心使用项仍按作者在 18.2 分钟/35 轮后明确豁免剩余时长的原记录表述。尚未达到 `SELF_USE_READY`；M3 前不得连接真实密钥或迁移真实数据。
 
 #### 2026-07-15 进度快照
 
 | 口径 | 当前事实 |
 |---|---|
-| 当前里程碑 | M1 · 合成数据全功能 PASS；下一里程碑 M2 · 完整迁移演练尚未启动 |
+| 当前里程碑 | M2 · 完整迁移演练 PASS；下一里程碑 M3 · 作者真实数据切换尚未启动 |
 | 可运行客户端 | 可重复构建无签名 dev 验证 exe 和 stable 边界对照 artifact；dev 真实运行生产页面、受限原生能力、合成数据持久化、重启和 profile 隔离 |
-| M0/M1 验证 | dev/stable identity 与调试边界保持隔离；1,351 个生产动作注册无重复/UNKNOWN/BLOCKED；全量 Vitest 521/521、Rust 默认与全特性 test、fmt/clippy、TypeScript、dev build 通过；真实 M1 smoke 的 35 个可见模块、pdf.js worker、AI 流式/取消、Credential Manager 重启、100 MiB Blob、IndexedDB 重启/空 profile/恢复均通过且无 JS/console error；核心使用实跑 18.2 分钟/35 轮后由作者豁免剩余时长 |
+| M0～M2 验证 | dev/stable identity 与调试边界保持隔离；1,361 个生产动作注册无重复/UNKNOWN/BLOCKED；TypeScript、Web/dev/stable UI build、Rust 默认/全特性 test、fmt/clippy、迁移定向回归和确定性夹具通过；M2 合成归档完成正常导入、2 MiB Blob、secret 剔除、逐表校验、失败/中断恢复和显式回滚各一次；没有反复耐久循环，未启动浏览器或正式 profile |
 | 功能等价 | M1 已完成；动作事实源为 `docs/windows-desktop/feature-parity-baseline.json`，生产代码增删或未映射动作会使 `check:desktop-parity` 失败 |
-| 旧数据迁移 | M2 尚未开始；未读取、复制或改写作者真实浏览器数据，也未触碰默认正式 UDF |
+| 旧数据迁移 | M2 工具与合成演练已完成；M3 真实迁移尚未开始，未读取、复制或改写作者真实浏览器数据，也未触碰默认正式 UDF |
 | 放行状态 | M3 未完成，`SELF_USE_READY` 未通过；公开 G2、beta、stable 均为未来范围 |
 
 ### 17.2 功能等价与数据迁移永久红线
@@ -2350,7 +2350,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 |---|---|---|---|
 | M0 · 稳定开发壳 | stable artifact 预启动拒绝调试；不继承外部 WebView2 调试参数；Web/Desktop 的 Cache、Service Worker、UDF 与 identity 隔离；pdf.js worker 有真实运行证据；修复 AI manual 漂移；保留现有 dev identity 持久化 smoke | D0.2、D1.1～D1.3 | PASS |
 | M1 · 合成数据全功能 | 从生产代码生成一份动作验收清单；补齐窄 Tauri IPC（AI/Embedding/Gist 流式与取消、Credential Manager 不透明引用、按用途约束的文件/备份/外链、最小脱敏诊断）；全部现有功能在 dev identity + 合成数据下可完成并重启保持；验证大合成项目、100 MiB Blob、AI 流式和核心使用（30 分钟原要求由作者在 18.2 分钟/35 轮无失败后明确豁免剩余时长） | D0.3～D0.5、D1.4/G1、D3.1～D3.5 的自用必需部分 | PASS |
-| M2 · 完整迁移演练 | 以一个 `FullMigrationArchive` 纵向切片完成只读导出、空目标导入、逐表/计数/hash/Blob/设置验证、secret 重授权、preflight/import/verify/activate/rollback 和 `MigrationReceipt`；只用合成或明确复制的夹具反复演练 | D2.1～D2.6；D2.7 增强后移 | NOT STARTED |
+| M2 · 完整迁移演练 | 以一个 `FullMigrationArchive` 纵向切片完成只读导出、空目标导入、逐表/计数/hash/Blob/设置验证、secret 重授权、preflight/import/verify/activate/rollback 和 `MigrationReceipt`；只使用合成/legacy 标记夹具，各风险场景执行一次，不做重复耐久循环 | D2.1～D2.6；D2.7 增强后移 | PASS |
 | M3 · 作者真实数据切换 | 固定 stable identity 的 portable 自用候选；作者明确授权并确认正确 profile 后，由 Codex 执行导出/导入/验证/激活；完成一份自用验收、观察和回滚验证 | D4.1～D4.3 | NOT STARTED |
 | 未来公开发布 | G2/D4.4、D5 全部；NSIS/卸载矩阵、受信任 Authenticode、Updater、beta/stable、公开材料、完整 Windows 矩阵、installed PWA 补充及常规 500 MiB/1 GiB 压测 | D4.4、D5.1～D5.5 | DEFERRED |
 

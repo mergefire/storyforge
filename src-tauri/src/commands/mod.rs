@@ -3,5 +3,6 @@ pub mod ai;
 pub mod dev;
 pub mod files;
 pub mod gist;
+pub mod migration;
 pub mod secrets;
 pub mod system;

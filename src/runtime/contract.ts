@@ -1,4 +1,9 @@
 import type { AIProvider } from '../lib/types/ai'
+import type {
+  MigrationJournal,
+  MigrationJournalPhase,
+  MigrationReceipt,
+} from '../lib/migration/archive-types'
 import type { RuntimeErrorCode } from './errors'
 
 export type RuntimeKind = 'web' | 'tauri'
@@ -300,6 +305,7 @@ export type RuntimeCapabilityName =
   | 'durability'
   | 'distribution'
   | 'updates'
+  | 'migration'
 
 export type DiagnosticEvent =
   | (DiagnosticEventBase & {
@@ -351,6 +357,23 @@ export interface Diagnostics {
   snapshot(): Promise<DiagnosticsSnapshot>
 }
 
+export interface MigrationRuntime {
+  readonly policy: {
+    /** Web can create an archive from its same-origin profile. */
+    readonly canExportProfile: boolean
+    /** Desktop must decide between import and an explicitly empty profile before seeds run. */
+    readonly requiresFirstRunChoice: boolean
+    /** Journal/receipt storage is outside the not-yet-activated business database. */
+    readonly journalOutsideBusinessDatabase: boolean
+  }
+  readJournal(): Promise<MigrationJournal | null>
+  writeJournal(journal: MigrationJournal, expectedPhase?: MigrationJournalPhase | null): Promise<void>
+  clearJournal(): Promise<void>
+  readReceipt(exportId: string): Promise<MigrationReceipt | null>
+  writeReceipt(receipt: MigrationReceipt): Promise<void>
+  deleteReceipt(exportId: string): Promise<void>
+}
+
 export interface RuntimeAdapter {
   readonly kind: RuntimeKind
   readonly ai: AiTransport
@@ -363,4 +386,5 @@ export interface RuntimeAdapter {
   readonly distribution: Distribution
   readonly updates: AppUpdate
   readonly diagnostics: Diagnostics
+  readonly migration: MigrationRuntime
 }

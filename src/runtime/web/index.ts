@@ -136,14 +136,19 @@ export const WEB_SAVE_FILE_FORMATS: Readonly<Record<SaveFilePurpose, { mediaType
   'prompt-library-json': { mediaType: 'application/json;charset=utf-8', extensions: ['.json'] },
   'prompt-workflow-json': { mediaType: 'application/json;charset=utf-8', extensions: ['.json'] },
   'diagnostic-bundle': { mediaType: 'application/zip', extensions: ['.zip'] },
-  'full-migration-archive': { mediaType: 'application/zip', extensions: ['.sfmigration'] },
+  'full-migration-archive': {
+    mediaType: 'application/vnd.storyforge.profile-migration+zip',
+    extensions: ['.storyforge-migrate'],
+  },
 }
 
 export const WEB_OPEN_FILE_FORMATS: Readonly<
   Record<OpenFilePurpose, Readonly<Record<string, readonly string[]>>>
 > = {
   'project-json': { 'application/json': ['.json'] },
-  'full-migration-archive': { 'application/zip': ['.sfmigration', '.zip'] },
+  'full-migration-archive': {
+    'application/vnd.storyforge.profile-migration+zip': ['.storyforge-migrate'],
+  },
   'source-document': {
     'text/plain': ['.txt'],
     'text/markdown': ['.md'],
@@ -544,7 +549,7 @@ async function requestPermission(
 
 function backupNameMatches(purpose: BackupReadRequest['purpose'], name: string): boolean {
   if (purpose === 'project-backup') return /^storyforge-.+\.json$/i.test(name)
-  return /^storyforge-.+\.(?:sfmigration|zip)$/i.test(name)
+  return /^storyforge-.+\.storyforge-migrate$/i.test(name)
 }
 
 async function writeAndCloseBackup(
@@ -772,7 +777,7 @@ function assertDiagnosticEvent(event: DiagnosticEvent): void {
     case 'runtime-capability':
       assertDiagnosticEnum(record, 'capability', new Set([
         'ai', 'gist', 'files', 'secrets', 'clipboard', 'external',
-        'durability', 'distribution', 'updates',
+        'durability', 'distribution', 'updates', 'migration',
       ]), operation)
       assertDiagnosticEnum(record, 'outcome', new Set(['started', 'completed', 'failed']), operation)
       break
@@ -1179,7 +1184,7 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       throwIfAborted(request.signal, operation)
       const suggestedName = normalizeSuggestedFilename(
         request.suggestedName,
-        request.purpose === 'project-backup' ? ['.json'] : ['.sfmigration', '.zip'],
+        request.purpose === 'project-backup' ? ['.json'] : ['.storyforge-migrate'],
         operation,
       )
       if (!backupNameMatches(request.purpose, suggestedName)) {
@@ -1425,6 +1430,39 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
     },
   }
 
+  let migrationJournal: Awaited<ReturnType<RuntimeAdapter['migration']['readJournal']>> = null
+  const migrationReceipts = new Map<string, Awaited<ReturnType<RuntimeAdapter['migration']['readReceipt']>>>()
+  const migration: RuntimeAdapter['migration'] = {
+    policy: {
+      canExportProfile: true,
+      requiresFirstRunChoice: false,
+      journalOutsideBusinessDatabase: false,
+    },
+    async readJournal() {
+      return migrationJournal ? { ...migrationJournal } : null
+    },
+    async writeJournal(journal, expectedPhase) {
+      const currentPhase = migrationJournal?.phase ?? null
+      if (expectedPhase !== undefined && currentPhase !== expectedPhase) {
+        throw new RuntimeError('BUSY', '迁移状态已经变化', { operation: 'migration.writeJournal' })
+      }
+      migrationJournal = { ...journal }
+    },
+    async clearJournal() {
+      migrationJournal = null
+    },
+    async readReceipt(exportId) {
+      const receipt = migrationReceipts.get(exportId)
+      return receipt ? structuredClone(receipt) : null
+    },
+    async writeReceipt(receipt) {
+      migrationReceipts.set(receipt.exportId, structuredClone(receipt))
+    },
+    async deleteReceipt(exportId) {
+      migrationReceipts.delete(exportId)
+    },
+  }
+
   return {
     kind: 'web',
     ai,
@@ -1437,5 +1475,6 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
     distribution,
     updates,
     diagnostics,
+    migration,
   }
 }

@@ -43,6 +43,7 @@ const requiredFiles = [
   'src-tauri/src/commands/dev.rs',
   'src-tauri/src/commands/files.rs',
   'src-tauri/src/commands/gist.rs',
+  'src-tauri/src/commands/migration.rs',
   'src-tauri/src/commands/secrets.rs',
   'src-tauri/src/commands/system.rs',
   'src-tauri/tauri.conf.json',
@@ -139,6 +140,12 @@ const commonCommands = [
   'commands::files::runtime_backup_begin_write',
   'commands::files::runtime_backup_list',
   'commands::files::runtime_backup_read',
+  'commands::migration::runtime_migration_read_journal',
+  'commands::migration::runtime_migration_write_journal',
+  'commands::migration::runtime_migration_clear_journal',
+  'commands::migration::runtime_migration_read_receipt',
+  'commands::migration::runtime_migration_write_receipt',
+  'commands::migration::runtime_migration_delete_receipt',
   'commands::system::runtime_cancel_request',
   'commands::system::runtime_clipboard_write',
   'commands::system::runtime_external_open',
@@ -157,7 +164,7 @@ assertExactArray(registeredCommands(handlerBlocks[0][1]), commonCommands, 'stabl
 assertExactArray(registeredCommands(handlerBlocks[1][1]), [...commonCommands, ...devOnlyCommands], 'dev M1 IPC 白名单')
 assert(lib.includes('#[cfg(not(feature = "dev-identity"))]'), 'stable handler 必须显式排除 dev-identity')
 assert(lib.includes('#[cfg(feature = "dev-identity")]'), 'dev handler 必须受 dev-identity feature 保护')
-const commandSources = ['ai', 'dev', 'files', 'gist', 'secrets', 'system']
+const commandSources = ['ai', 'dev', 'files', 'gist', 'migration', 'secrets', 'system']
   .map(name => read(`src-tauri/src/commands/${name}.rs`))
   .join('\n')
 const implementedCommands = [...commandSources.matchAll(/#\[tauri::command\]\s*pub\s+(?:async\s+)?fn\s+([a-z_]+)/g)]
@@ -189,4 +196,4 @@ assert(stableBoundary.includes('stableRejectedBeforeLaunch: true'), 'stable boun
 assert(stableBoundary.includes('stableLaunchAttempted: false'), 'stable boundary 必须证明没有启动 stable artifact')
 assert(!stableBoundary.includes('spawn('), 'stable boundary 不得启动任何 stable artifact')
 
-console.log('M1 desktop shell and narrow IPC static contract passed.')
+console.log('M2 desktop shell and narrow IPC static contract passed.')

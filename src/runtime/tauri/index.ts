@@ -13,6 +13,7 @@ import type {
   RuntimeOutcome,
 } from '../contract'
 import { RuntimeError, type RuntimeErrorCode, throwIfAborted } from '../errors'
+import type { MigrationJournal, MigrationReceipt } from '../../lib/migration/archive-types'
 
 const MAX_DIAGNOSTIC_EVENTS = 200
 const FILE_CHUNK_BYTES = 1024 * 1024
@@ -495,6 +496,43 @@ export function createTauriRuntime(options: TauriRuntimeOptions = {}): RuntimeAd
         }
       },
     },
+    migration: {
+      policy: {
+        canExportProfile: false,
+        requiresFirstRunChoice: true,
+        journalOutsideBusinessDatabase: true,
+      },
+      async readJournal() {
+        return ipc.invoke<MigrationJournal | null>('runtime_migration_read_journal')
+          .catch(error => { throw ipcError(error, 'migration.readJournal') })
+      },
+      async writeJournal(journal, expectedPhase) {
+        await ipc.invoke('runtime_migration_write_journal', {
+          request: {
+            journal,
+            ...(expectedPhase !== undefined
+              ? { expectedPhase: expectedPhase === null ? 'none' : expectedPhase }
+              : {}),
+          },
+        }).catch(error => { throw ipcError(error, 'migration.writeJournal') })
+      },
+      async clearJournal() {
+        await ipc.invoke('runtime_migration_clear_journal')
+          .catch(error => { throw ipcError(error, 'migration.clearJournal') })
+      },
+      async readReceipt(exportId) {
+        return ipc.invoke<MigrationReceipt | null>('runtime_migration_read_receipt', { exportId })
+          .catch(error => { throw ipcError(error, 'migration.readReceipt') })
+      },
+      async writeReceipt(receipt) {
+        await ipc.invoke('runtime_migration_write_receipt', { receipt })
+          .catch(error => { throw ipcError(error, 'migration.writeReceipt') })
+      },
+      async deleteReceipt(exportId) {
+        await ipc.invoke('runtime_migration_delete_receipt', { exportId })
+          .catch(error => { throw ipcError(error, 'migration.deleteReceipt') })
+      },
+    },
   }
 
   return adapter
@@ -504,6 +542,6 @@ export function createTauriRuntime(options: TauriRuntimeOptions = {}): RuntimeAd
 // adapter; it emits no runtime data and therefore cannot expand authority.
 const _capabilityNames: readonly RuntimeCapabilityName[] = [
   'ai', 'gist', 'files', 'secrets', 'clipboard', 'external', 'durability',
-  'distribution', 'updates',
+  'distribution', 'updates', 'migration',
 ]
 void _capabilityNames

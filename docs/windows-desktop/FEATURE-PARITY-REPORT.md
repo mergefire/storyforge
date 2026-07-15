@@ -2,8 +2,8 @@
 
 - Source freeze: `52819e7`
 - Scanner: v1 (TypeScript AST; production modules are never executed)
-- Registered actions: **1351**
-- Routes: 3; visible sidebar leaves: 36; workspace dispatch cases: 44; UI handlers: 1151; runtime/background calls: 117
+- Registered actions: **1361**
+- Routes: 4; visible sidebar leaves: 36; workspace dispatch cases: 44; UI handlers: 1160; runtime/background calls: 117
 - Gate: any added/deleted/unmapped action, duplicate actionId/FP ID, UNKNOWN, or BLOCKED status fails `npm run check:desktop-parity`.
 
 ## Explicit exclusions
@@ -61,12 +61,13 @@
 | `dispatch:eedad2995d0ced93` | `FP-DISPATCH-F3A2AACAAE8D` | dispatch | `src/pages/WorkspacePage.tsx:193` | REGISTERED_M1 | npm run check:desktop-routes |
 | `dispatch:ef7da0fd5332485b` | `FP-DISPATCH-749257C79C1E` | dispatch | `src/pages/WorkspacePage.tsx:201` | REGISTERED_M1 | npm run check:desktop-routes |
 | `dispatch:f39fcee271a87f48` | `FP-DISPATCH-7B63F47CB985` | dispatch | `src/pages/WorkspacePage.tsx:234` | REGISTERED_M1 | npm run check:desktop-routes |
-| `route:5f13a158ffec937b` | `FP-ROUTE-AFB399254B95` | route | `src/App.tsx:10` | REGISTERED_M1 | npm run check:desktop-routes |
-| `route:a547df4c0d21dfc6` | `FP-ROUTE-731FC6E0F5A8` | route | `src/App.tsx:11` | REGISTERED_M1 | npm run check:desktop-routes |
-| `route:e6a0a181362ef48a` | `FP-ROUTE-DDD17877C226` | route | `src/App.tsx:9` | REGISTERED_M1 | npm run check:desktop-routes |
+| `route:5bc3cb2557f34f7a` | `FP-ROUTE-81C605791E51` | route | `src/App.tsx:34` | REGISTERED_M1 | npm run check:desktop-routes |
+| `route:5f13a158ffec937b` | `FP-ROUTE-AFB399254B95` | route | `src/App.tsx:33` | REGISTERED_M1 | npm run check:desktop-routes |
+| `route:a547df4c0d21dfc6` | `FP-ROUTE-731FC6E0F5A8` | route | `src/App.tsx:35` | REGISTERED_M1 | npm run check:desktop-routes |
+| `route:e6a0a181362ef48a` | `FP-ROUTE-DDD17877C226` | route | `src/App.tsx:32` | REGISTERED_M1 | npm run check:desktop-routes |
 | `runtime:003a498012d3e9e8` | `FP-RUNTIME-B9BA9FB34994` | runtime | `src/lib/export/json-export.ts:120` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:0448c9370b75f7a5` | `FP-RUNTIME-9FDCDFF3C149` | runtime | `src/components/geography/GeographyPanel.tsx:145` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:0537fb24b728ac7e` | `FP-RUNTIME-6867495FAE07` | runtime | `src/runtime/web/index.ts:479` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:0537fb24b728ac7e` | `FP-RUNTIME-6867495FAE07` | runtime | `src/runtime/web/index.ts:484` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:05bd72cec6d9224e` | `FP-RUNTIME-1ABEBA99FAC5` | runtime | `src/stores/ai-config.ts:285` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:06f1d50cf64967ee` | `FP-RUNTIME-DF327DE4524D` | runtime | `src/components/shared/PanelLayout.tsx:62` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:0767b9b237d89f9e` | `FP-RUNTIME-CB914DEB6025` | runtime | `src/components/geography/WorldMapVoronoi.tsx:180` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
@@ -77,7 +78,7 @@
 | `runtime:0bde393d799b15ba` | `FP-RUNTIME-9DB16B56E280` | runtime | `src/components/system/import/ImportProgressPanel.tsx:22` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:0cd73196103195fb` | `FP-RUNTIME-7316CC4675F2` | runtime | `src/components/data/DataManagementPanel.tsx:188` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:130f3fcba1915e5e` | `FP-RUNTIME-406237A8347C` | runtime | `src/hooks/useGistAutoBackup.ts:18` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:1413bca62eee8663` | `FP-RUNTIME-4EFBFBE9A8C2` | runtime | `src/runtime/tauri/index.ts:273` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:1413bca62eee8663` | `FP-RUNTIME-4EFBFBE9A8C2` | runtime | `src/runtime/tauri/index.ts:274` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:175364d131f80b34` | `FP-RUNTIME-D0217643E381` | runtime | `src/pages/HomePage.tsx:123` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:1794e01e141f801e` | `FP-RUNTIME-1FD705D2D22D` | runtime | `src/components/geography/WorldMapVoronoi.tsx:209` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:18e3f0219abd35c4` | `FP-RUNTIME-17A872D45718` | runtime | `src/stores/ai-config.ts:267` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
@@ -90,14 +91,14 @@
 | `runtime:273d708a5311570d` | `FP-RUNTIME-174F8194B8C8` | runtime | `src/components/data/DataManagementPanel.tsx:88` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:289328bd5e682676` | `FP-RUNTIME-AF0AB3BB3532` | runtime | `src/components/settings/prompt/WorkflowRunner.tsx:438` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:291f5d0776e6019e` | `FP-RUNTIME-0A9BA808DD10` | runtime | `src/lib/ai/adapters/embedding-adapter.ts:61` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:29f4227779c9721d` | `FP-RUNTIME-0F60FDE52F72` | runtime | `src/runtime/web/index.ts:478` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:29f4227779c9721d` | `FP-RUNTIME-0F60FDE52F72` | runtime | `src/runtime/web/index.ts:483` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:2a263c5d977c6a63` | `FP-RUNTIME-4A384817BA23` | runtime | `src/stores/ai-config.ts:260` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:2c75413ae11e4c07` | `FP-RUNTIME-E8B370A0B49A` | runtime | `src/lib/export/gist-export.ts:125` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:2df21761ac0a0b8d` | `FP-RUNTIME-85E70D08B70B` | runtime | `src/components/geography/WorldMapVoronoi.tsx:83` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:2eb78315ce63d7ce` | `FP-RUNTIME-B7D2A9743F5A` | runtime | `src/components/data/DataManagementPanel.tsx:101` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:310cc0e775b2034d` | `FP-RUNTIME-191BFD9D38D5` | runtime | `src/components/relations/RelationGraph.tsx:72` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:3152acc6ee56626b` | `FP-RUNTIME-E78175ED7188` | runtime | `src/hooks/useFolderAutoBackup.ts:28` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:319defa37fd39229` | `FP-RUNTIME-EF33648FE12C` | runtime | `src/runtime/web/index.ts:1357` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:319defa37fd39229` | `FP-RUNTIME-EF33648FE12C` | runtime | `src/runtime/web/index.ts:1362` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:37b1be66f19cd9cf` | `FP-RUNTIME-01185D7D7327` | runtime | `src/lib/pwa/register-service-worker.ts:7` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:3a8d9aead5d96333` | `FP-RUNTIME-C0B6A38718BD` | runtime | `src/hooks/useAutoBackup.ts:22` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:3cc95c4e165b389e` | `FP-RUNTIME-96FECB761679` | runtime | `src/stores/ai-config.ts:239` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
@@ -119,7 +120,7 @@
 | `runtime:72ef3135d55954ad` | `FP-RUNTIME-F21A79995214` | runtime | `src/stores/ai-config.ts:348` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:770c348f88039406` | `FP-RUNTIME-3785FDBDA316` | runtime | `src/components/geography/WorldMapVoronoi.tsx:265` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:7763a00af456b083` | `FP-RUNTIME-12D7FA2099F7` | runtime | `src/components/editor/FloatingToolbar.tsx:70` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:78876d1b0a0ee3c8` | `FP-RUNTIME-979F00826179` | runtime | `src/runtime/web/index.ts:481` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:78876d1b0a0ee3c8` | `FP-RUNTIME-979F00826179` | runtime | `src/runtime/web/index.ts:486` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:7a32579adbcdec46` | `FP-RUNTIME-AA565B47AA24` | runtime | `src/lib/ai/client.ts:274` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:7b0e38ae6792412b` | `FP-RUNTIME-F819428C428F` | runtime | `src/components/settings/prompt/WorkflowRunner.tsx:438` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:7eeaf7866c4f34c1` | `FP-RUNTIME-689FE5E97964` | runtime | `src/pages/HomePage.tsx:93` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
@@ -135,11 +136,11 @@
 | `runtime:8d6c8a019f8ef3c2` | `FP-RUNTIME-92AAF6C293DB` | runtime | `src/components/editor/FloatingToolbar.tsx:61` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:8f1c9c7a1a1d8f44` | `FP-RUNTIME-EB7FF629A61E` | runtime | `src/pages/HomePage.tsx:69` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:90270a427d81dd48` | `FP-RUNTIME-7E23F2672E95` | runtime | `src/lib/export/context-snapshot.ts:182` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:91773bf7aead7b0f` | `FP-RUNTIME-7142842E098C` | runtime | `src/runtime/web/index.ts:469` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:91773bf7aead7b0f` | `FP-RUNTIME-7142842E098C` | runtime | `src/runtime/web/index.ts:474` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:94535d131042625f` | `FP-RUNTIME-B02DD75CFBF8` | runtime | `src/lib/reference-analysis/pipeline.ts:449` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:9842343ebf9cb5ed` | `FP-RUNTIME-5619B1582CCF` | runtime | `src/lib/ai/runtime-transport.ts:90` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:9a4c62528b82dd75` | `FP-RUNTIME-1603B6F80FDA` | runtime | `src/lib/export/gist-export.ts:51` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:9de464c106a2b9cf` | `FP-RUNTIME-CD8863FC40F4` | runtime | `src/runtime/tauri/index.ts:123` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:9de464c106a2b9cf` | `FP-RUNTIME-CD8863FC40F4` | runtime | `src/runtime/tauri/index.ts:124` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:9f2dee5e1688ad10` | `FP-RUNTIME-3662D7B8753A` | runtime | `src/stores/ai-config.ts:237` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:9fa1f65c601c6616` | `FP-RUNTIME-8477382460E5` | runtime | `src/lib/ai/runtime-transport.ts:108` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:a1c37512d45fdb66` | `FP-RUNTIME-E17AFAE687A1` | runtime | `src/components/data/DataManagementPanel.tsx:90` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
@@ -154,7 +155,7 @@
 | `runtime:b0196ec0634f1c56` | `FP-RUNTIME-1171DA06F537` | runtime | `src/lib/ai/client.ts:261` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:b2bf170b8a0fe155` | `FP-RUNTIME-4EF0A22EF427` | runtime | `src/lib/export/gist-export.ts:44` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:b5726486958b8e59` | `FP-RUNTIME-8604B287999D` | runtime | `src/components/shared/PanelLayout.tsx:61` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:b6950414d3a78e99` | `FP-RUNTIME-1C9A3AB5EB3F` | runtime | `src/runtime/web/index.ts:480` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:b6950414d3a78e99` | `FP-RUNTIME-1C9A3AB5EB3F` | runtime | `src/runtime/web/index.ts:485` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:b769b2ef6ce56082` | `FP-RUNTIME-E2BCCD4D14D7` | runtime | `src/lib/storage/folder-backup.ts:34` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:b7d5583a6d64a92b` | `FP-RUNTIME-7849063DF057` | runtime | `src/lib/export/gist-export.ts:55` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:b89be387c41db5bd` | `FP-RUNTIME-272866159074` | runtime | `src/stores/ai-config.ts:383` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
@@ -170,7 +171,7 @@
 | `runtime:c95846fb7223a4aa` | `FP-RUNTIME-F86EC38B66F4` | runtime | `src/lib/export/gist-export.ts:87` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:c9e6ace4e4b649c2` | `FP-RUNTIME-FC43569ED98B` | runtime | `src/stores/ai-config.ts:302` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:d2fcfa0bcd1cf847` | `FP-RUNTIME-A0E4FD188729` | runtime | `src/lib/storage/folder-backup.ts:50` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
-| `runtime:d82d931668734645` | `FP-RUNTIME-8F462D068F11` | runtime | `src/runtime/tauri/index.ts:185` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
+| `runtime:d82d931668734645` | `FP-RUNTIME-8F462D068F11` | runtime | `src/runtime/tauri/index.ts:186` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:db41cbae4c623b76` | `FP-RUNTIME-808654D0F966` | runtime | `src/lib/world-map/interaction.ts:287` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:ddfe8e71f842c228` | `FP-RUNTIME-16099B340E88` | runtime | `src/lib/ai/adapters/embedding-adapter.ts:53` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
 | `runtime:e18b7a3e04aa84ad` | `FP-RUNTIME-31B64F3D99CB` | runtime | `src/lib/ai/runtime-transport.ts:201` | REGISTERED_M1 | tests/desktop-contract/tauri-runtime.test.ts |
@@ -327,6 +328,7 @@
 | `ui:17b3af51ca9d1e76` | `FP-UI-AA672FBCB06A` | ui | `src/components/shared/ContextBudgetBar.tsx:81` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:17b86b536a32e9a6` | `FP-UI-E93D055F9B7C` | ui | `src/components/worldview/WorldviewOriginPanel.tsx:511` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:17e2557ddaf4dbec` | `FP-UI-B3502BB9995C` | ui | `src/components/geography/WorldTreeSidebar.tsx:59` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:17f51fa76fc9d52e` | `FP-UI-4628BCA7E63C` | ui | `src/components/migration/FirstRunMigration.tsx:216` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:17f6ac34775b67a1` | `FP-UI-2D04171669C9` | ui | `src/components/geography/WorldTreeSidebar.tsx:179` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:1824ea7b77030239` | `FP-UI-32AAD819002C` | ui | `src/components/settings/AIConfigPanel.tsx:301` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:18680d26eb4c79b7` | `FP-UI-4FE5C4E75B92` | ui | `src/components/worldview/WorldviewNaturalPanel.tsx:344` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
@@ -417,11 +419,13 @@
 | `ui:2ba1f437de1921a7` | `FP-UI-32F5B6821A85` | ui | `src/components/history/HistoryPanel.tsx:466` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2bb173b8697c6480` | `FP-UI-57FC57232840` | ui | `src/components/location/LocationPanel.tsx:331` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2bd8d13437625e6e` | `FP-UI-879E434FD25A` | ui | `src/components/editor/ChapterEditor.tsx:1078` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:2c19e5b13f5449c7` | `FP-UI-55F122F245FB` | ui | `src/pages/MigrationExportPage.tsx:86` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2c431d24b8f079ff` | `FP-UI-8892E473D176` | ui | `src/components/outline/OutlinePanel.tsx:945` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2c5cc601e43ca9c8` | `FP-UI-63F6E90CF1A7` | ui | `src/components/relations/CharacterRelationPanel.tsx:135` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2c7dc31543feef11` | `FP-UI-1C70F7873914` | ui | `src/components/project/ReferencePanel.tsx:346` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2c978d4ac04ef966` | `FP-UI-4042FEB8AF6F` | ui | `src/components/data/DataManagementPanel.tsx:356` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2d2e1bf38ceafc64` | `FP-UI-52D72F469256` | ui | `src/components/outline/OutlinePanel.tsx:659` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:2d400af8aff60e9e` | `FP-UI-14D456A1D7AD` | ui | `src/App.tsx:22` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2dcab947c1687f00` | `FP-UI-2729A1B05F0B` | ui | `src/components/system/ImportDocPanel.tsx:602` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2e117eec8e226a2c` | `FP-UI-7D4AA2E7824B` | ui | `src/components/character/CharacterExtraPanel.tsx:121` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:2e28e0e5e7223263` | `FP-UI-9085453280C8` | ui | `src/components/editor/EmotionBeatCard.tsx:245` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
@@ -693,6 +697,7 @@
 | `ui:68e30b8146cbc5a2` | `FP-UI-101BCB2AB1F7` | ui | `src/components/worldview/WorldviewOriginPanel.tsx:151` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:68e57ba483898926` | `FP-UI-4675310AD9BD` | ui | `src/components/editor/NotePanel.tsx:80` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:68f7f6ad17a5f734` | `FP-UI-EBE72038E1CE` | ui | `src/components/editor/ChapterEditor.tsx:786` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:69c97b164219a234` | `FP-UI-A8F590719140` | ui | `src/components/migration/FirstRunMigration.tsx:143` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:6a1eccf3e6424f90` | `FP-UI-04DB6606E06E` | ui | `src/components/world-group/WorldGroupDetail.tsx:119` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:6a2957cb5c3317bc` | `FP-UI-2F6711AE503A` | ui | `src/components/project/AnalysisReportViewer.tsx:179` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:6a4a122d12695977` | `FP-UI-485787719C20` | ui | `src/components/editor/RichEditor.tsx:669` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
@@ -716,6 +721,7 @@
 | `ui:6e9e24fd0682252d` | `FP-UI-62B0566E70D2` | ui | `src/components/rules/CreativeRulesPanel.tsx:227` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:6f2ee0671e2d34c6` | `FP-UI-D8BDA9435D23` | ui | `src/components/geography/WorldMapVoronoi.tsx:326` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:6f7569f591ad1763` | `FP-UI-6A0490FB5891` | ui | `src/components/system/import/ImportUnfinishedBanner.tsx:58` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:70539aec8f0f5da9` | `FP-UI-8658E01BCCC8` | ui | `src/components/migration/FirstRunMigration.tsx:178` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:70689170cc679bbf` | `FP-UI-B8E0866C02B4` | ui | `src/components/outline/OutlinePanel.tsx:1147` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:70bb7a6144c5df30` | `FP-UI-BEC5DD085166` | ui | `src/components/data/DataManagementPanel.tsx:249` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:70cb6f8f2f10050f` | `FP-UI-573D12BAEB20` | ui | `src/components/layout/Sidebar.tsx:186` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
@@ -792,6 +798,7 @@
 | `ui:7e3c69824d095b91` | `FP-UI-5C58FEAE1B84` | ui | `src/components/character/CharacterPanel.tsx:301` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:7e3ec51db7eae929` | `FP-UI-723D0250B727` | ui | `src/components/settings/AIConfigPanel.tsx:430` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:7e6b1b7cccdff4f7` | `FP-UI-0D0179524121` | ui | `src/components/character/CharacterDimensionPicker.tsx:51` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:7e7ec63088d82980` | `FP-UI-E966F9FFE972` | ui | `src/components/migration/FirstRunMigration.tsx:196` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:7eab2c35f745a861` | `FP-UI-D5D3841F89EB` | ui | `src/components/foreshadow/ForeshadowPanel.tsx:372` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:7ed4401bb85702fa` | `FP-UI-E4577119D80E` | ui | `src/components/facts/FactLibraryPanel.tsx:118` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:7f5800f1021b6268` | `FP-UI-194B6473A856` | ui | `src/components/data/DataManagementPanel.tsx:361` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
@@ -949,10 +956,11 @@
 | `ui:a226931871e3fab5` | `FP-UI-924D43071AE2` | ui | `src/components/shared/AIStreamOutput.tsx:247` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:a24449218158c4d3` | `FP-UI-0F2FD2345B67` | ui | `src/components/relations/CharacterRelationPanel.tsx:357` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:a2667806e94c5ca0` | `FP-UI-137D6B815B19` | ui | `src/components/outline/DetailedOutlinePanel.tsx:407` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
-| `ui:a2c5e8e9654ccc9f` | `FP-UI-F8C1601CFCA9` | ui | `src/components/settings/SettingsPage.tsx:29` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:a2c5e8e9654ccc9f` | `FP-UI-F8C1601CFCA9` | ui | `src/components/settings/SettingsPage.tsx:47` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:a3421897a5221225` | `FP-UI-A09B020FF3AA` | ui | `src/components/project/InspirationPanel.tsx:482` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:a3884142c1b0c371` | `FP-UI-9854D26CC942` | ui | `src/components/character/CharacterAxesPicker.tsx:39` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:a3bc611e738140cf` | `FP-UI-EA37E0444639` | ui | `src/components/outline/CharacterDrivenPlotPanel.tsx:342` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:a3d762aaf0bd5211` | `FP-UI-31E407F7F325` | ui | `src/components/migration/FirstRunMigration.tsx:215` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:a3f54dbab887d864` | `FP-UI-60CF421F04F5` | ui | `src/components/system/import/ImportReportModal.tsx:166` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:a40f0600d9611997` | `FP-UI-0144EAB626F5` | ui | `src/components/world-group/WorldGroupOverview.tsx:334` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:a432828b80d690b3` | `FP-UI-266B62641C55` | ui | `src/components/world-group/WorldGroupOverview.tsx:171` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
@@ -1121,6 +1129,7 @@
 | `ui:cb873253cae5db0f` | `FP-UI-1D66ACCBE0EE` | ui | `src/components/history/HistoryPanel.tsx:693` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:cb9217b72f37f2c8` | `FP-UI-24D1369B40AC` | ui | `src/components/shared/ExtractionReviewPanel.tsx:24` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:cc1cb7d44938c566` | `FP-UI-E6283D23B84F` | ui | `src/components/outline/OutlinePanel.tsx:943` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:cc3cce8b5ebf52e6` | `FP-UI-97CEE1F18D48` | ui | `src/components/migration/FirstRunMigration.tsx:221` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:cc910b8e156a1a56` | `FP-UI-86AC142AAA3F` | ui | `src/components/character/CharacterExtraPanel.tsx:113` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:ccfbb4356825a596` | `FP-UI-8CD5B23DD37F` | ui | `src/components/worldview/PowerSystemPanel.tsx:58` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:cd57f19611b9ad7c` | `FP-UI-0C7715813F7D` | ui | `src/components/data/CloudBackupCard.tsx:101` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
@@ -1262,6 +1271,7 @@
 | `ui:e8825352f054cb78` | `FP-UI-0639570CF5D5` | ui | `src/components/history/HistoryPanel.tsx:811` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:e885a83971174c1c` | `FP-UI-4A6BDAFE5180` | ui | `src/components/geography/GeographyPanel.tsx:176` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:e8e6d8d25759ee74` | `FP-UI-616019988F93` | ui | `src/components/worldview/WorldviewOriginPanel.tsx:323` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
+| `ui:e9389c36e00f9e6a` | `FP-UI-2A2BFC4BD71D` | ui | `src/components/migration/FirstRunMigration.tsx:185` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:e9bbd7260ee91b3d` | `FP-UI-166F613CE63F` | ui | `src/components/worldview/StoryCorePanel.tsx:131` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:e9ca7e99187fe8a4` | `FP-UI-EB0DB8126C3C` | ui | `src/components/editor/EmotionBeatCard.tsx:206` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |
 | `ui:ea1db368b4a204a0` | `FP-UI-529288220839` | ui | `src/components/codex/CodexPanel.tsx:477` | REGISTERED_M1 | npm test + M1 synthetic desktop contract |

@@ -78,8 +78,8 @@ pub struct AppState {
     pub cancellations: Mutex<HashMap<String, CancellationToken>>,
     pub writes: Mutex<HashMap<String, WriteSession>>,
     pub diagnostics: Mutex<Vec<Value>>,
+    pub migration_io: Mutex<()>,
     metadata_path: PathBuf,
-    #[cfg(feature = "dev-identity")]
     app_data_dir: PathBuf,
     metadata: Mutex<RuntimeMetadata>,
     session_secrets: Mutex<HashMap<String, SessionSecret>>,
@@ -139,9 +139,9 @@ impl AppState {
             cancellations: Mutex::new(HashMap::new()),
             writes: Mutex::new(HashMap::new()),
             diagnostics: Mutex::new(Vec::new()),
+            migration_io: Mutex::new(()),
             metadata: Mutex::new(read_metadata(&metadata_path)),
             metadata_path,
-            #[cfg(feature = "dev-identity")]
             app_data_dir: app_data,
             session_secrets: Mutex::new(HashMap::new()),
         })
@@ -432,6 +432,14 @@ impl AppState {
     #[cfg(feature = "dev-identity")]
     pub fn synthetic_fixture_root(&self) -> PathBuf {
         self.app_data_dir.join("m1-synthetic-fixtures")
+    }
+
+    pub fn migration_journal_path(&self) -> PathBuf {
+        self.app_data_dir.join("migration-journal.json")
+    }
+
+    pub fn migration_receipts_path(&self) -> PathBuf {
+        self.app_data_dir.join("migration-receipts.json")
     }
 }
 

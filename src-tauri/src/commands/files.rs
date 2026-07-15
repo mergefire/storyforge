@@ -31,7 +31,7 @@ fn purpose_extension(purpose: &str) -> RuntimeResult<&'static str> {
         | "prompt-library-json"
         | "prompt-workflow-json"
         | "project-backup" => Ok("json"),
-        "full-migration-archive" => Ok("zip"),
+        "full-migration-archive" => Ok("storyforge-migrate"),
         "project-markdown" | "inspiration-markdown" => Ok("md"),
         "project-text" | "state-cards-text" => Ok("txt"),
         "fact-ledger" => Ok("csv"),
@@ -115,6 +115,7 @@ fn media_type(path: &Path) -> &'static str {
     {
         Some("json") => "application/json",
         Some("zip") => "application/zip",
+        Some("storyforge-migrate") => "application/vnd.storyforge.profile-migration+zip",
         Some("md") => "text/markdown",
         Some("txt") => "text/plain",
         Some("csv") => "text/csv",

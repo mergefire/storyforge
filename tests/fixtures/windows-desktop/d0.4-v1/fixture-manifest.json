@@ -1,5 +1,5 @@
 {
-  "dataSourceCommit": "f257e92114afd1eb3384f7736dc01a1dd670ae0e",
+  "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
   "fixtureSpecVersion": "d0.4-fixtures-v1",
   "fixtures": [
     {
@@ -271,7 +271,7 @@
   "registry": {
     "count": 42,
     "nameSetSha256": "b6794b4faf2e4c87cc07d10c5eb51091c49e7c442ee878cf47ecded6d17db3f4",
-    "sourceSha256": "90788e79b1e90ee29bdce6db2e23288aebb1671998bdbb997b7e100a92f8a798"
+    "sourceSha256": "03dc86bbfb573265eb21db1f6a2e24ad6cf66bf2851702b34ba6fe742410e392"
   },
   "schemaVersion": "1.0.0"
 }
