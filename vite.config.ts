@@ -1,15 +1,30 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
+const WEB_BASE = '/storyforge/'
+const GOOGLE_FONTS_STYLESHEET = /\s*<link\s+href="https:\/\/fonts\.googleapis\.com\/[^>]+rel="stylesheet"\s*\/?>/i
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, '.', '')
+  const runtimeTarget = env.VITE_RUNTIME_TARGET?.trim() || 'web'
+  if (runtimeTarget !== 'web' && runtimeTarget !== 'tauri') {
+    throw new Error('VITE_RUNTIME_TARGET 必须是 web 或 tauri')
+  }
+  const isDesktop = runtimeTarget === 'tauri'
+
+  return {
+    plugins: [
+      react(),
+      ...(isDesktop ? [{
+        name: 'desktop-html-safety',
+        transformIndexHtml: (html: string) => html.replace(GOOGLE_FONTS_STYLESHEET, ''),
+      }] : []),
+      ...(!isDesktop ? [VitePWA({
       injectRegister: null,
       registerType: 'autoUpdate',
-      base: '/storyforge/',
-      scope: '/storyforge/',
+      base: WEB_BASE,
+      scope: WEB_BASE,
       manifest: {
         name: '故事熔炉 StoryForge',
         short_name: '故事熔炉',
@@ -58,11 +73,20 @@ export default defineConfig({
           },
         ],
       },
-    }),
-  ],
-  base: '/storyforge/',
-  server: {
-    port: 1111,
+      })] : []),
+    ],
+    base: isDesktop ? './' : WEB_BASE,
+    server: isDesktop ? {
+      host: '127.0.0.1',
+      port: 1420,
+      strictPort: true,
+      hmr: {
+        host: '127.0.0.1',
+        port: 1420,
+        protocol: 'ws',
+      },
+    } : {
+      port: 1111,
     // CF-1: 端口被占用时直接失败报错，而不是静默换到 1112 —— 避免用户以为在 1111、
     // 实际打开的却是被旧进程占用的 1111（错误服务 / 重定向循环）。
     strictPort: true,
@@ -136,24 +160,26 @@ export default defineConfig({
         secure: true,
       },
     },
-  },
-  build: {
-    outDir: 'dist',
-    chunkSizeWarningLimit: 1200,
-    rollupOptions: {
-      output: {
+    },
+    build: {
+      outDir: isDesktop ? 'dist-desktop' : 'dist',
+      emptyOutDir: true,
+      chunkSizeWarningLimit: 1200,
+      rollupOptions: {
+        output: {
         // 只把 react 固定成独立 vendor chunk（便于缓存）。
         // pdfjs / mammoth / three / jszip 均已通过「动态 import() 按需加载」自然分块，
         // 不可在此用 manualChunks 固定它们——否则会被并入主包静态引用、反而变回首屏 eager 加载。
         // Phase 3.5:把大的静态依赖拆成独立 vendor chunk。
         // 好处:① 主包变小、解析更快 ② 这些库很少变,浏览器可长期缓存(应用更新不必重下)。
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-editor': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-placeholder'],
-          'vendor-db': ['dexie'],
-          'vendor-d3': ['d3-hierarchy'],
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-editor': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-placeholder'],
+            'vendor-db': ['dexie'],
+            'vendor-d3': ['d3-hierarchy'],
+          },
         },
       },
     },
-  },
+  }
 })

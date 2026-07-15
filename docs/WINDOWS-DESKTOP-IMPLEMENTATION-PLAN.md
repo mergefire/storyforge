@@ -12,7 +12,7 @@
 | --- | --- |
 | 规划日期 | 2026-07-14 |
 | 技术路线 | 已由用户确认 |
-| 当前状态 | D0.1 / D0.3 已 PASS；D0.2 / D0.4 进行中；D0.5 未开始；D1.1 已启动受限前置施工，但尚无可运行 Windows 客户端 |
+| 当前状态 | D0.1 / D0.3 已 PASS；D0.2 / D0.4 进行中；D0.5 未开始；D1.1 受限实现已落地并有离线首页证据，但 D0 总门未闭环，仍为 IN PROGRESS |
 | 第一平台 | Windows 10/11 x64 |
 | 第一验证人 | 项目作者本人 |
 | 数据迁移责任 | Codex 开发迁移工具、执行首次迁移并出具验证结果 |
@@ -24,8 +24,8 @@
 
 | 口径 | 当前事实 |
 | --- | --- |
-| 作者自用版交付准备度 | **约 25%～30%（管理估算，不是放行结论）**；已完成的是治理、运行时边界和部分可重建基线，尚未形成用户可操作的客户端 |
-| 可运行客户端闭环 | **0 个可交付 exe**；当前树尚无正式 `src-tauri/`、Tauri 依赖、Windows 壳构建或离线启动证据 |
+| 作者自用版交付准备度 | **约 30%～35%（管理估算，不是放行结论）**；新增真实 Tauri 壳、双构建和离线首页证据，仍未形成可使用真实数据的作者自用候选 |
+| 可运行客户端闭环 | **1 个开发隔离身份的无签名验证 exe**；可在无 Vite/Node 时离线打开首页，但 Dexie 重启持久化、功能等价、签名和迁移均未完成 |
 | 功能等价验收 | D0.5 动作级 manifest 尚未建立，68 个聚合 FP 行及其 actionId 尚无任何 Desktop PASS，不得据页面规划推断功能已迁入 |
 | 旧浏览器数据迁移 | D2 尚未开始；没有读取、复制或改写真实浏览器数据，也没有可激活的正式客户端 profile |
 | 自用签名与公开发布 | 自用证书边界已冻结但尚未生成候选包；G1、G2、stable 均未通过，不能自用真实数据、封测或公开分发 |
@@ -36,7 +36,7 @@
 - D0.2 已冻结正式/开发 identity、UDF、Windows 支持边界和 `CN=StoryForge Self-Use` 作者本机自签名边界，仍待独立审查闭环；
 - D0.3 已完成 `RuntimeAdapter` 契约、Web/Fake 实现、浏览器专属能力接管和架构守卫，并通过独立审查；Tauri target 在原生 adapter 注册前继续 fail closed；
 - D0.4 已落地 `d0.4-v2` 协议、静态采集器、`empty-v1` / `small-v1` 可重建夹具和严格 manifest；全量 Vitest 最近一次为 105 files / 414 tests PASS，其中 410 个为项目原有用例、4 个为本次桌面夹具与 manifest 新增用例；
-- D1.1 当前只完成 D0.2～D0.4 依赖集成和壳规格核对，尚未创建 Rust/Tauri 壳，也未启动或遗留浏览器、WebView2、Vite 或客户端长驻进程。
+- D1.1 已创建正式 Rust/Tauri 壳、受限 adapter、最小 capability/CSP、双构建和开发身份 exe；真实 WebView2 首页冒烟通过，验证进程及动态调试端口均已清理。证据见 `windows-desktop/D1.1-TAURI-SHELL-STATUS.md`。
 
 用户已于 2026-07-15 明确授权：D0.4 剩余动态基线不得继续阻塞开发，允许先推进只使用合成数据和开发隔离身份的 D1.1 前置施工。该授权只改变施工顺序，不改变完成门槛：D0.2、D0.4、D0.5 未闭环前，D1.1 不能标 PASS；不得接真实密钥、正式 profile 或真实用户数据。
 
@@ -685,6 +685,8 @@ D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能
 
 ### D1.1 · 建立正式 Tauri 2 壳
 
+**当前状态（2026-07-15）**：受限实现与离线首页验证已完成，仍为 `IN PROGRESS`；D0.2、D0.4、D0.5 未闭环前不得标 `PASS`。详细证据见 [`windows-desktop/D1.1-TAURI-SHELL-STATUS.md`](./windows-desktop/D1.1-TAURI-SHELL-STATUS.md)。
+
 **位置**
 
 - 新建正式 src-tauri/。
@@ -721,6 +723,8 @@ D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能
 ---
 
 ### D1.2 · 条件化 base、router、PWA 与 Service Worker
+
+**当前状态（2026-07-15）**：`IN PROGRESS`；双 base、BrowserRouter/HashRouter、PWA/Service Worker 与输出目录条件化已随最小壳落地。远程字体已从 Desktop 产物移除，但本地字体打包和首页/设置页/项目页直接启动与重启验证仍未完成。
 
 **位置**
 
@@ -1981,4 +1985,3 @@ Windows package smoke
 - [Microsoft WebView2 User Data Folder](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder)
 - [Chromium IndexedDB backing store](https://chromium.googlesource.com/chromium/src/+/master/content/browser/indexed_db/docs/README.md)
 - [Electron Process Model（回退评估用）](https://www.electronjs.org/docs/latest/tutorial/process-model)
-

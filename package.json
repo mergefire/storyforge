@@ -7,6 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "desktop:ui:dev": "node node_modules/vite/bin/vite.js --mode desktop",
+    "desktop:ui:build": "tsc -b && node node_modules/vite/bin/vite.js build --mode desktop",
+    "desktop:ui:build:stable": "tsc -b && node node_modules/vite/bin/vite.js build --mode desktop-stable",
+    "desktop:dev": "tauri dev",
+    "desktop:build:dev": "tauri build --no-bundle",
+    "desktop:build": "tauri build --no-bundle --config src-tauri/tauri.stable.conf.json",
+    "desktop:info": "tauri info",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -18,12 +25,15 @@
     "generate:desktop-fixtures": "node scripts/windows-desktop-fixtures.mjs generate",
     "check:desktop-fixture-artifacts": "node scripts/windows-desktop-fixtures.mjs check",
     "check:desktop-fixtures": "npm run check:desktop-fixture-artifacts && vitest run tests/desktop-contract/D0.4-fixtures.test.ts tests/scripts/windows-desktop-fixture-manifest.test.ts",
+    "check:desktop-shell": "node scripts/check-desktop-shell.mjs",
+    "check:desktop-build-contract": "node scripts/check-desktop-build-contract.mjs",
     "baseline:collect-static": "node scripts/windows-desktop-baseline.mjs collect-static",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "ci": "npm run check:required-tables && npm run check:ai-manual && npm run check:architecture && npm run check:desktop-baseline && npm run check:desktop-fixtures && npx tsc --noEmit && npm run test:coverage && npm run build"
+    "ci": "npm run check:required-tables && npm run check:ai-manual && npm run check:architecture && npm run check:desktop-baseline && npm run check:desktop-fixtures && npm run check:desktop-shell && npx tsc --noEmit && npm run test:coverage && npm run build && npm run desktop:ui:build && npm run check:desktop-build-contract"
   },
   "dependencies": {
+    "@tauri-apps/api": "2.11.0",
     "@tiptap/extension-placeholder": "^3.22.3",
     "@tiptap/extension-text-style": "3.22.3",
     "@tiptap/pm": "^3.22.3",
@@ -45,6 +55,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "2.11.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",

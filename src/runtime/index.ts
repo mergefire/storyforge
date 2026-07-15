@@ -1,12 +1,12 @@
 import type { RuntimeAdapter } from './contract'
 import { readRuntimeTarget, selectRuntimeAdapter } from './target'
+import { createTauriRuntime } from './tauri'
 import { createWebRuntime } from './web'
 
-let activeRuntime = selectRuntimeAdapter(readRuntimeTarget(), {
-  web: createWebRuntime,
-  // D1 registers the formal Tauri implementation. D0 must fail closed for a
-  // tauri build instead of silently falling back to browser capabilities.
-})
+const configuredTarget = import.meta.env.VITE_RUNTIME_TARGET
+let activeRuntime = configuredTarget === 'tauri'
+  ? selectRuntimeAdapter('tauri', { tauri: createTauriRuntime })
+  : selectRuntimeAdapter(readRuntimeTarget(configuredTarget), { web: createWebRuntime })
 
 export function getRuntime(): RuntimeAdapter {
   return activeRuntime

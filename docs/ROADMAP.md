@@ -5,7 +5,7 @@
 > 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
 > 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — D0～D5 详细规格；项目级授权、依赖、闸门与状态见 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-15（Windows Desktop D0.1 / D0.3 已 PASS，D0.2 / D0.4 进行中，D0.5 未开始；用户已允许 D0.4 剩余动态基线不阻塞 D1.1 受限前置施工，但当前仍无正式 Tauri 壳或可运行客户端）
+> **最后更新**: 2026-07-15（Windows Desktop D0.1 / D0.3 已 PASS，D0.2 / D0.4 进行中，D0.5 未开始；D1.1 正式 Tauri 壳、受限 adapter、开发身份 exe 和离线首页证据已落地，但 D0 总门未闭环，仍不可使用真实数据）
 > **说明**: 本文档是任务索引，不是施工权威。旧文档已归档至 `docs/archive/`；实施与放行以 MASTER-BLUEPRINT 为准。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
@@ -27,10 +27,11 @@
 | D0.3 RuntimeAdapter 契约 | ✅ PASS：source `c062b19`；contract、Web/Fake、浏览器能力接管和架构守卫完成，独立审查 APPROVE | Tauri target 继续 fail closed，待 D1.1 注册最小 native adapter |
 | D0.4 功能/性能/安全基线 | 🟠 进行中：`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验；`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS | 补 large/blob/legacy 冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
 | D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
-| D1.1 正式 Tauri 2 壳 | 🟠 受限前置施工：只完成 D0.2～D0.4 依赖集成和规格核对；尚无 `src-tauri/`、Tauri 依赖、exe 或离线启动证据 | 开发隔离身份 + 合成数据下同时落地最小 Rust 壳和受限 native adapter；D0.2/D0.4/D0.5 未闭环前不得标 PASS |
-| D1.2～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
+| D1.1 正式 Tauri 2 壳 | 🟠 IN PROGRESS：`src-tauri/`、受限 adapter、最小 capability/CSP、双构建、开发身份 exe 和真实 WebView2 离线首页 smoke 已落地 | D0.2/D0.4/D0.5 闭环并完成独立审查；未满足前不得标 PASS或接真实数据 |
+| D1.2 条件化构建/路由/PWA | 🟠 IN PROGRESS：双 base、BrowserRouter/HashRouter、PWA/Service Worker 和输出目录条件化已落地 | 补本地字体与首页/设置页/项目页直接启动、重启 smoke |
+| D1.3～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
 
-当前作者自用版交付准备度管理估算约 25%～30%，但可运行客户端、动作级 Desktop PASS 和真实数据迁移均为 0。当前没有可导入真实数据或可公开分发的 Windows 客户端。不得把“规划完成”“D0 开始”写成“客户端已完成”；阶段记录只追加到 MASTER-BLUEPRINT §17.7。
+当前作者自用版交付准备度管理估算约 30%～35%；已有 1 个开发隔离身份的无签名验证 exe，但动作级 Desktop PASS 和真实数据迁移仍为 0。当前没有可导入真实数据或可公开分发的 Windows 客户端。不得把“离线首页可打开”写成“客户端已完成”；阶段记录只追加到 MASTER-BLUEPRINT §17.7。
 
 ---
 

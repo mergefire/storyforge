@@ -1,6 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import ErrorBoundary from './components/shared/ErrorBoundary'
 import { DialogProvider } from './components/shared/Dialog'
@@ -14,6 +13,7 @@ import { finalizeCharacterAxesMigrationSnapshots } from './lib/migrations/finali
 import { applyStoryForgeTheme, resolveStoryForgeTheme } from './lib/theme'
 import { getRuntime } from './runtime'
 import { initializeRuntimeCapabilities } from './runtime/bootstrap'
+import { RuntimeRouter } from './runtime/router'
 import './index.css'
 
 applyStoryForgeTheme(resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')))
@@ -51,13 +51,13 @@ async function bootstrap() {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <ErrorBoundary>
-        <BrowserRouter basename="/storyforge">
+        <RuntimeRouter>
           <ToastProvider>
             <DialogProvider>
               <App />
             </DialogProvider>
           </ToastProvider>
-        </BrowserRouter>
+        </RuntimeRouter>
       </ErrorBoundary>
     </React.StrictMode>,
   )
