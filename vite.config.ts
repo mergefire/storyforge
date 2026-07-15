@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const WEB_BASE = '/storyforge/'
-const GOOGLE_FONTS_STYLESHEET = /\s*<link\s+href="https:\/\/fonts\.googleapis\.com\/[^>]+rel="stylesheet"\s*\/?>/i
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '')
@@ -16,10 +15,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      ...(isDesktop ? [{
-        name: 'desktop-html-safety',
-        transformIndexHtml: (html: string) => html.replace(GOOGLE_FONTS_STYLESHEET, ''),
-      }] : []),
       ...(!isDesktop ? [VitePWA({
       injectRegister: null,
       registerType: 'autoUpdate',
@@ -55,23 +50,12 @@ export default defineConfig(({ mode }) => {
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,ttf}'],
         navigateFallback: '/storyforge/index.html',
         navigateFallbackDenylist: [/^\/(?!storyforge)/],
         // 主 bundle 已随功能增多突破 2 MiB（pdf.js + mammoth + 分块流水线），
         // 放宽到 5 MiB 让它被精确预缓存而不是只靠 runtime cache。
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        runtimeCaching: [
-          {
-            // Google Fonts
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts',
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
-            },
-          },
-        ],
       },
       })] : []),
     ],

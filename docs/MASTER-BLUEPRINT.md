@@ -2313,15 +2313,15 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 3. 专项规划提供本节已登记任务的详细施工规格；若与本节或 `CLAUDE.md` 冲突，立即停止并先修正文档，不得自行择一执行。
 4. 功能等价动作清单的机器可读事实源在 D0.5 建立：`docs/windows-desktop/feature-parity-baseline.json`；专项规划 §5 是其人工初始矩阵，不复制进本蓝图维护第二份 68 项清单。
 5. D0.4 `d0.4-v2` 以当前生产 `web-tab` 作为唯一必需参考基线；installed PWA 仅为可选补充，缺失不阻塞 D0.4、D0.5 或 D1。该调整不放宽夹具、功能、规范化数据 hash、性能、恢复、安全或功能零丢失硬门。
-6. 本专项当前状态为 **D0 进行中，D1.1 受限实现已落地**。D0.1、D0.3 已 PASS；D0.2、D0.4 进行中；D0.5 未开始；D1.1 已建立正式 `src-tauri/`、受限 Tauri adapter、双构建和可离线启动的开发身份 exe，并完成真实 WebView2 首页冒烟，但最终 PASS 仍等待 D0 总门。D1.2 已有条件化构建前置实现，D1.3～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过功能等价验证”。
+6. 本专项当前状态为 **D0 进行中，D1.1 / D1.2 受限实现已落地**。D0.1、D0.3 已 PASS；D0.2、D0.4 进行中；D0.5 未开始；D1.1 已建立正式 `src-tauri/`、受限 Tauri adapter、双构建和可离线启动的 exe；D1.2 已完成本地字体、Web/Desktop 构建边界和真实 WebView2 三路由启动/重启 smoke。D1.1 最终 PASS 仍等待 D0 总门，D1.2 最终 PASS 仍等待 D1.1 硬依赖闭环；D1.3～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过功能等价验证”。
 7. 用户于 2026-07-15 明确授权 D0.4 剩余动态基线不阻塞开发，并允许先推进只使用合成数据和开发隔离身份的 D1.1 最小壳。该授权只调整施工顺序，不放宽完成门槛：D0.2、D0.4、D0.5 未闭环前 D1.1 不得标 PASS，不得连接真实密钥、正式 profile 或真实用户数据，也不得越过 G1/G2。
 
 #### 2026-07-15 进度快照
 
 | 口径 | 当前事实 |
 |---|---|
-| 作者自用版交付准备度 | 约 **30%～35%**，仅为管理估算；已增加真实 Tauri 壳、离线首页和双构建证据，不是闸门通过比例 |
-| 可运行客户端 | 1 个开发隔离身份的无签名验证 exe，可离线打开真实首页；不是可交付自用版，Dexie 重启持久化和功能等价尚无完整证据 |
+| 作者自用版交付准备度 | 约 **35%～40%**，仅为管理估算；已增加本地字体、三路由直接刷新和跨进程重启证据，不是闸门通过比例 |
+| 可运行客户端 | 1 个隔离 profile 的无签名验证 exe，可离线打开真实首页、设置页和合成项目页；单个合成项目已跨进程重启可见，但 D1.3 全量持久化/身份矩阵和功能等价尚无完整证据 |
 | 功能等价 | D0.5 未建立，68 个聚合 FP 行及其 actionId 尚无 Desktop PASS |
 | 旧数据迁移 | D2 未开始；未读取、复制或改写作者真实浏览器数据 |
 | 发布状态 | G1、G2、stable 均未通过；不能使用真实数据、封测或公开分发 |
@@ -2351,7 +2351,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 | D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议已落地；`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验，`small-v1` 嵌套引用及规范化往返业务 hash 均为 PASS；large/blob/legacy 完整夹具与生产 `web-tab` 实测尚未齐全；installed PWA 可选） |
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
 | D1.1 | 建立正式 Tauri 2 壳 | 最终 PASS 仍依赖 D0.1～D0.5；2026-07-15 特别授权仅允许开发隔离身份 + 合成数据的前置施工 | IN PROGRESS（正式 `src-tauri/`、最小 capability/CSP、受限 adapter、可重复 Desktop build、无服务离线首页和真实 WebView2 smoke 已落地；D0.2/D0.4/D0.5 未闭环，不得标 PASS） |
-| D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | IN PROGRESS（Web/Desktop 独立 base、BrowserRouter/HashRouter、PWA/Service Worker 和输出目录已条件化；本地字体与三路由直接启动/重启验证未完成） |
+| D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | IN PROGRESS（受限实现已完成：Web/Desktop 独立 base、BrowserRouter/HashRouter、PWA/Service Worker 和输出目录条件化，本地字体、双产物契约及三路由两次真实启动 smoke 均通过；最终 PASS 等待 D1.1 硬依赖闭环） |
 | D1.3 | 验证 Dexie/WebView2 数据持久化 | D1.2；仅合成夹具 | NOT STARTED |
 | D1.4 | 验证 IPC、流式和文件最短闭环 | D0.3、D1.1；不得接真实密钥/数据 | NOT STARTED |
 | D1.5 / G1 | WebView2 Go/No-Go | D0.5、D1.1～D1.4 | NOT STARTED |
@@ -2470,7 +2470,17 @@ G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量�
 - **验证**：`cargo tauri build --no-bundle` PASS；开发身份 release exe 可在无 Vite/Node 时从 `tauri.localhost` 渲染真实首页，过程无 JS exception/CSP error；Web/PWA build、Desktop build contract、42 表、架构、基线/夹具、lint 0 errors、Rust fmt/clippy/test 均通过；全量 Vitest 513/514，唯一失败为既有 AI manual 漂移；详见 `docs/windows-desktop/D1.1-TAURI-SHELL-STATUS.md`；
 - **Codex 交付状态**：IN PROGRESS（受限实现已落地，未标 PASS）；
 - **Claude 审查状态**：实现已具备交付审查条件，尚未完成独立审查；
-- **未决风险**：D0.2/D0.4/D0.5 门禁未闭环；D1.2 本地字体/三路由重启、D1.3 持久化隔离和 D1.4 IPC 尚未完成；不得连接真实密钥、正式 profile 或真实数据。
+- **未决风险**：D0.2/D0.4/D0.5 门禁未闭环；D1.3 持久化/身份隔离和 D1.4 IPC 尚未完成；不得连接真实密钥、默认正式 profile 或真实数据。
+
+#### 🟠 D1.2 · 条件化 base、router、PWA 与 Service Worker（2026-07-15 进行中）
+
+- **source commit**：当前实现位于 `refactor/phase-desktop-task-d1-1`，本记录所在 D1.2 本地检查点；
+- **实现摘要**：Web 保留 `/storyforge/`、BrowserRouter、manifest/Service Worker；Desktop 使用相对 base、HashRouter、独立 `dist-desktop/` 且不生成 PWA/Workbox。Inter、Source Serif 4、JetBrains Mono 四个 variable TTF 字体面与 OFL 许可证已本地打包；新增双产物契约和可重复 Windows 路由/重启 smoke；
+- **功能等价 / 数据红线**：只测试首页、设置页和项目页承载，不隐藏或替换任何功能；合成项目只写入一次性隔离 WebView2 profile，未读取真实浏览器 profile、密钥或用户数据；没有修改 Dexie schema、表生命周期和三个注册表；
+- **验证**：Web build 113 files、PWA 110 precache entries；Desktop build 110 files，禁止远程 Google Fonts、`/storyforge/`、manifest、Service Worker 和 Workbox；真实 dev-identity WebView2 两次启动分别使用动态端口 57095/57131，首页/设置/`#/workspace/1` 直接刷新和重启均通过，合成项目跨进程可见，四个字体面 loaded，manifest/SW/Cache/禁止请求/JS exception/console error 均为 0；烟测会检查 bundle 内 dev identifier，拒绝把 CDP 用于 stable 构建；根 PID 树、端口和隔离 profile 已清理；Rust fmt/clippy/test、Tauri release build、required tables、architecture 和 lint 0 errors 通过；全量 Vitest 513/514，唯一失败仍为既有 AI manual 漂移；详见 `docs/windows-desktop/D1.2-BUILD-ROUTING-STATUS.md`；
+- **Codex 交付状态**：IN PROGRESS（受限实现完成；因 D1.1/D0 硬依赖未闭环，不标 PASS）；
+- **Claude 审查状态**：待独立审查；
+- **未决风险**：D0.4 生产 `web-tab` 动态基线和 D0.5 动作级功能基线未完成；D1.3 尚需覆盖章节自动保存、全部合成夹具、dev/stable UDF 隔离、覆盖升级、卸载保留及失败注入。当前单个项目跨重启证据不得冒充 D1.3 PASS。
 
 ---
 

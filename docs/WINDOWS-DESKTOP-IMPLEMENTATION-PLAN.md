@@ -12,7 +12,7 @@
 | --- | --- |
 | 规划日期 | 2026-07-14 |
 | 技术路线 | 已由用户确认 |
-| 当前状态 | D0.1 / D0.3 已 PASS；D0.2 / D0.4 进行中；D0.5 未开始；D1.1 受限实现已落地并有离线首页证据，但 D0 总门未闭环，仍为 IN PROGRESS |
+| 当前状态 | D0.1 / D0.3 已 PASS；D0.2 / D0.4 进行中；D0.5 未开始；D1.1 与 D1.2 受限实现已落地，D0 总门未闭环，均仍为 IN PROGRESS |
 | 第一平台 | Windows 10/11 x64 |
 | 第一验证人 | 项目作者本人 |
 | 数据迁移责任 | Codex 开发迁移工具、执行首次迁移并出具验证结果 |
@@ -24,8 +24,8 @@
 
 | 口径 | 当前事实 |
 | --- | --- |
-| 作者自用版交付准备度 | **约 30%～35%（管理估算，不是放行结论）**；新增真实 Tauri 壳、双构建和离线首页证据，仍未形成可使用真实数据的作者自用候选 |
-| 可运行客户端闭环 | **1 个开发隔离身份的无签名验证 exe**；可在无 Vite/Node 时离线打开首页，但 Dexie 重启持久化、功能等价、签名和迁移均未完成 |
+| 作者自用版交付准备度 | **约 35%～40%（管理估算，不是放行结论）**；真实 Tauri 壳、双构建、本地字体和三路由重启证据已形成，仍未形成可使用真实数据的作者自用候选 |
+| 可运行客户端闭环 | **1 个隔离 profile 的无签名验证 exe**；可在无 Vite/Node 时离线打开首页、设置页和合成项目页，且单个合成项目已证明跨进程重启可见；D1.3 全量持久化/身份矩阵、功能等价、签名和迁移仍未完成 |
 | 功能等价验收 | D0.5 动作级 manifest 尚未建立，68 个聚合 FP 行及其 actionId 尚无任何 Desktop PASS，不得据页面规划推断功能已迁入 |
 | 旧浏览器数据迁移 | D2 尚未开始；没有读取、复制或改写真实浏览器数据，也没有可激活的正式客户端 profile |
 | 自用签名与公开发布 | 自用证书边界已冻结但尚未生成候选包；G1、G2、stable 均未通过，不能自用真实数据、封测或公开分发 |
@@ -37,6 +37,7 @@
 - D0.3 已完成 `RuntimeAdapter` 契约、Web/Fake 实现、浏览器专属能力接管和架构守卫，并通过独立审查；Tauri target 在原生 adapter 注册前继续 fail closed；
 - D0.4 已落地 `d0.4-v2` 协议、静态采集器、`empty-v1` / `small-v1` 可重建夹具和严格 manifest；全量 Vitest 最近一次为 105 files / 414 tests PASS，其中 410 个为项目原有用例、4 个为本次桌面夹具与 manifest 新增用例；
 - D1.1 已创建正式 Rust/Tauri 壳、受限 adapter、最小 capability/CSP、双构建和开发身份 exe；真实 WebView2 首页冒烟通过，验证进程及动态调试端口均已清理。证据见 `windows-desktop/D1.1-TAURI-SHELL-STATUS.md`。
+- D1.2 已把 Inter、Source Serif 4、JetBrains Mono 改为随产物分发的本地字体；Web 保持 `/storyforge/` + BrowserRouter + PWA，Desktop 保持相对 base + HashRouter 且不含 PWA/Service Worker；真实 WebView2 两次启动的首页/设置/项目路由、合成项目重启可见和进程清理均通过。证据见 `windows-desktop/D1.2-BUILD-ROUTING-STATUS.md`。
 
 用户已于 2026-07-15 明确授权：D0.4 剩余动态基线不得继续阻塞开发，允许先推进只使用合成数据和开发隔离身份的 D1.1 前置施工。该授权只改变施工顺序，不改变完成门槛：D0.2、D0.4、D0.5 未闭环前，D1.1 不能标 PASS；不得接真实密钥、正式 profile 或真实用户数据。
 
@@ -724,7 +725,7 @@ D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能
 
 ### D1.2 · 条件化 base、router、PWA 与 Service Worker
 
-**当前状态（2026-07-15）**：`IN PROGRESS`；双 base、BrowserRouter/HashRouter、PWA/Service Worker 与输出目录条件化已随最小壳落地。远程字体已从 Desktop 产物移除，但本地字体打包和首页/设置页/项目页直接启动与重启验证仍未完成。
+**当前状态（2026-07-15）**：`IN PROGRESS — 受限实现已完成，最终 PASS 等待 D1.1 硬依赖闭环`。双 base、BrowserRouter/HashRouter、PWA/Service Worker 与输出目录条件化、本地字体均已落地；首页/设置页/项目页已在真实 WebView2 中完成直接刷新与跨进程重启 smoke。详细证据见 [`windows-desktop/D1.2-BUILD-ROUTING-STATUS.md`](./windows-desktop/D1.2-BUILD-ROUTING-STATUS.md)。
 
 **位置**
 

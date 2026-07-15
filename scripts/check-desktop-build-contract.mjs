@@ -25,7 +25,20 @@ const webFiles = walk(webDir)
 const desktopFiles = walk(desktopDir)
 const webIndex = fs.readFileSync(path.join(webDir, 'index.html'), 'utf8')
 const desktopIndex = fs.readFileSync(path.join(desktopDir, 'index.html'), 'utf8')
-assert(!desktopIndex.includes('fonts.googleapis.com'), 'Desktop index must not request Google Fonts')
+
+function readTextArtifacts(dir, files) {
+  return files
+    .filter(file => /\.(?:css|html|js|mjs|webmanifest)$/.test(file))
+    .map(file => fs.readFileSync(path.join(dir, file), 'utf8'))
+    .join('\n')
+}
+
+const webText = readTextArtifacts(webDir, webFiles)
+const desktopText = readTextArtifacts(desktopDir, desktopFiles)
+
+for (const [target, text] of [['Web', webText], ['Desktop', desktopText]]) {
+  assert(!/https:\/\/fonts\.(?:googleapis|gstatic)\.com/i.test(text), `${target} output must not request remote Google Fonts`)
+}
 
 assert(webFiles.includes('manifest.webmanifest'), 'Web 产物缺少 manifest.webmanifest')
 assert(webFiles.includes('sw.js'), 'Web 产物缺少 sw.js')
@@ -40,6 +53,22 @@ assert(!desktopIndex.includes('/storyforge/'), 'Desktop index 不得请求 /stor
 assert(/(?:src|href)="\.\/assets\//.test(desktopIndex), 'Desktop index 必须使用 ./assets 相对路径')
 assert(desktopFiles.some(file => file.startsWith('assets/') && file.endsWith('.js')), 'Desktop 产物缺少 JavaScript chunks')
 assert(desktopFiles.some(file => file.startsWith('assets/') && file.endsWith('.css')), 'Desktop 产物缺少 CSS')
+
+const expectedLocalFonts = [
+  /^assets\/Inter-Variable-.+\.ttf$/,
+  /^assets\/SourceSerif4-Variable-.+\.ttf$/,
+  /^assets\/SourceSerif4-Italic-Variable-.+\.ttf$/,
+  /^assets\/JetBrainsMono-Variable-.+\.ttf$/,
+]
+for (const pattern of expectedLocalFonts) {
+  const webFont = webFiles.find(file => pattern.test(file))
+  assert(webFont, `Web output missing local font ${pattern}`)
+  assert(desktopFiles.some(file => pattern.test(file)), `Desktop output missing local font ${pattern}`)
+  const webServiceWorker = fs.readFileSync(path.join(webDir, 'sw.js'), 'utf8')
+  assert(webServiceWorker.includes(webFont), `Web service worker must precache ${webFont}`)
+}
+assert(webText.includes('Inter') && webText.includes('Source Serif 4') && webText.includes('JetBrains Mono'), 'Web CSS must declare packaged fonts')
+assert(desktopText.includes('Inter') && desktopText.includes('Source Serif 4') && desktopText.includes('JetBrains Mono'), 'Desktop CSS must declare packaged fonts')
 
 assert(desktopFiles.some(file => /^assets\/SettingsPage-.+\.js$/.test(file)), 'Desktop output must include the settings lazy chunk')
 assert(desktopFiles.some(file => /^assets\/pdf\.worker-.+\.mjs$/.test(file)), 'Desktop output must include the pdf.js worker')

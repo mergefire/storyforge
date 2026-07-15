@@ -27,6 +27,7 @@
     "check:desktop-fixtures": "npm run check:desktop-fixture-artifacts && vitest run tests/desktop-contract/D0.4-fixtures.test.ts tests/scripts/windows-desktop-fixture-manifest.test.ts",
     "check:desktop-shell": "node scripts/check-desktop-shell.mjs",
     "check:desktop-build-contract": "node scripts/check-desktop-build-contract.mjs",
+    "check:desktop-routes": "node scripts/windows-desktop-route-smoke.mjs",
     "baseline:collect-static": "node scripts/windows-desktop-baseline.mjs collect-static",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
