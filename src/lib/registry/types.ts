@@ -20,6 +20,24 @@ export type TableOwner =
   | 'blob'         // Blob 存储,特殊 owner(如 importFiles 复用为 master blob)
   | 'global'       // 全局(不绑项目,不参与 deleteProject 级联)
 
+export type MigrationPolicy =
+  | 'required'
+  | 'optional-history'
+  | 'operational'
+  | 'omit-and-rebuild'
+
+export type MigrationRecordFilterId = 'user-scope-only'
+
+export interface TableMigrationSpec {
+  policy: MigrationPolicy
+  /** Blob fields are stored as independent archive entries, never base64 JSON. */
+  binaryFields?: string[]
+  /** Closed filter registry; arbitrary table-local callbacks are forbidden. */
+  recordFilterId?: MigrationRecordFilterId
+  /** Required for every omitted/rebuildable table. */
+  recoveryAction?: string
+}
+
 /** 简单外键引用(table[field] 形式) */
 export interface SimpleRef {
   kind: 'simple'
@@ -36,6 +54,8 @@ export interface JsonRef {
   jsonPath: string   // 简化 path,如 '$.characterId' 或 '$[].characterIds[]'
   target: string     // 'tableName[fieldName]'
   onDelete: 'cascade' | 'setNull' | 'keep' | 'remap'
+  /** 导出/导入时也必须按目标表的新主键重映射。 */
+  portable?: { onUnmapped: 'require' | 'drop-item' }
 }
 
 /** 数组字段内的多引用(字段本身就是 number[]) */
@@ -44,6 +64,8 @@ export interface ArrayRef {
   field: string       // 数组字段名(或 JSON 数组字符串字段名)
   itemTarget: string  // 数组元素指向哪张表
   onDelete: 'removeItem' | 'setNullItem' | 'keep'
+  /** 导出/导入时也必须按目标表的新主键重映射。 */
+  portable?: { onUnmapped: 'require' | 'drop-item' }
 }
 
 /** 间接归属(本表没有 projectId,通过另一张表的字段间接挂项目) */
@@ -134,6 +156,8 @@ export interface TableSpec<T = any> {
   refs?: RefSpec[]
   /** 是否纳入 JSON 备份导出 */
   exportable: boolean
+  /** Full-profile migration policy. Every Dexie table must declare one here. */
+  migration: TableMigrationSpec
   /** 导出时需要的 ID 重映射 */
   exportRemap?: ExportRemapField[]
   /**

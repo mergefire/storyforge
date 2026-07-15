@@ -12,12 +12,17 @@
  *   ⑤ PROJECT_TABLES exportable 表必须接入 JSON 导出/导入
  *   ⑥ components/hooks/pages 不得使用浏览器原生 alert/confirm/prompt
  *   ⑦ 正式 UI 不得出现"正在开发/即将推出/敬请期待"式死入口文案
+ *   ⑧ Tauri API/window.__TAURI__ 只能出现在 runtime/tauri 边界
  *
  * 用法:node scripts/check-architecture.mjs
  */
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  findBrowserRuntimeViolations,
+  findRuntimeTargetBranchViolations,
+} from './runtime-boundary-rules.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -203,6 +208,34 @@ for (const dir of UI_DIRS) {
     if (!m) continue
     const line = src.slice(0, m.index).split('\n').length
     violations.push(`[⑦半成品文案] ${file}:${line}: 正式 UI 不得出现"${m[0]}"式死入口承诺;请隐藏入口、标记 Labs 禁用态,或指向已上线流程`)
+  }
+}
+
+// ── ⑧ 浏览器专属能力只能进入 Web 运行时边界 ──
+// D0.3 完成接管后，业务层不得重新引入网络、文件选择/下载、剪贴板、
+// 持久化、Service Worker 或任意新窗口导航。Tauri 对应实现走 runtime/tauri。
+for (const file of walk('src')) {
+  if (file.startsWith('src/runtime/web/')) continue
+  const src = read(file)
+  for (const match of findBrowserRuntimeViolations(src)) {
+    const line = src.slice(0, match.index).split('\n').length
+    violations.push(`[⑧Web运行时边界] ${file}:${line}: ${match.label} 只能由 src/runtime/web 实现；业务层必须走 RuntimeAdapter`)
+  }
+  if (file.startsWith('src/runtime/')) continue
+  for (const match of findRuntimeTargetBranchViolations(src)) {
+    const line = src.slice(0, match.index).split('\n').length
+    violations.push(`[⑧运行时选择边界] ${file}:${line}: ${match.label} 只能由 src/runtime 组合根实现；业务层不得按目标散落分支`)
+  }
+}
+
+// ── ⑨ Tauri API 只能进入唯一运行时边界 ──
+// Native imports stay isolated just like the Web-only capabilities guarded above.
+for (const file of walk('src')) {
+  if (file.startsWith('src/runtime/tauri/')) continue
+  const src = read(file)
+  const forbidden = /(?:from\s*['"]@tauri-apps\/|import\(\s*['"]@tauri-apps\/|\bwindow\.__TAURI__\b|\bglobalThis\.__TAURI__\b)/
+  if (forbidden.test(src)) {
+    violations.push(`[⑧Tauri边界] ${file}: Tauri API 只能由 src/runtime/tauri 导入，业务层必须走 RuntimeAdapter`)
   }
 }
 

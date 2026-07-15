@@ -1,166 +1,224 @@
-/**
- * Gist 云备份 store（FB-11 数据持久 · A）
- *
- * 把项目数据备份到 GitHub 私密 Gist —— 数据离开浏览器存到 GitHub 云端,
- * 清浏览器 / 换设备都不丢,可一键拉回。PAT 默认只存 sessionStorage,
- * 用户显式选择记住本机时才落 localStorage。
- */
+/** GitHub Gist cloud backup state. Plaintext PATs are memory-only. */
 import { create } from 'zustand'
 import {
-  exportToGist, importFromGist, validateGitHubPAT, listStoryforgeGists, listGistRevisions,
-  type GistBackupMeta, type GistRevisionMeta,
+  clearGitHubPATCredential,
+  connectGitHubPAT,
+  exportToGistWithCredential,
+  importFromGistWithCredential,
+  listGistRevisionsWithCredential,
+  listStoryforgeGistsWithCredential,
+  storedGitHubPATCredential,
+  storeGitHubPATCredential,
+  type GistBackupMeta,
+  type GistRevisionMeta,
 } from '../lib/export/gist-export'
 import { exportProjectJSON, importProjectJSON } from '../lib/export/json-export'
+import type { CredentialId } from '../runtime'
 
-const PAT_KEY = 'sf-gist-pat'
+const LEGACY_PAT_KEY = 'sf-gist-pat'
 const USER_KEY = 'sf-gist-user'
+const PERSISTENCE_KEY = 'sf-gist-credential-persistence'
 const AUTO_KEY = 'sf-gist-auto'
 const projKey = (projectId: number) => `sf-gist-proj-${projectId}`
 
 interface ProjBackup { gistId: string; lastBackupAt: number }
 
 function readProj(projectId: number): ProjBackup | null {
-  try { const s = localStorage.getItem(projKey(projectId)); return s ? JSON.parse(s) : null } catch { return null }
-}
-function writeProj(projectId: number, v: ProjBackup) {
-  localStorage.setItem(projKey(projectId), JSON.stringify(v))
+  try { const saved = localStorage.getItem(projKey(projectId)); return saved ? JSON.parse(saved) : null } catch { return null }
 }
 
-function readSavedAuth(): { pat: string | null; username: string | null; rememberPat: boolean } {
-  const sessionPat = sessionStorage.getItem(PAT_KEY)
-  if (sessionPat) {
-    return {
-      pat: sessionPat,
-      username: sessionStorage.getItem(USER_KEY),
-      rememberPat: false,
-    }
-  }
-  const localPat = localStorage.getItem(PAT_KEY)
+function writeProj(projectId: number, value: ProjBackup) {
+  localStorage.setItem(projKey(projectId), JSON.stringify(value))
+}
+
+function readInitialAuth(): {
+  pat: string | null
+  username: string | null
+  rememberPat: boolean
+} {
+  const sessionPat = sessionStorage.getItem(LEGACY_PAT_KEY)
+  const localPat = localStorage.getItem(LEGACY_PAT_KEY)
+  const persistence = localStorage.getItem(PERSISTENCE_KEY)
+  const rememberPat = persistence === 'device' || (persistence === null && !!localPat)
   return {
-    pat: localPat,
-    username: localStorage.getItem(USER_KEY),
-    rememberPat: !!localPat,
+    pat: sessionPat || localPat,
+    username: rememberPat
+      ? localStorage.getItem(USER_KEY)
+      : sessionStorage.getItem(USER_KEY) || localStorage.getItem(USER_KEY),
+    rememberPat,
   }
 }
 
-function writeAuth(pat: string, username: string, rememberPat: boolean): void {
+function writeAuthMetadata(username: string, rememberPat: boolean): void {
   const target = rememberPat ? localStorage : sessionStorage
   const other = rememberPat ? sessionStorage : localStorage
-  target.setItem(PAT_KEY, pat)
   target.setItem(USER_KEY, username)
-  other.removeItem(PAT_KEY)
   other.removeItem(USER_KEY)
+  localStorage.setItem(PERSISTENCE_KEY, rememberPat ? 'device' : 'session')
+  // Legacy plaintext locations are canaries after M1 migration.
+  localStorage.removeItem(LEGACY_PAT_KEY)
+  sessionStorage.removeItem(LEGACY_PAT_KEY)
 }
 
-function clearAuth(): void {
-  localStorage.removeItem(PAT_KEY)
+function clearAuthMetadata(): void {
+  localStorage.removeItem(LEGACY_PAT_KEY)
   localStorage.removeItem(USER_KEY)
-  sessionStorage.removeItem(PAT_KEY)
+  localStorage.removeItem(PERSISTENCE_KEY)
+  sessionStorage.removeItem(LEGACY_PAT_KEY)
   sessionStorage.removeItem(USER_KEY)
 }
 
 interface GistState {
+  /** Plaintext exists only during the current renderer session. */
   pat: string | null
+  credentialId: CredentialId | null
+  connected: boolean
   username: string | null
   rememberPat: boolean
   autoBackup: boolean
   busy: boolean
   error: string | null
 
-  /** 连接 GitHub:验证 PAT 并保存 */
+  initializeCredential: () => Promise<void>
   connect: (pat: string, rememberPat?: boolean) => Promise<boolean>
-  disconnect: () => void
+  disconnect: () => Promise<void>
   setAutoBackup: (on: boolean) => void
-  /** 备份指定项目到云端(创建/更新该项目的 Gist) */
   backupProject: (projectId: number) => Promise<{ url: string } | null>
-  /** 从指定 Gist 恢复(新建一个项目),返回新项目 id;传 sha 则恢复该历史版本 */
   restoreFromGist: (gistId: string, sha?: string) => Promise<number | null>
-  /** 列出该账号下所有故事熔炉备份(换设备找回用) */
   listBackups: () => Promise<GistBackupMeta[]>
-  /** 列出某项目云备份 Gist 的历史版本(版本回溯用) */
   listRevisions: (projectId: number) => Promise<GistRevisionMeta[]>
-  /** 读某项目的本地备份状态(gistId / 上次备份时间) */
   projBackup: (projectId: number) => ProjBackup | null
 }
 
-const initialAuth = readSavedAuth()
+const initialAuth = readInitialAuth()
+
+async function resolveCredential(state: GistState): Promise<CredentialId | null> {
+  if (state.credentialId) return state.credentialId
+  if (state.pat) {
+    return storeGitHubPATCredential(state.pat, state.rememberPat ? 'device' : 'session')
+  }
+  return storedGitHubPATCredential()
+}
 
 export const useGistStore = create<GistState>((set, get) => ({
   pat: initialAuth.pat,
+  credentialId: null,
+  connected: !!initialAuth.pat,
   username: initialAuth.username,
   rememberPat: initialAuth.rememberPat,
   autoBackup: localStorage.getItem(AUTO_KEY) === '1',
   busy: false,
   error: null,
 
+  initializeCredential: async () => {
+    try {
+      const credentialId = await resolveCredential(get())
+      set({ credentialId, connected: credentialId !== null })
+    } catch (error) {
+      set({
+        credentialId: null,
+        connected: false,
+        error: error instanceof Error ? error.message : '无法恢复 Gist 凭据',
+      })
+    }
+  },
+
   connect: async (pat, rememberPat = false) => {
+    const value = pat.trim()
+    if (!value) return false
     set({ busy: true, error: null })
     try {
-      const login = await validateGitHubPAT(pat.trim())
-      writeAuth(pat.trim(), login, rememberPat)
-      set({ pat: pat.trim(), username: login, rememberPat, busy: false })
+      const { login, credentialId } = await connectGitHubPAT(
+        value,
+        rememberPat ? 'device' : 'session',
+      )
+      writeAuthMetadata(login, rememberPat)
+      set({
+        pat: value,
+        credentialId,
+        connected: true,
+        username: login,
+        rememberPat,
+        busy: false,
+      })
       return true
-    } catch (e) {
-      set({ busy: false, error: e instanceof Error ? e.message : '连接失败' })
+    } catch (error) {
+      set({ busy: false, error: error instanceof Error ? error.message : '连接失败' })
       return false
     }
   },
 
-  disconnect: () => {
-    clearAuth()
+  disconnect: async () => {
+    clearAuthMetadata()
     localStorage.removeItem(AUTO_KEY)
-    set({ pat: null, username: null, rememberPat: false, autoBackup: false })
+    set({
+      pat: null,
+      credentialId: null,
+      connected: false,
+      username: null,
+      rememberPat: false,
+      autoBackup: false,
+      busy: false,
+      error: null,
+    })
+    try {
+      await clearGitHubPATCredential()
+    } catch {
+      set({ error: '已断开，但运行时凭据清理失败，请重启应用后检查凭据状态' })
+    }
   },
 
-  setAutoBackup: (on) => {
+  setAutoBackup: on => {
     localStorage.setItem(AUTO_KEY, on ? '1' : '0')
     set({ autoBackup: on })
   },
 
-  backupProject: async (projectId) => {
-    const { pat } = get()
-    if (!pat) { set({ error: '未连接 GitHub' }); return null }
-    set({ busy: true, error: null })
+  backupProject: async projectId => {
+    const credentialId = await resolveCredential(get())
+    if (!credentialId) { set({ error: '未连接 GitHub', connected: false }); return null }
+    set({ busy: true, error: null, credentialId, connected: true })
     try {
       const data = await exportProjectJSON(projectId)
       const existing = readProj(projectId)
-      const res = await exportToGist(data, { pat, gistId: existing?.gistId })
-      writeProj(projectId, { gistId: res.gistId, lastBackupAt: Date.now() })
+      const result = await exportToGistWithCredential(data, credentialId, existing?.gistId)
+      writeProj(projectId, { gistId: result.gistId, lastBackupAt: Date.now() })
       set({ busy: false })
-      return { url: res.url }
-    } catch (e) {
-      set({ busy: false, error: e instanceof Error ? e.message : '备份失败' })
+      return { url: result.url }
+    } catch (error) {
+      set({ busy: false, error: error instanceof Error ? error.message : '备份失败' })
       return null
     }
   },
 
-  restoreFromGist: async (gistId, sha) => {
-    const { pat } = get()
-    if (!pat) { set({ error: '未连接 GitHub' }); return null }
-    set({ busy: true, error: null })
+  restoreFromGist: async (gistId, revision) => {
+    const credentialId = await resolveCredential(get())
+    if (!credentialId) { set({ error: '未连接 GitHub', connected: false }); return null }
+    set({ busy: true, error: null, credentialId, connected: true })
     try {
-      const data = await importFromGist(gistId, pat, sha)
-      const newId = await importProjectJSON(data as any)
+      const data = await importFromGistWithCredential(gistId, credentialId, revision)
+      const newId = await importProjectJSON(data)
       set({ busy: false })
       return newId
-    } catch (e) {
-      set({ busy: false, error: e instanceof Error ? e.message : '恢复失败' })
+    } catch (error) {
+      set({ busy: false, error: error instanceof Error ? error.message : '恢复失败' })
       return null
     }
   },
 
   listBackups: async () => {
-    const { pat } = get()
-    if (!pat) return []
-    return listStoryforgeGists(pat)
+    const credentialId = await resolveCredential(get())
+    if (!credentialId) return []
+    set({ credentialId, connected: true })
+    return listStoryforgeGistsWithCredential(credentialId)
   },
 
-  listRevisions: async (projectId) => {
-    const { pat } = get()
-    const proj = readProj(projectId)
-    if (!pat || !proj?.gistId) return []
-    return listGistRevisions(proj.gistId, pat)
+  listRevisions: async projectId => {
+    const credentialId = await resolveCredential(get())
+    const project = readProj(projectId)
+    if (!credentialId || !project?.gistId) return []
+    set({ credentialId, connected: true })
+    return listGistRevisionsWithCredential(project.gistId, credentialId)
   },
 
-  projBackup: (projectId) => readProj(projectId),
+  projBackup: projectId => readProj(projectId),
 }))

@@ -1,9 +1,18 @@
 import type { AIConfig, ChatMessage } from '../types'
 import { AIError } from '../types'
+import type { AiTransportResponse, JsonValue } from '../../runtime'
 import { createLog, updateLog, type TokenUsage } from './logger'
 import { recordUsage } from './usage-log'
 import { trimMessagesToFit } from './context-budget'
 import { buildOpenAIEndpoint } from './openai-endpoint'
+import {
+  bindAiCredential,
+  executeAiRequest,
+  isSuccessfulAiResponse,
+  normalizeAiTransportError,
+  readAiResponseText,
+  waitForAiRetry,
+} from './runtime-transport'
 
 /** 调用元信息（用于消耗统计分类） */
 export interface AICallMeta {
@@ -52,14 +61,16 @@ function mapDepthToBudgetTokens(depth: string | null): number {
   return 6000 // 默认 / 标准
 }
 
-/**
- * 根据 provider 构造请求 URL 和 headers
- */
+function jsonMessages(messages: ChatMessage[]): JsonValue[] {
+  return messages.map(message => ({ role: message.role, content: message.content }))
+}
+
+/** 根据 provider 构造共享 TS 请求体；URL/凭据由 RuntimeAdapter 接管。 */
 function buildRequest(config: AIConfig, messages: ChatMessage[], stream: boolean) {
   // 基础请求体：所有 provider 都需要的字段
-  const body: Record<string, unknown> = {
+  const body: Record<string, JsonValue> = {
     model: config.model,
-    messages,
+    messages: jsonMessages(messages),
     stream,
   }
 
@@ -128,7 +139,7 @@ function buildRequest(config: AIConfig, messages: ChatMessage[], stream: boolean
       } else {
         messages = [{ role: 'system', content: thinkInstruction.trim() }, ...messages]
       }
-      body.messages = messages
+      body.messages = jsonMessages(messages)
     } else if (/deepseek.*(reasoner|r1|v4-pro|thinking)/.test(modelLower)) {
       // DeepSeek 思考系模型（如 deepseek-reasoner、deepseek-r1、v4-pro、-thinking）
       body.thinking = { type: 'enabled' }
@@ -148,12 +159,71 @@ function buildRequest(config: AIConfig, messages: ChatMessage[], stream: boolean
   }
 
   return {
-    url: buildOpenAIEndpoint(config.baseUrl, 'chat/completions'),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify(body),
+    configuredBaseUrl: config.baseUrl,
+    logUrl: buildOpenAIEndpoint(config.baseUrl, 'chat/completions'),
+    body,
+  }
+}
+
+function sseData(line: string): string | null {
+  const normalized = line.endsWith('\r') ? line.slice(0, -1) : line
+  if (!normalized.startsWith('data:')) return null
+  return normalized.slice(5).trim()
+}
+
+/** Yield complete SSE data fields while preserving UTF-8 and lines split across chunks. */
+async function* readSseData(body: AsyncIterable<Uint8Array>): AsyncGenerator<string> {
+  const decoder = new TextDecoder()
+  let buffer = ''
+  try {
+    for await (const chunk of body) {
+      buffer += decoder.decode(chunk, { stream: true })
+      let newline = buffer.indexOf('\n')
+      while (newline !== -1) {
+        const data = sseData(buffer.slice(0, newline))
+        buffer = buffer.slice(newline + 1)
+        if (data !== null) yield data
+        newline = buffer.indexOf('\n')
+      }
+    }
+    buffer += decoder.decode()
+    if (buffer) {
+      const data = sseData(buffer)
+      if (data !== null) yield data
+    }
+  } catch (error) {
+    throw normalizeAiTransportError(error)
+  }
+}
+
+interface OpenAIUsagePayload {
+  prompt_tokens?: number
+  completion_tokens?: number
+  total_tokens?: number
+}
+
+interface OpenAIStreamPayload {
+  choices?: Array<{
+    delta?: {
+      reasoning_content?: string
+      thinking?: string
+      reasoning?: string
+      content?: string
+    }
+  }>
+  usage?: OpenAIUsagePayload
+}
+
+interface OpenAIChatPayload {
+  choices?: Array<{ message?: { content?: string } }>
+  usage?: OpenAIUsagePayload
+}
+
+function toTokenUsage(usage: OpenAIUsagePayload): TokenUsage {
+  return {
+    inputTokens: usage.prompt_tokens ?? 0,
+    outputTokens: usage.completion_tokens ?? 0,
+    totalTokens: usage.total_tokens ?? 0,
   }
 }
 
@@ -180,7 +250,7 @@ export async function* streamChat(
   const log = createLog({
     type: 'stream',
     provider: config.provider,
-    url: req.url,
+    url: req.logUrl,
     model: config.model,
     status: 'pending',
   })
@@ -188,133 +258,144 @@ export async function* streamChat(
   const startTime = Date.now()
 
   try {
+    const credentialId = await bindAiCredential({
+      key: 'storyforge.ai.primary',
+      apiKey: config.apiKey,
+      provider: config.provider,
+      profileId: 'primary',
+      operation: 'chat-completions',
+      configuredBaseUrl: req.configuredBaseUrl,
+    })
+
     // 自动重试：遇到 429（频率限制）或 503（服务不可用）时，最多重试 2 次
-    let response: Response | null = null
+    let response: AiTransportResponse | undefined
     const MAX_RETRIES = 2
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      response = await fetch(req.url, {
-        method: 'POST',
-        headers: req.headers,
+      response = await executeAiRequest({
+        provider: config.provider,
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: req.configuredBaseUrl,
+        credentialId,
         body: req.body,
         signal,
       })
 
-      if (response.ok) break
+      if (isSuccessfulAiResponse(response)) break
 
       // 429/503 可重试
-      if ((response!.status === 429 || response!.status === 503) && attempt < MAX_RETRIES) {
+      if ((response.status === 429 || response.status === 503) && attempt < MAX_RETRIES) {
         const wait = (attempt + 1) * 2000 // 2s, 4s
-        console.warn(`[AI] HTTP ${response!.status}，${wait / 1000}s 后重试（${attempt + 1}/${MAX_RETRIES}）`)
-        await new Promise(r => setTimeout(r, wait))
+        console.warn(`[AI] HTTP ${response.status}，${wait / 1000}s 后重试（${attempt + 1}/${MAX_RETRIES}）`)
+        // 消费错误响应，确保 Web reader / Native channel 在下一次尝试前释放。
+        await readAiResponseText(response.body)
+        await waitForAiRetry(wait, signal)
         continue
       }
 
       break
     }
 
-    if (!response!.ok) {
-      const errorText = await response!.text()
+    if (!response) throw new Error('AI transport 未返回响应')
+
+    if (!isSuccessfulAiResponse(response)) {
+      const errorText = await readAiResponseText(response.body)
       const duration = Date.now() - startTime
-      updateLog(log.id, { status: 'error', statusCode: response!.status, duration, errorMessage: errorText.slice(0, 200) })
-      throw new AIError(response!.status, errorText)
+      updateLog(log.id, { status: 'error', statusCode: response.status, duration, errorMessage: errorText.slice(0, 200) })
+      throw new AIError(response.status, errorText)
     }
 
-    const reader = response!.body!.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
     let usage: TokenUsage | undefined
 
     // <think> 标签解析状态（兼容中转将思考包裹在 content 的 <think>...</think> 中）
     let insideThinkTag = false
     let contentTagBuffer = ''
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
+    const complete = () => {
+      const logUpdate: Record<string, unknown> = {
+        status: 'success',
+        statusCode: response.status,
+        duration: Date.now() - startTime,
+      }
+      if (usage) logUpdate.usage = usage
+      if (result && usage) result.usage = usage
+      updateLog(log.id, logUpdate)
+      if (usage) {
+        void recordUsage({
+          projectId: meta?.projectId ?? null,
+          timestamp: Date.now(),
+          category: meta?.category ?? '',
+          model: config.model,
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+        })
+      }
+    }
 
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6).trim()
-          if (data === '[DONE]') {
-            // 冲刷标签缓冲区残留
-            if (contentTagBuffer) {
-              yield { kind: insideThinkTag ? 'reasoning' : 'content', text: contentTagBuffer }
-              contentTagBuffer = ''
-            }
-            const logUpdate: Record<string, unknown> = { status: 'success', statusCode: response!.status, duration: Date.now() - startTime }
-            if (usage) logUpdate.usage = usage
-            if (result && usage) result.usage = usage
-            updateLog(log.id, logUpdate)
-            if (usage) void recordUsage({ projectId: meta?.projectId ?? null, timestamp: Date.now(), category: meta?.category ?? '', model: config.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens })
-            return
-          }
-          try {
-            const json = JSON.parse(data)
-            const delta = json.choices?.[0]?.delta
-            if (delta) {
-              const reasoning: string | undefined =
-                delta.reasoning_content ?? delta.thinking ?? delta.reasoning
-              if (reasoning) yield { kind: 'reasoning', text: reasoning }
-              const content: string | undefined = delta.content
-              if (content) {
-                // <think> 标签解析：中转可能将思考包裹在 content 的 <think>...</think> 中
-                contentTagBuffer += content
-                while (contentTagBuffer.length > 0) {
-                  if (!insideThinkTag) {
-                    const idx = contentTagBuffer.indexOf('<think>')
-                    if (idx !== -1) {
-                      const before = contentTagBuffer.slice(0, idx)
-                      if (before) yield { kind: 'content', text: before }
-                      contentTagBuffer = contentTagBuffer.slice(idx + 7)
-                      insideThinkTag = true
-                    } else {
-                      // 检查末尾是否可能是 <think> 的不完整前缀（最多 6 字符）
-                      let holdback = 0
-                      for (let i = 1; i < 7 && i <= contentTagBuffer.length; i++) {
-                        if ('<think>'.startsWith(contentTagBuffer.slice(-i))) { holdback = i; break }
-                      }
-                      const safe = contentTagBuffer.slice(0, contentTagBuffer.length - holdback)
-                      if (safe) yield { kind: 'content', text: safe }
-                      contentTagBuffer = holdback ? contentTagBuffer.slice(-holdback) : ''
-                      break
-                    }
-                  } else {
-                    const idx = contentTagBuffer.indexOf('</think>')
-                    if (idx !== -1) {
-                      const before = contentTagBuffer.slice(0, idx)
-                      if (before) yield { kind: 'reasoning', text: before }
-                      contentTagBuffer = contentTagBuffer.slice(idx + 8)
-                      insideThinkTag = false
-                    } else {
-                      let holdback = 0
-                      for (let i = 1; i < 8 && i <= contentTagBuffer.length; i++) {
-                        if ('</think>'.startsWith(contentTagBuffer.slice(-i))) { holdback = i; break }
-                      }
-                      const safe = contentTagBuffer.slice(0, contentTagBuffer.length - holdback)
-                      if (safe) yield { kind: 'reasoning', text: safe }
-                      contentTagBuffer = holdback ? contentTagBuffer.slice(-holdback) : ''
-                      break
-                    }
+    for await (const data of readSseData(response.body)) {
+      if (data === '[DONE]') {
+        // 冲刷标签缓冲区残留
+        if (contentTagBuffer) {
+          yield { kind: insideThinkTag ? 'reasoning' : 'content', text: contentTagBuffer }
+          contentTagBuffer = ''
+        }
+        complete()
+        return
+      }
+      try {
+        const json = JSON.parse(data) as OpenAIStreamPayload
+        const delta = json.choices?.[0]?.delta
+        if (delta) {
+          const reasoning = delta.reasoning_content ?? delta.thinking ?? delta.reasoning
+          if (reasoning) yield { kind: 'reasoning', text: reasoning }
+          const content = delta.content
+          if (content) {
+            // <think> 标签解析：中转可能将思考包裹在 content 的 <think>...</think> 中
+            contentTagBuffer += content
+            while (contentTagBuffer.length > 0) {
+              if (!insideThinkTag) {
+                const idx = contentTagBuffer.indexOf('<think>')
+                if (idx !== -1) {
+                  const before = contentTagBuffer.slice(0, idx)
+                  if (before) yield { kind: 'content', text: before }
+                  contentTagBuffer = contentTagBuffer.slice(idx + 7)
+                  insideThinkTag = true
+                } else {
+                  // 检查末尾是否可能是 <think> 的不完整前缀（最多 6 字符）
+                  let holdback = 0
+                  for (let i = 1; i < 7 && i <= contentTagBuffer.length; i++) {
+                    if ('<think>'.startsWith(contentTagBuffer.slice(-i))) { holdback = i; break }
                   }
+                  const safe = contentTagBuffer.slice(0, contentTagBuffer.length - holdback)
+                  if (safe) yield { kind: 'content', text: safe }
+                  contentTagBuffer = holdback ? contentTagBuffer.slice(-holdback) : ''
+                  break
+                }
+              } else {
+                const idx = contentTagBuffer.indexOf('</think>')
+                if (idx !== -1) {
+                  const before = contentTagBuffer.slice(0, idx)
+                  if (before) yield { kind: 'reasoning', text: before }
+                  contentTagBuffer = contentTagBuffer.slice(idx + 8)
+                  insideThinkTag = false
+                } else {
+                  let holdback = 0
+                  for (let i = 1; i < 8 && i <= contentTagBuffer.length; i++) {
+                    if ('</think>'.startsWith(contentTagBuffer.slice(-i))) { holdback = i; break }
+                  }
+                  const safe = contentTagBuffer.slice(0, contentTagBuffer.length - holdback)
+                  if (safe) yield { kind: 'reasoning', text: safe }
+                  contentTagBuffer = holdback ? contentTagBuffer.slice(-holdback) : ''
+                  break
                 }
               }
             }
-            // 提取 token 用量（通常在最后一个 chunk 中）
-            if (json.usage) {
-              usage = {
-                inputTokens: json.usage.prompt_tokens ?? 0,
-                outputTokens: json.usage.completion_tokens ?? 0,
-                totalTokens: json.usage.total_tokens ?? 0,
-              }
-            }
-          } catch {
-            // 忽略解析错误
           }
         }
+        // 提取 token 用量（通常在最后一个 chunk 中）
+        if (json.usage) usage = toTokenUsage(json.usage)
+      } catch {
+        // 与旧实现一致：忽略单个不可解析的 SSE data，不中断整个生成。
       }
     }
 
@@ -324,16 +405,17 @@ export async function* streamChat(
       contentTagBuffer = ''
     }
 
-    const logUpdate: Record<string, unknown> = { status: 'success', statusCode: response!.status, duration: Date.now() - startTime }
-    if (usage) logUpdate.usage = usage
-    if (result && usage) result.usage = usage
-    updateLog(log.id, logUpdate)
-    if (usage) void recordUsage({ projectId: meta?.projectId ?? null, timestamp: Date.now(), category: meta?.category ?? '', model: config.model, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens })
+    complete()
   } catch (err) {
     if (err instanceof AIError) throw err
+    const normalizedError = normalizeAiTransportError(err)
     const duration = Date.now() - startTime
-    updateLog(log.id, { status: 'error', duration, errorMessage: (err as Error).message })
-    throw err
+    updateLog(log.id, {
+      status: 'error',
+      duration,
+      errorMessage: normalizedError instanceof Error ? normalizedError.message : String(normalizedError),
+    })
+    throw normalizedError
   }
 }
 
@@ -356,25 +438,32 @@ export async function chat(
   }
   const req = buildRequest(config, trimmed.messages, false)
 
-  const response = await fetch(req.url, {
-    method: 'POST',
-    headers: req.headers,
+  const credentialId = await bindAiCredential({
+    key: 'storyforge.ai.primary',
+    apiKey: config.apiKey,
+    provider: config.provider,
+    profileId: 'primary',
+    operation: 'chat-completions',
+    configuredBaseUrl: req.configuredBaseUrl,
+  })
+  const response = await executeAiRequest({
+    provider: config.provider,
+    profileId: 'primary',
+    operation: 'chat-completions',
+    configuredBaseUrl: req.configuredBaseUrl,
+    credentialId,
     body: req.body,
     signal,
   })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new AIError(response!.status, errorText)
+  if (!isSuccessfulAiResponse(response)) {
+    const errorText = await readAiResponseText(response.body)
+    throw new AIError(response.status, errorText)
   }
 
-  const json = await response.json()
+  const json = JSON.parse(await readAiResponseText(response.body)) as OpenAIChatPayload
   if (json.usage) {
-    const usage = {
-      inputTokens: json.usage.prompt_tokens ?? 0,
-      outputTokens: json.usage.completion_tokens ?? 0,
-      totalTokens: json.usage.total_tokens ?? 0,
-    }
+    const usage = toTokenUsage(json.usage)
     if (result) result.usage = usage
     void recordUsage({
       projectId: meta?.projectId ?? null,

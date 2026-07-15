@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Minimal D1.1 capability for the StoryForge main window.",
+  "platforms": ["windows"],
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

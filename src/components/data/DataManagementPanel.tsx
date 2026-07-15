@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Download, Upload, FileJson, FileText, FileType,
   Loader2, CheckCircle, AlertCircle, FolderOpen, X,
@@ -8,15 +8,15 @@ import {
 import { exportProjectJSON, downloadJSON, importProjectJSON, type ProjectExportData } from '../../lib/export/json-export'
 import { exportProjectMarkdown, exportProjectTXT, downloadTextFile } from '../../lib/export/text-export'
 import {
-  isFSASupported, pickFolder, ensureFolderPermission, folderPermissionGranted,
-  writeProjectJSONToFolder,
+  projectBackupBindingId, writeProjectJSONToFolder,
 } from '../../lib/storage/folder-backup'
-import { saveFolderHandle, loadFolderHandle, clearFolderHandle, projFolderKey, LAST_FOLDER_KEY } from '../../lib/storage/folder-handle-store'
 import { useBackupStore } from '../../stores/backup'
 import CloudBackupCard from './CloudBackupCard'
 import { useToast } from '../shared/Toast'
 import { useDialog } from '../shared/Dialog'
 import type { Project, Snapshot } from '../../lib/types'
+import { decodeRuntimeFileText, openRuntimeFile } from '../../lib/runtime-file'
+import { getRuntime, type BackupBinding } from '../../runtime'
 
 type Tab = 'export' | 'backup'
 type ExportStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -72,23 +72,26 @@ export default function DataManagementPanel({ project, onImported }: Props) {
 function ExportTab({ project, onImported }: Props) {
   const [status, setStatus] = useState<ExportStatus>('idle')
   const [message, setMessage] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // ── 本地文件夹（句柄持久化 + 重新授权 + 自动备份，FB-11）──
-  const [folderHandle, setFolderHandle] = useState<FileSystemDirectoryHandle | null>(null)
-  const [folderName, setFolderName] = useState('')
-  const [folderNeedsAuth, setFolderNeedsAuth] = useState(false)
+  // ── 本地文件夹（不透明绑定 + 重新授权 + 自动备份，FB-11）──
+  const [folderBinding, setFolderBinding] = useState<BackupBinding | null>(null)
   const [folderBusy, setFolderBusy] = useState(false)
+  const bindingId = projectBackupBindingId(project.id!)
+  const folderBound = folderBinding != null && folderBinding.permission !== 'missing'
+  const folderNeedsAuth = folderBound && folderBinding.permission !== 'granted'
+  const folderName = folderBinding?.label ?? ''
 
-  // 进面板时把该项目已持久化的绑定读回来；授权仍有效则直接显示已绑定，失效则提示重新授权
+  // Runtime owns the persisted directory capability; the renderer only sees an opaque binding.
   useEffect(() => {
     let cancelled = false
+    setFolderBinding(null)
     void (async () => {
-      const h = await loadFolderHandle(projFolderKey(project.id!))
-      if (!h || cancelled) return
-      setFolderHandle(h)
-      setFolderName(h.name)
-      setFolderNeedsAuth(!(await folderPermissionGranted(h)))
+      try {
+        const binding = await getRuntime().files.inspectBackupBinding(projectBackupBindingId(project.id!))
+        if (!cancelled) setFolderBinding(binding)
+      } catch (error) {
+        console.error('[folder] 检查目录绑定失败:', error)
+      }
     })()
     return () => { cancelled = true }
   }, [project.id])
@@ -102,29 +105,30 @@ function ExportTab({ project, onImported }: Props) {
     try {
       show('loading', '正在导出 JSON...')
       const data = await exportProjectJSON(project.id!)
-      downloadJSON(data, `${project.name}_${new Date().toISOString().slice(0, 10)}.json`)
+      const output = await downloadJSON(data, `${project.name}_${new Date().toISOString().slice(0, 10)}.json`)
+      if (output.status === 'cancelled') { show('idle', ''); return }
       show('success', 'JSON 导出成功！')
     } catch (e) { show('error', `导出失败：${(e as Error).message}`) }
   }
 
-  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleImportJSON = async () => {
     try {
+      const opened = await openRuntimeFile('project-json')
+      if (opened.status === 'cancelled') return
       show('loading', '正在导入项目...')
-      const data: ProjectExportData = JSON.parse(await file.text())
+      const data: ProjectExportData = JSON.parse(decodeRuntimeFileText(opened.value))
       const newId = await importProjectJSON(data)
       show('success', '导入成功！')
       onImported?.(newId)
     } catch (err) { show('error', `导入失败：${(err as Error).message}`) }
-    e.target.value = ''
   }
 
   const handleExportMarkdown = async () => {
     try {
       show('loading', '正在导出 Markdown...')
       const md = await exportProjectMarkdown(project.id!)
-      downloadTextFile(md, `${project.name}_${new Date().toISOString().slice(0, 10)}.md`, 'text/markdown')
+      const output = await downloadTextFile(md, `${project.name}_${new Date().toISOString().slice(0, 10)}.md`, 'text/markdown')
+      if (output.status === 'cancelled') { show('idle', ''); return }
       show('success', 'Markdown 导出成功！')
     } catch (e) { show('error', `导出失败：${(e as Error).message}`) }
   }
@@ -133,57 +137,71 @@ function ExportTab({ project, onImported }: Props) {
     try {
       show('loading', '正在导出 TXT...')
       const txt = await exportProjectTXT(project.id!)
-      downloadTextFile(txt, `${project.name}_${new Date().toISOString().slice(0, 10)}.txt`)
+      const output = await downloadTextFile(txt, `${project.name}_${new Date().toISOString().slice(0, 10)}.txt`)
+      if (output.status === 'cancelled') { show('idle', ''); return }
       show('success', 'TXT 导出成功！')
     } catch (e) { show('error', `导出失败：${(e as Error).message}`) }
   }
 
-  // 绑定文件夹：选目录 → 请求授权 → 持久化句柄 → 立刻写一次
+  // Bind a directory capability, request permission in this user gesture, then write once.
   const handleBindFolder = async () => {
-    const h = await pickFolder()
-    if (!h) return
     setFolderBusy(true)
     try {
-      const ok = await ensureFolderPermission(h)
-      if (!ok) { show('error', '未授予文件夹写入权限'); return }
-      await saveFolderHandle(projFolderKey(project.id!), h)
-      await saveFolderHandle(LAST_FOLDER_KEY, h)
-      setFolderHandle(h); setFolderName(h.name); setFolderNeedsAuth(false)
-      const wrote = await writeProjectJSONToFolder(h, project.id!)
-      show(wrote ? 'success' : 'error', wrote ? `已绑定并保存到 / ${h.name}` : '绑定成功但写入失败')
+      const outcome = await getRuntime().files.bindBackupDirectory(bindingId)
+      if (outcome.status === 'cancelled') return
+      let binding = outcome.value
+      if (binding.permission !== 'granted') {
+        binding = await getRuntime().files.requestBackupPermission(bindingId, true)
+      }
+      setFolderBinding(binding)
+      if (binding.permission !== 'granted') {
+        show('error', '未授予文件夹写入权限')
+        return
+      }
+      const wrote = await writeProjectJSONToFolder(bindingId, project.id!)
+      show(wrote ? 'success' : 'error', wrote ? `已绑定并保存到 / ${binding.label}` : '绑定成功但写入失败')
     } catch (e) { show('error', `绑定失败：${(e as Error).message}`) }
     finally { setFolderBusy(false) }
   }
 
-  // 重新授权（更新/刷新后浏览器把权限降回 prompt 时，一次手势恢复）
+  // Reauthorize an expired browser/native directory capability in a user gesture.
   const handleReauthFolder = async () => {
-    if (!folderHandle) return
+    if (!folderBound) return
     setFolderBusy(true)
     try {
-      const ok = await ensureFolderPermission(folderHandle)
-      if (!ok) { show('error', '仍未获授权'); return }
-      setFolderNeedsAuth(false)
-      await writeProjectJSONToFolder(folderHandle, project.id!)
+      const binding = await getRuntime().files.requestBackupPermission(bindingId, true)
+      setFolderBinding(binding)
+      if (binding.permission !== 'granted') { show('error', '仍未获授权'); return }
+      await writeProjectJSONToFolder(bindingId, project.id!)
       show('success', '已重新授权，本项目会自动写入该文件夹')
     } catch (e) { show('error', `授权失败：${(e as Error).message}`) }
     finally { setFolderBusy(false) }
   }
 
   const handleSaveToFolder = async () => {
-    if (!folderHandle) return
+    if (!folderBound) return
     setFolderBusy(true)
     try {
       show('loading', '正在写入本地文件夹...')
-      if (!(await ensureFolderPermission(folderHandle))) { show('error', '未获授权，无法写入'); setFolderNeedsAuth(true); return }
-      const ok = await writeProjectJSONToFolder(folderHandle, project.id!)
+      let binding = folderBinding!
+      if (binding.permission !== 'granted') {
+        binding = await getRuntime().files.requestBackupPermission(bindingId, true)
+        setFolderBinding(binding)
+      }
+      if (binding.permission !== 'granted') { show('error', '未获授权，无法写入'); return }
+      const ok = await writeProjectJSONToFolder(bindingId, project.id!)
       show(ok ? 'success' : 'error', ok ? '已保存到本地文件夹' : '写入失败，请重新绑定文件夹')
     } catch (e) { show('error', `写入失败：${(e as Error).message}`) }
     finally { setFolderBusy(false) }
   }
 
   const handleUnbindFolder = async () => {
-    await clearFolderHandle(projFolderKey(project.id!))
-    setFolderHandle(null); setFolderName(''); setFolderNeedsAuth(false)
+    try {
+      await getRuntime().files.clearBackupBinding(bindingId)
+      setFolderBinding(null)
+    } catch (e) {
+      show('error', `解绑失败：${(e as Error).message}`)
+    }
   }
 
   return (
@@ -202,10 +220,9 @@ function ExportTab({ project, onImported }: Props) {
           <ActionButton onClick={handleExportJSON} disabled={status === 'loading'} variant="accent">
             <Download className="w-4 h-4" /> 导出 JSON
           </ActionButton>
-          <ActionButton onClick={() => fileInputRef.current?.click()} disabled={status === 'loading'} variant="default">
+          <ActionButton onClick={() => void handleImportJSON()} disabled={status === 'loading'} variant="default">
             <Upload className="w-4 h-4" /> 导入 JSON
           </ActionButton>
-          <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileSelected} className="hidden" />
         </div>
       </SectionCard>
 
@@ -239,9 +256,8 @@ function ExportTab({ project, onImported }: Props) {
         icon={<FolderOpen className="w-5 h-5 text-orange-400" />}
         title="本地文件夹自动备份"
         desc="绑定后，进入本项目会自动把完整数据写入该文件夹（打开时 + 每 5 分钟）。绑定跨刷新/更新保留；换设备或数据重置后，可在首页「从本地文件夹恢复」。"
-        badge={!isFSASupported() ? '仅 Chrome/Edge 支持' : undefined}
       >
-        {folderHandle ? (
+        {folderBound ? (
           <div className="space-y-2">
             {folderNeedsAuth ? (
               <div className="flex items-center gap-2 text-sm text-amber-400 bg-amber-500/10 px-3 py-2 rounded-lg">
@@ -270,7 +286,7 @@ function ExportTab({ project, onImported }: Props) {
             </div>
           </div>
         ) : (
-          <ActionButton onClick={handleBindFolder} disabled={!isFSASupported() || folderBusy || status === 'loading'} variant="orange">
+          <ActionButton onClick={handleBindFolder} disabled={folderBusy || status === 'loading'} variant="orange">
             {folderBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderOpen className="w-4 h-4" />} 选择本地文件夹
           </ActionButton>
         )}

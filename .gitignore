@@ -1,5 +1,8 @@
 node_modules
+.qa-reports/
 dist/
+dist-desktop/
+dist-desktop-stable/
 .DS_Store
 *.local
 *.tsbuildinfo
@@ -14,5 +17,7 @@ coverage/
 
 # Release packaging outputs
 release/
+src-tauri/target/
+src-tauri/gen/schemas/
 packaging/desktop-server/web/*
 !packaging/desktop-server/web/placeholder.txt

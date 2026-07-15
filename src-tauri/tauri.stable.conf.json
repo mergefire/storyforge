@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "StoryForge",
+  "identifier": "io.github.yuanbw2025.storyforge",
+  "build": {
+    "beforeBuildCommand": "npm run desktop:ui:build:stable",
+    "frontendDist": "../dist-desktop-stable"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "故事熔炉 StoryForge",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1080,
+        "minHeight": 720,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "devtools": false,
+        "backgroundColor": "#0a0a0f",
+        "dataDirectory": "webview-data"
+      }
+    ]
+  }
+}

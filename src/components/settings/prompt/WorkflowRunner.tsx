@@ -20,6 +20,7 @@ import type { Project } from '../../../lib/types'
 import type { TokenUsage } from '../../../lib/ai/logger'
 import { targetLabel, assembleWorkflowStepVars } from './workflow-helpers'
 import { useToast } from '../../shared/Toast'
+import { getRuntime } from '../../../runtime'
 
 interface RunnerProps {
   workflow: PromptWorkflow
@@ -434,7 +435,7 @@ function StepCard({
 
   const handleCopy = () => {
     if (!outText) return
-    navigator.clipboard.writeText(outText).then(() => {
+    getRuntime().clipboard.writeText('workflow-output', outText).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     })

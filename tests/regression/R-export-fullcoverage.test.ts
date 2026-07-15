@@ -81,11 +81,8 @@ describe('R-export-fullcoverage · 全表多世界往返安全网', () => {
     // 细纲外键(outlineNodeId 重映射正确)
     const newDetail = await db.detailedOutlines.where('projectId').equals(newId).first()
     expect(newDetail!.outlineNodeId).toBe(newChapNode.id)
-    // ⚠️ 已知缺陷(AUDIT-1 发现):detailedOutlines.appearingCharacterIds 与 scenes[].characterIds
-    // 这两个「数组/JSON 内的角色引用」当前手写导入**未重映射**到新角色 id(注册表 refs 已声明,但
-    // exportRemap 漏处理)。安全网此处只锁「当前行为」,不断言重映射值。派生引擎切换完成后,作为
-    // 增量修复单独开启数组/JSON 引用重映射 + 独立测试。见 ROADMAP AUDIT-1b。
-    expect(newDetail!.appearingCharacterIds).toBeDefined()
+    expect(newDetail!.appearingCharacterIds).toEqual([newChar1.id])
+    expect(newDetail!.scenes?.[0].characterIds).toEqual([newChar1.id])
 
     // 情感卡 → 章节
     const newBeat = await db.emotionBeatCards.where('projectId').equals(newId).first()
@@ -118,6 +115,8 @@ describe('R-export-fullcoverage · 全表多世界往返安全网', () => {
     const newRef1 = newRefs[0]
     const newRca = await db.referenceChunkAnalysis.where('referenceId').equals(newRef1.id!).first()
     expect(newRca!.openingTechnique).toContain('天才陨落')
+    const newRule = await db.creativeRules.where('projectId').equals(newId).first()
+    expect(newRule!.citedReferenceIds as unknown).toEqual([newRef1.id])
 
     // worldNodes portalsJSON 自引用重映射
     const newWorldNodes = await db.worldNodes.where('projectId').equals(newId).toArray()

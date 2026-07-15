@@ -9,7 +9,7 @@
  * 容量评估：
  *   · 1.6M 字 ≈ 3 MB UTF-8 → 忽略
  *   · 1000 万字 ≈ 20-30 MB → 仍在 IndexedDB 默认额度内
- *   · 启动时会调 navigator.storage.persist() 让浏览器不随便回收
+ *   · 启动时通过 RuntimeAdapter durability 申请持久存储，避免运行时随意回收
  */
 export interface ImportFileBlob {
   /** 主键 = ImportSession.id */

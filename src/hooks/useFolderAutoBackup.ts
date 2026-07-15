@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { loadFolderHandle, projFolderKey } from '../lib/storage/folder-handle-store'
-import { folderPermissionGranted, writeProjectJSONToFolder } from '../lib/storage/folder-backup'
+import { projectBackupBindingId, writeProjectJSONToFolder } from '../lib/storage/folder-backup'
+import { getRuntime } from '../runtime'
 
 /** 本地文件夹自动备份间隔（毫秒）— 5 分钟 */
 export const FOLDER_AUTO_INTERVAL = 5 * 60 * 1000
@@ -10,7 +10,7 @@ export const FOLDER_AUTO_INTERVAL = 5 * 60 * 1000
  *
  * 进入某项目工作区时：若该项目此前绑过本地文件夹、且授权仍有效（不弹窗静默判断），
  * 则**进入即写一次** + 之后每 FOLDER_AUTO_INTERVAL 写一次完整 JSON。
- * 句柄持久在独立 IndexedDB，刷新/更新后依然在 → 让「自动保存」名副其实、绑定不丢。
+ * 目录能力由 RuntimeAdapter 持久化；业务侧只保留 opaque bindingId。
  *
  * 未绑定 / 授权失效 → 静默跳过（不打扰；用户可在「数据管理」面板重新授权）。
  */
@@ -22,20 +22,22 @@ export function useFolderAutoBackup(projectId: number | null) {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
     if (!projectId) return
 
-    void (async () => {
-      const handle = await loadFolderHandle(projFolderKey(projectId))
-      if (!handle || cancelled) return
-      if (!(await folderPermissionGranted(handle))) return // 授权失效：静默跳过
+    const writeIfAvailable = async () => {
+      try {
+        const bindingId = projectBackupBindingId(projectId)
+        const binding = await getRuntime().files.inspectBackupBinding(bindingId)
+        if (cancelled || binding.permission !== 'granted') return
 
-      // 进入工作区先落一次盘
-      writeProjectJSONToFolder(handle, projectId).catch(err =>
-        console.error('[FolderAutoBackup] 首次写入失败:', err))
+        await writeProjectJSONToFolder(bindingId, projectId)
+      } catch (err) {
+        console.error('[FolderAutoBackup] 写入或检查目录绑定失败:', err)
+      }
+    }
 
-      timerRef.current = setInterval(() => {
-        writeProjectJSONToFolder(handle, projectId).catch(err =>
-          console.error('[FolderAutoBackup] 写入失败:', err))
-      }, FOLDER_AUTO_INTERVAL)
-    })()
+    // Keep the timer armed even when no binding exists yet. A directory bound or
+    // reauthorized in the current workspace is picked up on the very next tick.
+    void writeIfAvailable()
+    timerRef.current = setInterval(() => { void writeIfAvailable() }, FOLDER_AUTO_INTERVAL)
 
     return () => {
       cancelled = true

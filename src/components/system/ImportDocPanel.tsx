@@ -28,6 +28,8 @@ import type { ImportSession, ChunkState, ImportTarget } from '../../lib/types/im
 import type { SidebarModule } from '../layout/Sidebar'
 import { useDialog } from '../shared/Dialog'
 import { useToast } from '../shared/Toast'
+import { getRuntime } from '../../runtime'
+import { openRuntimeFile, runtimeFileAsBrowserFile } from '../../lib/runtime-file'
 
 interface Props {
   project: Project
@@ -46,7 +48,7 @@ const DEFAULT_CHUNK_SIZE = 50000
  * 2026-05-12 增强：
  *   · 上传时把原文 Blob 存到 IndexedDB（importFiles 表）
  *   · 打开面板发现未完成任务时，自动从 Blob 恢复原文 → 直接续跑，不再需要重传文件
- *   · 调 navigator.storage.persist() 防止浏览器 GC 掉 Blob
+ *   · 通过 RuntimeAdapter 申请持久存储，防止运行时回收 Blob
  */
 export default function ImportDocPanel({ project, onNavigate }: Props) {
   const dialog = useDialog()
@@ -103,15 +105,16 @@ export default function ImportDocPanel({ project, onNavigate }: Props) {
     setTargetWorldGroupId(activeBelongsToProject ? activeGroupId : worldGroups[0]?.id ?? null)
   }, [activeGroupId, project.enableMultiWorld, targetWorldGroupId, worldGroups])
 
-  // ── 启动时：申请持久存储权限（一次性，浏览器会记住） ─────
+  // ── 启动时：申请持久存储权限（由 Web/Desktop runtime 各自实现） ─────
   useEffect(() => {
-    if (navigator.storage?.persist) {
-      navigator.storage.persisted().then(already => {
-        if (!already) {
-          navigator.storage.persist().catch(() => {/* 用户拒绝也无所谓，后面还能跑 */})
-        }
-      }).catch(() => {})
-    }
+    void (async () => {
+      try {
+        const status = await getRuntime().durability.inspect()
+        if (!status.persisted) await getRuntime().durability.requestPersistence()
+      } catch {
+        // 用户拒绝或运行时不支持不阻断导入；原有导入/续跑降级语义保持不变。
+      }
+    })()
   }, [])
 
   // ── 初始：扫描项目内未完成会话，并尝试从 Blob 恢复 ────────
@@ -190,18 +193,18 @@ export default function ImportDocPanel({ project, onNavigate }: Props) {
   /** 暂存最近一次上传的原始 File（创建 session 时存到 importFiles） */
   const lastUploadedFile = useRef<File | null>(null)
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    e.target.value = ''
-    if (!f) return
-    setFileError(null)
-    setExtractInfo(null)
-    setFilename(f.name)
-    setRawText('')
-    setPlans(null)
+  const handleFile = async () => {
     setLoadingFile(true)
-    lastUploadedFile.current = f
     try {
+      const opened = await openRuntimeFile('source-document')
+      if (opened.status === 'cancelled') return
+      const f = runtimeFileAsBrowserFile(opened.value)
+      setFileError(null)
+      setExtractInfo(null)
+      setFilename(f.name)
+      setRawText('')
+      setPlans(null)
+      lastUploadedFile.current = f
       const result = await extractTextFromFile(f)
       setRawText(result.text)
       const sizeMB = (f.size / 1024 / 1024).toFixed(2)
@@ -213,6 +216,11 @@ export default function ImportDocPanel({ project, onNavigate }: Props) {
       setExtractInfo(parts.join(' · '))
     } catch (err) {
       setFilename('')
+      setRawText('')
+      setPlans(null)
+      setExtractInfo(null)
+      setVolumeDetect(null)
+      setShowConfirm(false)
       lastUploadedFile.current = null
       setFileError(err instanceof Error ? err.message : String(err))
     } finally {

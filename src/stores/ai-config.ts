@@ -4,6 +4,16 @@ import { PROVIDER_PRESETS } from '../lib/types'
 import { createLog, updateLog } from '../lib/ai/logger'
 import { nanoid } from '../lib/utils/id'
 import { buildOpenAIEndpoint, normalizeOpenAIBaseUrl } from '../lib/ai/openai-endpoint'
+import {
+  bindAiCredential,
+  deleteAiCredential,
+  executeAiRequest,
+  isAiAbortError,
+  isAiNetworkError,
+  isSuccessfulAiResponse,
+  readAiResponseText,
+} from '../lib/ai/runtime-transport'
+import { getRuntime } from '../runtime'
 
 const STORAGE_KEY = 'storyforge-ai-config'
 const PRESETS_KEY = 'storyforge-ai-presets'
@@ -11,6 +21,11 @@ const SESSION_API_KEY = 'storyforge-ai-api-key-session'
 const REMEMBER_API_KEY = 'storyforge-ai-api-key-remember'
 const EMBEDDING_KEY = 'storyforge-embedding-config'
 const EMBEDDING_SESSION_KEY = 'storyforge-embedding-key-session'
+const ACTIVE_PRESET_KEY = 'storyforge-ai-active-preset'
+
+function storesPlaintextConfiguration(): boolean {
+  return getRuntime().secrets.policy.storesPlaintextConfiguration
+}
 
 const DEFAULT_CONFIG: AIConfig = {
   provider: 'deepseek',
@@ -39,9 +54,9 @@ function loadEmbeddingConfig(rememberApiKey: boolean): EmbeddingConfig {
 }
 
 function persistEmbeddingConfig(cfg: EmbeddingConfig, rememberApiKey: boolean): void {
-  const persisted: EmbeddingConfig = rememberApiKey ? cfg : { ...cfg, apiKey: '' }
+  const persisted: EmbeddingConfig = storesPlaintextConfiguration() && rememberApiKey ? cfg : { ...cfg, apiKey: '' }
   localStorage.setItem(EMBEDDING_KEY, JSON.stringify(persisted))
-  if (rememberApiKey) sessionStorage.removeItem(EMBEDDING_SESSION_KEY)
+  if (!storesPlaintextConfiguration() || rememberApiKey) sessionStorage.removeItem(EMBEDDING_SESSION_KEY)
   else if (cfg.apiKey) sessionStorage.setItem(EMBEDDING_SESSION_KEY, cfg.apiKey)
   else sessionStorage.removeItem(EMBEDDING_SESSION_KEY)
 }
@@ -59,7 +74,10 @@ function loadPresets(): AIConfigPreset[] {
 }
 
 function savePresets(presets: AIConfigPreset[]) {
-  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets))
+  const safePresets = !storesPlaintextConfiguration()
+    ? presets.map(preset => ({ ...preset, config: { ...preset.config, apiKey: '' } }))
+    : presets
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(safePresets))
 }
 
 /** 根据 HTTP 状态码和英文错误信息，返回中文解释 */
@@ -135,10 +153,10 @@ function loadInitialConfig(): { config: AIConfig; rememberApiKey: boolean } {
 }
 
 function persistConfig(config: AIConfig, rememberApiKey: boolean): void {
-  const persisted: AIConfig = rememberApiKey ? config : { ...config, apiKey: '' }
+  const persisted: AIConfig = storesPlaintextConfiguration() && rememberApiKey ? config : { ...config, apiKey: '' }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted))
   localStorage.setItem(REMEMBER_API_KEY, String(rememberApiKey))
-  if (rememberApiKey) {
+  if (!storesPlaintextConfiguration() || rememberApiKey) {
     sessionStorage.removeItem(SESSION_API_KEY)
   } else if (config.apiKey) {
     sessionStorage.setItem(SESSION_API_KEY, config.apiKey)
@@ -148,7 +166,20 @@ function persistConfig(config: AIConfig, rememberApiKey: boolean): void {
 }
 
 function presetConfig(config: AIConfig, rememberApiKey: boolean): AIConfig {
-  return rememberApiKey ? { ...config } : { ...config, apiKey: '' }
+  return storesPlaintextConfiguration() && rememberApiKey ? { ...config } : { ...config, apiKey: '' }
+}
+
+function setActivePreset(id: string | null): void {
+  if (id) localStorage.setItem(ACTIVE_PRESET_KEY, id)
+  else localStorage.removeItem(ACTIVE_PRESET_KEY)
+}
+
+function aiIdentityChanged(
+  current: Pick<AIConfig, 'provider' | 'baseUrl'>,
+  next: Pick<AIConfig, 'provider' | 'baseUrl'>,
+): boolean {
+  return current.provider !== next.provider
+    || normalizeOpenAIBaseUrl(current.baseUrl).baseUrl !== normalizeOpenAIBaseUrl(next.baseUrl).baseUrl
 }
 
 export interface TestResult {
@@ -166,42 +197,118 @@ interface AIConfigStore {
   activePresetId: string | null
   /** NS-5 语义检索（embedding）配置 */
   embedding: EmbeddingConfig
-  setEmbeddingConfig: (partial: Partial<EmbeddingConfig>) => void
-  setConfig: (config: Partial<AIConfig>) => void
-  setRememberApiKey: (remember: boolean) => void
-  switchProvider: (provider: AIProvider) => void
+  setEmbeddingConfig: (partial: Partial<EmbeddingConfig>) => Promise<void>
+  setConfig: (config: Partial<AIConfig>) => Promise<void>
+  setRememberApiKey: (remember: boolean) => Promise<void>
+  switchProvider: (provider: AIProvider) => Promise<void>
   testConnection: () => Promise<TestResult>
   // ── 预设管理 ──
   saveAsPreset: (name: string) => string
-  applyPreset: (id: string) => void
+  applyPreset: (id: string) => Promise<void>
   updatePresetFromCurrent: (id: string) => void
   renamePreset: (id: string, name: string) => void
-  deletePreset: (id: string) => void
+  deletePreset: (id: string) => Promise<void>
 }
 
 const initial = loadInitialConfig()
+const initialPresets = loadPresets()
+const savedActivePresetId = localStorage.getItem(ACTIVE_PRESET_KEY)
+const initialActivePresetId = savedActivePresetId
+  && initialPresets.some(preset => preset.id === savedActivePresetId)
+  ? savedActivePresetId
+  : null
+if (!initialActivePresetId) setActivePreset(null)
 
 export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   config: initial.config,
   rememberApiKey: initial.rememberApiKey,
-  presets: loadPresets(),
-  activePresetId: null,
+  presets: initialPresets,
+  activePresetId: initialActivePresetId,
   embedding: loadEmbeddingConfig(initial.rememberApiKey),
 
-  setEmbeddingConfig: (partial: Partial<EmbeddingConfig>) => {
-    const next = { ...get().embedding, ...partial }
-    persistEmbeddingConfig(next, get().rememberApiKey)
-    set({ embedding: next })
+  setEmbeddingConfig: async (partial: Partial<EmbeddingConfig>) => {
+    const current = get().embedding
+    const next = { ...current, ...partial }
+    const providerChanged = partial.provider !== undefined && partial.provider !== current.provider
+    const identityChanged = current.provider !== next.provider
+      || normalizeOpenAIBaseUrl(current.baseUrl).baseUrl !== normalizeOpenAIBaseUrl(next.baseUrl).baseUrl
+    const clearCredential = partial.apiKey === ''
+      || (identityChanged && partial.apiKey === undefined)
+    if (clearCredential) await deleteAiCredential('storyforge.ai.embedding')
+    if (partial.apiKey) {
+      await bindAiCredential({
+        key: 'storyforge.ai.embedding',
+        apiKey: partial.apiKey,
+        provider: next.provider,
+        profileId: 'embedding',
+        operation: 'embeddings',
+        configuredBaseUrl: next.baseUrl,
+        persistence: get().rememberApiKey ? 'device' : 'session',
+      })
+    }
+    const storedNext = { ...next, ...(providerChanged && partial.apiKey === undefined ? { apiKey: '' } : {}) }
+    persistEmbeddingConfig(storedNext, get().rememberApiKey)
+    set({ embedding: storedNext })
   },
 
-  setConfig: (partial: Partial<AIConfig>) => {
-    const newConfig = { ...get().config, ...partial }
+  setConfig: async (partial: Partial<AIConfig>) => {
+    const current = get().config
+    const candidate = { ...current, ...partial }
+    const identityChanged = aiIdentityChanged(current, candidate)
+    const clearCredential = partial.apiKey === ''
+      || (identityChanged && partial.apiKey === undefined)
+    if (clearCredential) await deleteAiCredential('storyforge.ai.primary')
+    setActivePreset(null)
+    const newConfig = {
+      ...candidate,
+      ...(identityChanged && partial.apiKey === undefined ? { apiKey: '' } : {}),
+    }
+    if (partial.apiKey) {
+      await bindAiCredential({
+        key: 'storyforge.ai.primary',
+        apiKey: partial.apiKey,
+        provider: newConfig.provider,
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: newConfig.baseUrl,
+        persistence: get().rememberApiKey ? 'device' : 'session',
+      })
+    }
     persistConfig(newConfig, get().rememberApiKey)
     // 手动改动配置后，与已选预设脱钩（除非改动等于该预设）
     set({ config: newConfig, activePresetId: null })
   },
 
-  setRememberApiKey: (remember: boolean) => {
+  setRememberApiKey: async (remember: boolean) => {
+    if (remember === get().rememberApiKey) return
+    if (!remember) {
+      await deleteAiCredential('storyforge.ai.primary')
+      await deleteAiCredential('storyforge.ai.embedding')
+    }
+    const config = get().config
+    const embedding = get().embedding
+    if (config.apiKey) {
+      await bindAiCredential({
+        key: 'storyforge.ai.primary',
+        apiKey: config.apiKey,
+        provider: config.provider,
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: config.baseUrl,
+        persistence: remember ? 'device' : 'session',
+      })
+    }
+    if (embedding.apiKey) {
+      await bindAiCredential({
+        key: 'storyforge.ai.embedding',
+        apiKey: embedding.apiKey,
+        provider: embedding.provider,
+        profileId: 'embedding',
+        operation: 'embeddings',
+        configuredBaseUrl: embedding.baseUrl,
+        persistence: remember ? 'device' : 'session',
+      })
+    }
     persistConfig(get().config, remember)
     persistEmbeddingConfig(get().embedding, remember)
     set({ rememberApiKey: remember })
@@ -216,14 +323,34 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     }
     const presets = [...get().presets, preset]
     savePresets(presets)
+    setActivePreset(id)
+    if (get().config.apiKey) {
+      void bindAiCredential({
+        key: 'storyforge.ai.primary',
+        apiKey: get().config.apiKey,
+        provider: get().config.provider,
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: get().config.baseUrl,
+        persistence: get().rememberApiKey ? 'device' : 'session',
+      })
+    }
     set({ presets, activePresetId: id })
     return id
   },
 
-  applyPreset: (id: string) => {
+  applyPreset: async (id: string) => {
     const preset = get().presets.find(p => p.id === id)
     if (!preset) return
-    const newConfig = { ...preset.config, apiKey: preset.config.apiKey || get().config.apiKey }
+    const current = get().config
+    const sameCredentialIdentity = preset.config.provider === current.provider
+      && normalizeOpenAIBaseUrl(preset.config.baseUrl).baseUrl === normalizeOpenAIBaseUrl(current.baseUrl).baseUrl
+    if (!sameCredentialIdentity) await deleteAiCredential('storyforge.ai.primary')
+    const newConfig = {
+      ...preset.config,
+      apiKey: preset.config.apiKey || (sameCredentialIdentity ? current.apiKey : ''),
+    }
+    setActivePreset(id)
     persistConfig(newConfig, get().rememberApiKey)
     set({ config: newConfig, activePresetId: id })
   },
@@ -234,6 +361,7 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
       config: presetConfig(get().config, get().rememberApiKey),
     } : p)
     savePresets(presets)
+    setActivePreset(id)
     set({ presets, activePresetId: id })
   },
 
@@ -243,13 +371,16 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     set({ presets })
   },
 
-  deletePreset: (id: string) => {
+  deletePreset: async (id: string) => {
+    await deleteAiCredential(`storyforge.ai.preset.${id}`)
     const presets = get().presets.filter(p => p.id !== id)
     savePresets(presets)
+    if (get().activePresetId === id) setActivePreset(null)
     set({ presets, activePresetId: get().activePresetId === id ? null : get().activePresetId })
   },
 
-  switchProvider: (provider: AIProvider) => {
+  switchProvider: async (provider: AIProvider) => {
+    if (provider !== get().config.provider) await deleteAiCredential('storyforge.ai.primary')
     const preset = PROVIDER_PRESETS[provider] || {}
     const newConfig: AIConfig = {
       ...get().config,
@@ -257,12 +388,13 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
       ...preset,
       apiKey: provider === get().config.provider ? get().config.apiKey : (preset.apiKey || ''),
     }
+    setActivePreset(null)
     persistConfig(newConfig, get().rememberApiKey)
     set({ config: newConfig, activePresetId: null })
   },
 
   testConnection: async (): Promise<TestResult> => {
-    const { config } = get()
+    const { config, rememberApiKey } = get()
     const normalized = normalizeOpenAIBaseUrl(config.baseUrl)
     if (normalized.changed) {
       const newConfig = { ...config, baseUrl: normalized.baseUrl }
@@ -284,23 +416,32 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     })
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
+      const credentialId = await bindAiCredential({
+        key: 'storyforge.ai.primary',
+        apiKey: config.apiKey,
+        provider: config.provider,
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: normalized.baseUrl,
+        persistence: rememberApiKey ? 'device' : 'session',
+      })
+      const response = await executeAiRequest({
+        provider: config.provider,
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: normalized.baseUrl,
+        credentialId,
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.apiKey}`,
-        },
-        body: JSON.stringify({
+        body: {
           model: config.model,
           messages: [{ role: 'user', content: '请回复"连接成功"' }],
-        }),
+        },
       })
 
       const duration = Date.now() - startTime
-      const bodyText = await response.text()
+      const bodyText = await readAiResponseText(response.body)
 
-      if (response.ok) {
+      if (isSuccessfulAiResponse(response)) {
         updateLog(log.id, { status: 'success', statusCode: response.status, duration, responseBody: bodyText.slice(0, 200) })
         const prefix = normalized.warnings.length ? `${normalized.warnings.join(' ')} ` : ''
         return { ok: true, message: `✅ ${prefix}连接成功`, statusCode: response.status, duration }
@@ -344,9 +485,9 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
       const error = err as Error
       let errorMsg: string
 
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      if (isAiNetworkError(err)) {
         errorMsg = '网络错误 — 可能原因：1) 网络不通 2) 该平台不支持浏览器直接调用(CORS) 3) Base URL 错误'
-      } else if (error.name === 'AbortError') {
+      } else if (isAiAbortError(err)) {
         errorMsg = '请求超时'
       } else {
         errorMsg = error.message || '未知错误'

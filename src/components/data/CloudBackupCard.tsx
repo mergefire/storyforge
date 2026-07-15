@@ -9,6 +9,7 @@ import { Cloud, CloudUpload, CloudDownload, Check, Loader2, LogOut, ExternalLink
 import { useGistStore } from '../../stores/gist'
 import type { GistBackupMeta, GistRevisionMeta } from '../../lib/export/gist-export'
 import { useDialog } from '../shared/Dialog'
+import { getRuntime } from '../../runtime'
 
 interface Props {
   projectId: number
@@ -16,14 +17,25 @@ interface Props {
 }
 
 export default function CloudBackupCard({ projectId, onImported }: Props) {
-  const { pat, username, rememberPat, autoBackup, busy, error, connect, disconnect, backupProject, restoreFromGist, listBackups, listRevisions, setAutoBackup, projBackup } = useGistStore()
+  const { connected, username, rememberPat, autoBackup, busy, error, connect, disconnect, backupProject, restoreFromGist, listBackups, listRevisions, setAutoBackup, projBackup } = useGistStore()
   const dialog = useDialog()
   const [patInput, setPatInput] = useState('')
   const [rememberPatInput, setRememberPatInput] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
+  const [externalError, setExternalError] = useState<string | null>(null)
   const [backups, setBackups] = useState<GistBackupMeta[] | null>(null)
   const [revisions, setRevisions] = useState<GistRevisionMeta[] | null>(null)
   const proj = projBackup(projectId)
+  const credentialStoreLabel = getRuntime().secrets.policy.storageLabel
+
+  const handleOpenTokenHelp = async () => {
+    setExternalError(null)
+    try {
+      await getRuntime().external.open({ kind: 'github-gist-token' })
+    } catch (openError) {
+      setExternalError(openError instanceof Error ? openError.message : '无法打开 GitHub Token 页面')
+    }
+  }
 
   const handleConnect = async () => {
     if (!patInput.trim()) return
@@ -80,7 +92,7 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
         备份到你的 GitHub 私密 Gist —— 数据存在云端，<strong>清浏览器 / 换设备都不丢</strong>，可一键拉回。
       </p>
 
-      {!pat ? (
+      {!connected ? (
         // 未连接:填 PAT
         <div className="space-y-2">
           <input
@@ -95,10 +107,10 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
               className="px-3 py-1.5 rounded bg-sky-500/80 text-white text-sm hover:bg-sky-500 disabled:opacity-50 flex items-center gap-1.5">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />} 连接 GitHub
             </button>
-            <a href="https://github.com/settings/tokens/new?scopes=gist&description=storyforge-backup" target="_blank" rel="noreferrer"
+            <button type="button" onClick={handleOpenTokenHelp}
               className="text-xs text-sky-400 hover:underline flex items-center gap-0.5">
               如何创建 Token <ExternalLink className="w-3 h-3" />
-            </a>
+            </button>
           </div>
           <label className="flex items-start gap-2 text-[11px] text-text-secondary cursor-pointer">
             <input
@@ -107,7 +119,7 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
               onChange={e => setRememberPatInput(e.target.checked)}
               className="mt-0.5 accent-sky-400"
             />
-            <span>在本机记住 Token（写入 localStorage）。不勾选时仅本次浏览器会话有效。</span>
+            <span>在本机记住 Token（写入{credentialStoreLabel}）。不勾选时仅本次会话有效。</span>
           </label>
           <p className="text-[11px] text-text-muted">
             云备份会把完整项目 JSON 明文上传到你的 GitHub 私密 Gist；Private Gist 不是端到端加密保险箱。
@@ -128,7 +140,7 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
             </button>
           </div>
           <p className="text-[11px] text-text-muted">
-            备份内容会作为完整项目 JSON 明文上传到 GitHub 私密 Gist；Token {rememberPat ? '保存在本机 localStorage' : '仅保存在本次浏览器会话'}。
+            备份内容会作为完整项目 JSON 明文上传到 GitHub 私密 Gist；Token {rememberPat ? `保存在${credentialStoreLabel}` : '仅保存在本次会话'}。
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -196,8 +208,10 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
         </div>
       )}
 
-      {(msg || error) && (
-        <p className={`text-xs mt-2 ${error ? 'text-error' : 'text-success'}`}>{error || msg}</p>
+      {(msg || error || externalError) && (
+        <p className={`text-xs mt-2 ${error || externalError ? 'text-error' : 'text-success'}`}>
+          {error || externalError || msg}
+        </p>
       )}
     </div>
   )

@@ -1,4 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#0a0a0f"/>
-  <text x="256" y="340" font-size="280" text-anchor="middle" font-family="serif">🔥</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">StoryForge icon</title>
+  <desc id="desc">An open golden book rising above two anvil halves, with a fountain-pen nib in the negative space.</desc>
+
+  <rect width="512" height="512" rx="104" fill="#1A0F0A"/>
+
+  <!-- Open book: three forged page layers on each side. -->
+  <g fill="#C8A155">
+    <path d="M112 96C171 102 215 134 238 190C207 151 168 130 112 125Z"/>
+    <path d="M96 139C160 142 207 161 238 197C198 173 153 168 96 170Z"/>
+    <path d="M82 184C149 182 203 192 238 214H82Z"/>
+    <g transform="translate(512 0) scale(-1 1)">
+      <path d="M112 96C171 102 215 134 238 190C207 151 168 130 112 125Z"/>
+      <path d="M96 139C160 142 207 161 238 197C198 173 153 168 96 170Z"/>
+      <path d="M82 184C149 182 203 192 238 214H82Z"/>
+    </g>
+  </g>
+
+  <!-- Ember at the book spine. -->
+  <path d="M256 180L274 207L256 234L238 207Z" fill="#D97757"/>
+
+  <!-- Mirrored anvils; their inner edges form a fountain-pen nib. -->
+  <g fill="#F5E6D3">
+    <path d="M69 230H238C236 255 226 284 210 312C206 319 206 326 211 333L226 357C233 367 236 384 236 416H122L127 380C155 374 174 354 174 328C174 294 151 276 113 265C87 258 72 247 69 230Z"/>
+    <path d="M69 230H238C236 255 226 284 210 312C206 319 206 326 211 333L226 357C233 367 236 384 236 416H122L127 380C155 374 174 354 174 328C174 294 151 276 113 265C87 258 72 247 69 230Z" transform="translate(512 0) scale(-1 1)"/>
+  </g>
+
+  <!-- Nib slit and breather hole. -->
+  <path d="M256 250V410" stroke="#F5E6D3" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="256" cy="324" r="12" fill="#F5E6D3"/>
 </svg>

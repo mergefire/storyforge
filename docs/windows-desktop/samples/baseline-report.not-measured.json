@@ -1,0 +1,534 @@
+{
+  "schemaVersion": "1.0.0",
+  "protocolVersion": "d0.4-v2",
+  "reportId": "sample-not-measured",
+  "reportKind": "STATIC_ONLY",
+  "generatedAt": "2026-07-14T00:00:00.000Z",
+  "source": {
+    "appVersion": "3.7.5",
+    "sourceCommit": "UNRESOLVED"
+  },
+  "mode": "not-launched",
+  "environment": {
+    "captureStatus": "PARTIAL_STATIC",
+    "factsPath": "environment.json",
+    "unresolvedFields": [
+      "browserRuntimeConfiguration",
+      "displayConfiguration",
+      "fixtureArtifacts",
+      "physicalPowerState",
+      "sourceCommit",
+      "videoFixture"
+    ]
+  },
+  "fixtures": {
+    "specVersion": "d0.4-fixtures-v1",
+    "manifestPath": "fixture-manifest.json",
+    "registryTableCount": 42,
+    "registryFingerprint": "03dc86bbfb573265eb21db1f6a2e24ad6cf66bf2851702b34ba6fe742410e392",
+    "states": [
+      {
+        "id": "empty-v1",
+        "required": true,
+        "artifactStatus": "GENERATED_VALID",
+          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+      },
+      {
+        "id": "small-v1",
+        "required": true,
+        "artifactStatus": "GENERATED_VALID",
+          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+      },
+      {
+        "id": "large-synthetic-v1",
+        "required": true,
+          "artifactStatus": "GENERATED_VALID",
+          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+      },
+      {
+        "id": "blob-ladder-v1",
+        "required": true,
+          "artifactStatus": "GENERATED_VALID",
+          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+      },
+      {
+        "id": "legacy-matrix-v1",
+        "required": true,
+          "artifactStatus": "GENERATED_VALID",
+          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+      },
+      {
+        "id": "real-anonymized-v1",
+        "required": false,
+        "artifactStatus": "NOT_AVAILABLE",
+        "manifestSha256": null
+      }
+    ]
+  },
+  "functional": {
+    "required": true,
+    "baselineSource": "docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md",
+    "futureManifest": "docs/windows-desktop/feature-parity-baseline.json",
+    "status": "NOT_MEASURED",
+    "reasonCode": "D0_5_ACTION_BASELINE_NOT_FROZEN_AND_WEB_REFERENCE_NOT_EXECUTED",
+    "verdict": "NOT_EVALUATED",
+    "aggregateRowCount": null,
+    "actionCount": null,
+    "evidence": []
+  },
+  "comparison": {
+    "status": "INCOMPLETE",
+    "reasonCode": "WEB_REFERENCE_REPORT_NOT_COLLECTED",
+    "referenceModes": [],
+    "referenceReportIds": [],
+    "evidence": []
+  },
+  "performance": [
+    {
+      "id": "PERF-START-COLD",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "p95 <= 3000 ms",
+        "desktop p95 <= 120% of web-tab p95"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-START-WARM",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "desktop p95 <= 120% of web-tab p95"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-OPEN-LARGE",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "desktop p95 <= 120% of web-tab p95"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-EDITOR-TYPE",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "input-to-paint p95 < 100 ms",
+        "normalized content hash unchanged"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-SAVE",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "100% persisted content hash match after restart"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-AI-STREAM",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "cancel p95 <= 250 ms",
+        "first chunk p95 <= 120% of web-tab p95",
+        "mock output hash exact"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-MEM-30",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "bytes",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "final 15 minute private-bytes slope <= 2 MiB/min",
+        "idle recovery within max(15%, 128 MiB) of pre-workload baseline"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-VIDEO-IDLE",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "percent",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "reference dropped-frame baseline only; no absolute pass without media fixture"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-VIDEO-EDIT",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "percentage-points",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "dropped-frame increase <= 1.0 percentage point versus video idle"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-VIDEO-AI",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "percentage-points",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "dropped-frame increase <= 1.0 percentage point versus video idle"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-BLOB-10M",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "FIXTURE_NOT_GENERATED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "no OOM or crash",
+        "byte SHA-256 exact after roundtrip"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-BLOB-100M",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "FIXTURE_NOT_GENERATED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "no OOM or crash",
+        "byte SHA-256 exact after roundtrip"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-BLOB-500M",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "FIXTURE_NOT_GENERATED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "no OOM or crash",
+        "byte SHA-256 exact after roundtrip"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-BLOB-1G",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "FIXTURE_NOT_GENERATED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "no OOM or crash",
+        "byte SHA-256 exact after roundtrip"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    },
+    {
+      "id": "PERF-CANVAS",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_BROWSER_OR_APPLICATION_LAUNCHED",
+      "verdict": "NOT_EVALUATED",
+      "unit": "ms",
+      "sampleCount": 0,
+      "aggregates": {
+        "min": null,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "max": null,
+        "mean": null,
+        "standardDeviation": null
+      },
+      "thresholds": [
+        "no black frame, lost input or state corruption",
+        "60 Hz frame-time p95 <= 16.7 ms"
+      ],
+      "rawSamplesPath": null,
+      "evidence": []
+    }
+  ],
+  "security": [
+    {
+      "id": "SEC-DATA-LOSS",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_DYNAMIC_SECURITY_EXECUTION",
+      "verdict": "NOT_EVALUATED",
+      "observations": [],
+      "evidence": []
+    },
+    {
+      "id": "SEC-XSS-IPC",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_DYNAMIC_SECURITY_EXECUTION",
+      "verdict": "NOT_EVALUATED",
+      "observations": [],
+      "evidence": []
+    },
+    {
+      "id": "SEC-SECRET",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_DYNAMIC_SECURITY_EXECUTION",
+      "verdict": "NOT_EVALUATED",
+      "observations": [],
+      "evidence": []
+    },
+    {
+      "id": "SEC-CONTENT",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_DYNAMIC_SECURITY_EXECUTION",
+      "verdict": "NOT_EVALUATED",
+      "observations": [],
+      "evidence": []
+    },
+    {
+      "id": "SEC-URL",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_DYNAMIC_SECURITY_EXECUTION",
+      "verdict": "NOT_EVALUATED",
+      "observations": [],
+      "evidence": []
+    },
+    {
+      "id": "SEC-PATH",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_DYNAMIC_SECURITY_EXECUTION",
+      "verdict": "NOT_EVALUATED",
+      "observations": [],
+      "evidence": []
+    },
+    {
+      "id": "SEC-UPDATE",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_DYNAMIC_SECURITY_EXECUTION",
+      "verdict": "NOT_EVALUATED",
+      "observations": [],
+      "evidence": []
+    },
+    {
+      "id": "SEC-UDF",
+      "required": true,
+      "status": "NOT_MEASURED",
+      "reasonCode": "NO_DYNAMIC_SECURITY_EXECUTION",
+      "verdict": "NOT_EVALUATED",
+      "observations": [],
+      "evidence": []
+    }
+  ],
+  "overall": {
+    "eligibility": "NOT_ELIGIBLE",
+    "reasonCodes": [
+      "FIXTURES_NOT_GENERATED",
+      "FUNCTIONAL_BASELINE_NOT_MEASURED",
+      "REFERENCE_ENVIRONMENT_INCOMPLETE",
+      "REQUIRED_SCENARIOS_NOT_MEASURED"
+    ],
+    "healthScore": null,
+    "requiredScenarioCounts": {
+      "total": 24,
+      "measured": 0,
+      "passed": 0,
+      "failed": 0,
+      "notEvaluated": 24
+    }
+  }
+}

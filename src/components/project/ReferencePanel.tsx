@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Trash2, Library, BookMarked, Palette, Upload,
   Globe, Users2, ListTree, ChevronDown, ChevronRight,
@@ -19,6 +19,7 @@ import {
 } from '../../lib/reference-analysis/pipeline'
 import AnalysisReportViewer from './AnalysisReportViewer'
 import { useDialog } from '../shared/Dialog'
+import { decodeRuntimeFileText, openRuntimeFile } from '../../lib/runtime-file'
 
 // ── 常量 ─────────────────────────────────────────────────────────
 
@@ -466,7 +467,6 @@ function DeepAnalysisTab({
   const [statusMsg, setStatusMsg] = useState('')
   const [activityLog, setActivityLog] = useState<{ level: string; msg: string }[]>([])
   const [running, setRunning] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const status = reference.analysisStatus || 'none'
 
@@ -498,46 +498,49 @@ function DeepAnalysisTab({
   }, [reference.id, getChunkAnalyses])
 
   // 上传文件并开始分析
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !reference.id) return
+  const handleFileUpload = async () => {
+    if (!reference.id) return
+    try {
+      const opened = await openRuntimeFile('reference-document')
+      if (opened.status === 'cancelled') return
 
-    const text = await file.text()
-    if (!text.trim()) {
-      setStatusMsg('文件内容为空')
-      return
+      // Preserve the historical TXT/MD/EPUB behavior: all three are UTF-8 decoded text.
+      const text = decodeRuntimeFileText(opened.value)
+      if (!text.trim()) {
+        setStatusMsg('文件内容为空')
+        return
+      }
+
+      // 规划分块
+      const plan = planRefChunks(text, depth)
+
+      // 更新 Reference 元数据
+      onUpdate({
+        totalChars: plan.totalChars,
+        fileHash: plan.fileHash,
+        analysisDepth: depth,
+        analysisStatus: 'pending',
+        analysisProgress: 0,
+        analysisError: undefined,
+      })
+
+      // 如果有旧分析结果，清理
+      await clearChunkAnalyses(reference.id)
+      setChunks([])
+
+      // 注册分块到内存
+      registerRefChunks(reference.id, plan.chunks)
+
+      setStatusMsg(`已加载「${opened.value.name}」，共 ${plan.totalChars.toLocaleString()} 字，分 ${plan.chunks.length} 块`)
+      setActivityLog([])
+
+      // 启动分析
+      setRunning(true)
+      setProgress(0)
+      runRefAnalysis(reference.id)
+    } catch (error) {
+      setStatusMsg(`读取文件失败：${error instanceof Error ? error.message : String(error)}`)
     }
-
-    // 规划分块
-    const plan = planRefChunks(text, depth)
-
-    // 更新 Reference 元数据
-    onUpdate({
-      totalChars: plan.totalChars,
-      fileHash: plan.fileHash,
-      analysisDepth: depth,
-      analysisStatus: 'pending',
-      analysisProgress: 0,
-      analysisError: undefined,
-    })
-
-    // 如果有旧分析结果，清理
-    await clearChunkAnalyses(reference.id)
-    setChunks([])
-
-    // 注册分块到内存
-    registerRefChunks(reference.id, plan.chunks)
-
-    setStatusMsg(`已加载「${file.name}」，共 ${plan.totalChars.toLocaleString()} 字，分 ${plan.chunks.length} 块`)
-    setActivityLog([])
-
-    // 启动分析
-    setRunning(true)
-    setProgress(0)
-    runRefAnalysis(reference.id)
-
-    // 清空 file input
-    e.target.value = ''
   }
 
   const handleCancel = () => {
@@ -548,7 +551,7 @@ function DeepAnalysisTab({
   const handleReanalyze = async () => {
     if (!reference.id) return
     setStatusMsg('请上传文件以重新分析')
-    fileInputRef.current?.click()
+    await handleFileUpload()
   }
 
   const isAnalyzing = status === 'analyzing' || running
@@ -591,15 +594,8 @@ function DeepAnalysisTab({
             </select>
           </div>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".txt,.md,.epub"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => void handleFileUpload()}
             className="flex items-center gap-1.5 px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent-hover transition-colors"
           >
             <UploadCloud className="w-4 h-4" />

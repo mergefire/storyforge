@@ -17,6 +17,105 @@ import { migrateStateCardsToTemporalFactCandidates } from '../migrations/state-c
 import type { TableSpec } from '../registry/types'
 import type { ProjectExportData } from './json-export'
 import { normalizeCharacterAxes } from '../character/character-axes'
+import { usesPortableNestedReferences } from './export-format'
+import {
+  portableRefTargetTable,
+  remapPortableReferenceValue,
+} from './registry-ref-remap'
+import type { PortableReferenceRef } from './registry-ref-remap'
+
+interface PendingPortableRefRemap {
+  spec: TableSpec
+  newId: number
+  refs: PortableReferenceRef[]
+  stashed: Record<string, unknown>
+}
+
+function portableRefsFor(spec: TableSpec): PortableReferenceRef[] {
+  return (spec.refs ?? []).filter((ref): ref is PortableReferenceRef =>
+    (ref.kind === 'array' || ref.kind === 'json') && ref.portable !== undefined)
+}
+
+function isImportRow(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isNonNegativeSafeInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) >= 0
+}
+
+/**
+ * Validate every transport-level table ID and foreign export index before the
+ * transaction writes its first row. A string `"0"` and number `0` are distinct
+ * Map keys; accepting both can otherwise turn a present optional reference into
+ * null without failing the import.
+ *
+ * Legacy v1-v3 character relations may use -1 for an orphan endpoint declared
+ * with onUnmapped:'drop'. Preserve that exact sentinel; all other values must be
+ * non-negative safe integers in the target table's exported index domain.
+ */
+function validateImportTransport(
+  data: ProjectExportData,
+  specs: readonly TableSpec[],
+): Map<string, any[]> {
+  const rowsByTable = new Map<string, any[]>()
+  const indexDomains = new Map<string, Set<number>>()
+
+  for (const spec of specs) {
+    const raw = (data as unknown as Record<string, unknown>)[spec.name]
+    if (raw != null && !Array.isArray(raw)) {
+      throw new Error(`[deriveImport] ${spec.name} must be an array`)
+    }
+    const rows = (raw ?? []) as unknown[]
+    const domain = new Set<number>()
+    rows.forEach((row, rowIndex) => {
+      if (!isImportRow(row)) {
+        throw new Error(`[deriveImport] ${spec.name}[${rowIndex}] must be an object`)
+      }
+      if (spec.exportIdField) {
+        const exportId = row._exportId
+        if (!isNonNegativeSafeInteger(exportId)) {
+          throw new Error(`[deriveImport] ${spec.name}[${rowIndex}]._exportId must be a non-negative safe integer`)
+        }
+        if (domain.has(exportId)) {
+          throw new Error(`[deriveImport] ${spec.name} contains duplicate _exportId ${exportId}`)
+        }
+        domain.add(exportId)
+      } else {
+        domain.add(rowIndex)
+      }
+    })
+    rowsByTable.set(spec.name, rows as any[])
+    indexDomains.set(spec.name, domain)
+  }
+
+  for (const spec of specs) {
+    const rows = rowsByTable.get(spec.name) ?? []
+    rows.forEach((row, rowIndex) => {
+      for (const remap of spec.exportRemap ?? []) {
+        const exportIndex = row[remap.exportAs]
+        if (exportIndex == null) continue
+        if (remap.onUnmapped === 'drop' && exportIndex === -1) continue
+        if (!isNonNegativeSafeInteger(exportIndex)) {
+          throw new Error(
+            `[deriveImport] ${spec.name}[${rowIndex}].${remap.exportAs} must be a non-negative safe integer`,
+          )
+        }
+        const targetDomain = indexDomains.get(remap.remapVia)
+        if (!targetDomain?.has(exportIndex) && remap.onUnmapped !== 'drop') {
+          if (remap.onUnmapped === 'require') {
+            throw new Error(`[deriveImport] 缺失必填外键映射:${spec.name}.${remap.field}=${exportIndex}`)
+          }
+          throw new Error(
+            `[deriveImport] ${spec.name}[${rowIndex}].${remap.exportAs} references missing export index ${exportIndex}`,
+          )
+        }
+      }
+    })
+  }
+
+  return rowsByTable
+}
 
 /** 表级拓扑排序:被 remapVia 指向的表必须先导入(selfTree 不算表间依赖) */
 function deriveImportOrder(specs: TableSpec[]): TableSpec[] {
@@ -39,23 +138,64 @@ function deriveImportOrder(specs: TableSpec[]): TableSpec[] {
   return order
 }
 
-/** 树表行级拓扑排序:_parentExportId 为空或父已就位的行优先,保证 parent 先于 child 落库 */
-function topoSortTreeRows(rows: any[]): any[] {
-  const sorted: any[] = []
-  const placed = new Set<number>()
-  let guard = 0
-  while (sorted.length < rows.length) {
-    if (guard++ > rows.length + 2) {
-      for (const r of rows) if (!placed.has(r._exportId)) sorted.push(r) // 防环兜底
-      break
+/**
+ * 树表行级拓扑排序：父引用为空或父已就位的行优先，保证 parent 先于 child 落库。
+ *
+ * 不允许环、重复/缺失导出 ID 或悬空父引用。旧实现遇环会把剩余行按原顺序兜底，
+ * 随后的 selfTree remap 会把尚未导入的父引用静默置 null；这会让“导入成功”掩盖数据损坏。
+ */
+function topoSortTreeRows(spec: TableSpec, rows: any[]): any[] {
+  if (!spec.tree || rows.length === 0) return rows
+
+  const parentRemaps = (spec.exportRemap ?? []).filter(
+    rm => rm.selfTree && rm.field === spec.tree!.parentField,
+  )
+  if (parentRemaps.length !== 1 || !spec.exportIdField) {
+    throw new Error(`[deriveImport] ${spec.name} tree registry metadata is invalid`)
+  }
+  const parentExportField = parentRemaps[0].exportAs
+
+  const rowIds = new Set<unknown>()
+  for (const row of rows) {
+    const exportId = row._exportId
+    if (exportId == null) {
+      throw new Error(`[deriveImport] ${spec.name} tree row is missing _exportId`)
     }
-    for (const r of rows) {
-      if (placed.has(r._exportId)) continue
-      if (r._parentExportId == null || placed.has(r._parentExportId)) {
-        sorted.push(r)
-        placed.add(r._exportId)
+    if (rowIds.has(exportId)) {
+      throw new Error(`[deriveImport] ${spec.name} tree contains duplicate _exportId ${String(exportId)}`)
+    }
+    rowIds.add(exportId)
+  }
+
+  const sorted: any[] = []
+  const placed = new Set<unknown>()
+  let remaining = rows.slice()
+  while (remaining.length > 0) {
+    const ready: any[] = []
+    const blocked: any[] = []
+    for (const row of remaining) {
+      const parentExportId = row[parentExportField]
+      if (parentExportId == null || placed.has(parentExportId)) {
+        ready.push(row)
+      } else {
+        if (!rowIds.has(parentExportId)) {
+          throw new Error(
+            `[deriveImport] ${spec.name} tree row ${String(row._exportId)} has missing parent ${String(parentExportId)}`,
+          )
+        }
+        blocked.push(row)
       }
     }
+    if (ready.length === 0) {
+      throw new Error(
+        `[deriveImport] ${spec.name} tree contains a parent cycle: ${blocked.map(row => String(row._exportId)).join(',')}`,
+      )
+    }
+    for (const row of ready) {
+      sorted.push(row)
+      placed.add(row._exportId)
+    }
+    remaining = blocked
   }
   return sorted
 }
@@ -84,9 +224,11 @@ function patchSelfIdPaths(obj: Record<string, any>, paths: string[], newId: numb
  */
 export async function deriveImportProjectJSON(data: ProjectExportData): Promise<number> {
   if (!data.version || !data.project) throw new Error('无效的导出文件格式')
+  const remapPortableRefs = usesPortableNestedReferences(data)
   const now = Date.now()
   const specs = PROJECT_TABLES.filter(s => s.exportable && s.name !== 'projects')
   const order = deriveImportOrder(specs)
+  const rowsByTable = validateImportTransport(data, specs)
 
   return await db.transaction('rw', transactionTablesFor('importProject'), async () => {
     const newProjectId = await db.projects.add({
@@ -104,10 +246,11 @@ export async function deriveImportProjectJSON(data: ProjectExportData): Promise<
     }
 
     const newIdMaps = new Map<string, Map<number, number>>()
+    const pendingPortableRefRemaps: PendingPortableRefRemap[] = []
 
     for (const spec of order) {
-      const rawRows: any[] = (data as any)[spec.name] ?? []
-      const rows = spec.tree ? topoSortTreeRows(rawRows) : rawRows
+      const rawRows = rowsByTable.get(spec.name) ?? []
+      const rows = spec.tree ? topoSortTreeRows(spec, rawRows) : rawRows
       const newIdMap = new Map<number, number>()
       const pendingRefRemap: Array<{ newId: number; stashed: Record<string, any> }> = []
 
@@ -146,6 +289,14 @@ export async function deriveImportProjectJSON(data: ProjectExportData): Promise<
           Object.assign(obj, normalizeCharacterAxes(obj))
         }
 
+        const portableRefs = remapPortableRefs ? portableRefsFor(spec) : []
+        const portableStashed: Record<string, unknown> = {}
+        for (const ref of portableRefs) {
+          if (!Object.prototype.hasOwnProperty.call(obj, ref.field)) continue
+          portableStashed[ref.field] = obj[ref.field]
+          delete obj[ref.field]
+        }
+
         // JSON 引用字段(portals)先剥离,待全表映射建好后两阶段回填
         let stashed: Record<string, any> | null = null
         if ((spec.exportRefRemap ?? []).length > 0) {
@@ -163,6 +314,14 @@ export async function deriveImportProjectJSON(data: ProjectExportData): Promise<
         const key = spec.exportIdField ? exportId : exportIndex
         if (key != null) newIdMap.set(key, newId)
         if (stashed) pendingRefRemap.push({ newId, stashed })
+        if (Object.keys(portableStashed).length > 0) {
+          pendingPortableRefRemaps.push({
+            spec,
+            newId,
+            refs: portableRefs,
+            stashed: portableStashed,
+          })
+        }
       }
 
       // 两阶段:JSON 引用重映射(portals 自引用,需本表 newIdMap 已全)
@@ -177,6 +336,26 @@ export async function deriveImportProjectJSON(data: ProjectExportData): Promise<
       }
 
       newIdMaps.set(spec.name, newIdMap)
+    }
+
+    // v4 portable nested refs use export indexes. Resolve only after every table map exists,
+    // so forward references, self references and cycles never affect table import order.
+    for (const pending of pendingPortableRefRemaps) {
+      const patch: Record<string, unknown> = {}
+      for (const ref of pending.refs) {
+        if (!Object.prototype.hasOwnProperty.call(pending.stashed, ref.field)) continue
+        const targetTable = portableRefTargetTable(ref)
+        const targetMap = newIdMaps.get(targetTable)
+        patch[ref.field] = remapPortableReferenceValue(
+          pending.stashed[ref.field],
+          ref,
+          (exportIndex: number) => targetMap?.get(exportIndex),
+          { operation: 'import', table: pending.spec.name, row: pending.newId },
+        )
+      }
+      if (Object.keys(patch).length > 0) {
+        await (db as any)[pending.spec.name].update(pending.newId, patch)
+      }
     }
 
     // NS-4：旧备份可能只有 stateCards、没有 temporalFacts。导入后用新项目内的

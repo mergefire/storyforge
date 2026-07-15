@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Play, Trash2, Copy, ArrowRight,
   Upload, Download, Plus, Edit3,
@@ -10,6 +10,7 @@ import WorkflowEditor from './WorkflowEditor'
 import WorkflowRunner from './WorkflowRunner'
 import { useDialog } from '../../shared/Dialog'
 import { useToast } from '../../shared/Toast'
+import { decodeRuntimeFileText, openRuntimeFile, saveRuntimeText } from '../../../lib/runtime-file'
 
 interface Props {
   project?: Project
@@ -28,28 +29,27 @@ export default function PromptWorkflowsPanel({ project }: Props = {}) {
 
   const [runningId, setRunningId] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { initWorkflows() }, [initWorkflows])
 
-  const handleExportAll = () => {
-    const blob = new Blob([JSON.stringify(workflows, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `storyforge-workflows-${new Date().toISOString().slice(0, 10)}.json`
-    document.body.appendChild(a); a.click(); document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+  const handleExportAll = async () => {
+    try {
+      const outcome = await saveRuntimeText(
+        'prompt-workflow-json',
+        `storyforge-workflows-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify(workflows, null, 2),
+      )
+      if (outcome.status === 'completed') toast.success('工作流已导出')
+    } catch (err) {
+      toast.error(`导出失败：${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
-  const handleImportClick = () => fileInputRef.current?.click()
-
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleImportFile = async () => {
     try {
-      const text = await file.text()
-      const data = JSON.parse(text)
+      const opened = await openRuntimeFile('prompt-workflow-json')
+      if (opened.status === 'cancelled') return
+      const data = JSON.parse(decodeRuntimeFileText(opened.value))
       const items: unknown[] = Array.isArray(data) ? data : [data]
       const now = Date.now()
       let count = 0
@@ -73,8 +73,6 @@ export default function PromptWorkflowsPanel({ project }: Props = {}) {
       toast.success(`成功导入 ${count} 个工作流`)
     } catch (err) {
       toast.error(`导入失败：${err instanceof Error ? err.message : String(err)}`)
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -137,24 +135,17 @@ export default function PromptWorkflowsPanel({ project }: Props = {}) {
             <Plus className="w-3.5 h-3.5" /> 新建
           </button>
           <button
-            onClick={handleImportClick}
+            onClick={() => void handleImportFile()}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-hover text-text-primary text-xs rounded hover:bg-bg-elevated"
           >
             <Upload className="w-3.5 h-3.5" /> 导入
           </button>
           <button
-            onClick={handleExportAll}
+            onClick={() => void handleExportAll()}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-hover text-text-primary text-xs rounded hover:bg-bg-elevated"
           >
             <Download className="w-3.5 h-3.5" /> 导出全部
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={handleImportFile}
-          />
         </div>
       </div>
 

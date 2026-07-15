@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Upload, Download, Layers, FileText, Workflow } from 'lucide-react'
 import { usePromptStore } from '../../../stores/prompt'
 import type { PromptTemplate } from '../../../lib/types/prompt'
@@ -8,6 +8,7 @@ import PromptTemplateList from './PromptTemplateList'
 import PromptTemplateEditor from './PromptTemplateEditor'
 import PromptWorkflowsPanel from './PromptWorkflowsPanel'
 import { useToast } from '../../shared/Toast'
+import { decodeRuntimeFileText, openRuntimeFile, saveRuntimeText } from '../../../lib/runtime-file'
 
 type ScopeFilter = 'all' | 'system' | 'user'
 
@@ -29,7 +30,6 @@ export default function PromptManagerPanel({ project }: Props = {}) {
     try { return localStorage.getItem('sf-genre-pack') || 'general' } catch { return 'general' }
   })
   const [tab, setTab] = useState<'templates' | 'workflows'>('templates')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 持久化题材包选择（切换时写入 + 挂载时从上面的 useState 初始化器读取）
   useEffect(() => {
@@ -89,20 +89,25 @@ export default function PromptManagerPanel({ project }: Props = {}) {
   }
 
   /** 导出全部模板为 JSON */
-  const handleExportAll = () => {
-    const blob = new Blob([JSON.stringify(templates, null, 2)], { type: 'application/json' })
-    triggerDownload(blob, `storyforge-prompts-${new Date().toISOString().slice(0, 10)}.json`)
+  const handleExportAll = async () => {
+    try {
+      const outcome = await saveRuntimeText(
+        'prompt-library-json',
+        `storyforge-prompts-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify(templates, null, 2),
+      )
+      if (outcome.status === 'completed') toast.success('提示词模板已导出')
+    } catch (err) {
+      toast.error(`导出失败：${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   /** 导入 JSON 文件 */
-  const handleImportClick = () => fileInputRef.current?.click()
-
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleImportFile = async () => {
     try {
-      const text = await file.text()
-      const data = JSON.parse(text)
+      const opened = await openRuntimeFile('prompt-library-json')
+      if (opened.status === 'cancelled') return
+      const data = JSON.parse(decodeRuntimeFileText(opened.value))
       const items: unknown[] = Array.isArray(data) ? data : [data]
       let count = 0
       const now = Date.now()
@@ -124,8 +129,6 @@ export default function PromptManagerPanel({ project }: Props = {}) {
       toast.success(`成功导入 ${count} 条模板`)
     } catch (err) {
       toast.error(`导入失败：${err instanceof Error ? err.message : String(err)}`)
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
@@ -171,10 +174,8 @@ export default function PromptManagerPanel({ project }: Props = {}) {
           genrePack={genrePack}
           handleGenrePackChange={handleGenrePackChange}
           handleNew={handleNew}
-          handleImportClick={handleImportClick}
+          handleImportClick={() => void handleImportFile()}
           handleExportAll={handleExportAll}
-          handleImportFile={handleImportFile}
-          fileInputRef={fileInputRef}
           reload={reload}
         />
       )}
@@ -194,16 +195,14 @@ interface TemplatesViewProps {
   handleGenrePackChange: (g: string) => void
   handleNew: () => void
   handleImportClick: () => void
-  handleExportAll: () => void
-  handleImportFile: (e: React.ChangeEvent<HTMLInputElement>) => void
-  fileInputRef: React.RefObject<HTMLInputElement | null>
+  handleExportAll: () => Promise<void>
   reload: () => Promise<void>
 }
 
 function PromptTemplatesView({
   filtered, selected, selectedId, setSelectedId, scopeFilter, setScopeFilter,
   genrePack, handleGenrePackChange, handleNew, handleImportClick,
-  handleExportAll, handleImportFile, fileInputRef, reload,
+  handleExportAll, reload,
 }: TemplatesViewProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -258,18 +257,11 @@ function PromptTemplatesView({
             <Upload className="w-3.5 h-3.5" /> 导入
           </button>
           <button
-            onClick={handleExportAll}
+            onClick={() => void handleExportAll()}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-hover text-text-primary text-sm rounded hover:bg-bg-elevated"
           >
             <Download className="w-3.5 h-3.5" /> 导出全部
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={handleImportFile}
-          />
         </div>
       </div>
 
@@ -314,15 +306,4 @@ function validateTemplate(raw: unknown): Omit<PromptTemplate, 'id' | 'createdAt'
     modelOverride: typeof r.modelOverride === 'object' && r.modelOverride !== null ? r.modelOverride as PromptTemplate['modelOverride'] : undefined,
     isActive: false,
   }
-}
-
-function triggerDownload(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
 }

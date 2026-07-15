@@ -1,0 +1,244 @@
+{
+  "fixtureSpecVersion": "d0.4-fixtures-v1",
+  "protocolVersion": "d0.4-v2",
+  "registryCoverage": {
+    "source": "src/lib/registry/project-tables.ts#PROJECT_TABLES",
+    "rule": "At generation time, derive every current project table and its owner/export policy from PROJECT_TABLES. Do not copy a table-name list into this specification.",
+    "sourceFingerprintRule": "SHA-256 of UTF-8 registry source after CRLF/CR is canonicalized to LF, so identical commits have identical fingerprints across worktrees.",
+    "required": true
+  },
+  "projectExportFormat": {
+    "currentVersion": 4,
+    "nestedRefEncoding": "export-index-v1",
+    "portableNestedReferenceRule": "Only version 4 with the exact marker encodes nested references as export indexes.",
+    "legacyCompatibility": "Versions 1-3 remain importable. Their nested numbers are historical raw database IDs and must be preserved without guessing or index reinterpretation."
+  },
+  "determinism": {
+    "seed": "storyforge-windows-d0.4-v1",
+    "clock": "2026-01-01T00:00:00.000Z",
+    "timezone": "UTC",
+    "textEncoding": "UTF-8",
+    "logicalIdRule": "SHA-256 of the UTF-8 JSON tuple [seed, fixtureId, entityKind, zero-padded ordinal], encoded as a stable lowercase hexadecimal identifier. Tuple encoding preserves coordinate boundaries.",
+    "sourcePrimaryKeyRule": "Use the first 13 hexadecimal characters of the logical ID as a positive JavaScript-safe integer. Imported target keys must differ so remap assertions cannot pass accidentally.",
+    "blobRule": "Generate and hash in 1048576-byte chunks. The complete 1 GiB artifact is explicit-command only, never allocated as one Buffer/Blob and never inserted into fake-indexeddb.",
+    "canonicalJson": {
+      "objectKeys": "LEXICOGRAPHIC",
+      "arrayOrder": "PRESERVE",
+      "singleStateExcludedPaths": [
+        "$.exportedAt"
+      ],
+      "roundtripExcludedPaths": [
+        "$.exportedAt",
+        "$.project.createdAt",
+        "$.project.updatedAt",
+        "$.<exportableTable>[*].createdAt",
+        "$.<exportableTable>[*].updatedAt"
+      ],
+      "roundtripProjectNameRule": "Require targetName === sourceName + '（导入）', then compare the target projection with the exact source name. Never strip a suffix from one state in isolation.",
+      "blobPolicy": "FAIL_CLOSED_HASH_BYTES_SEPARATELY"
+    }
+  },
+  "fixtures": [
+    {
+      "id": "empty-v1",
+      "required": true,
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/empty-v1.json",
+      "artifactBytes": 1244,
+      "artifactSha256": "dcdd05d02618562e54baa7fa3874634f3008299f0dd842442c8728af23b034be",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
+      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "purpose": "First launch, empty database, empty project list and import boundary.",
+      "expected": {
+        "projects": 0,
+        "worldGroups": 0,
+        "worldviews": 0,
+        "worldNodes": 0,
+        "chapters": 0
+      }
+    },
+    {
+      "id": "small-v1",
+      "required": true,
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/small-v1.storyforge.json",
+      "artifactBytes": 39843,
+      "artifactSha256": "92f33232ffc977e06ee59d3f92d21f1ed341584f2f5a83235d5ae3d970a5249d",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
+      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "purpose": "Representative daily editing, save, restart, export and import.",
+      "expected": {
+        "projects": 1,
+        "worldGroups": 2,
+        "worldviews": 2,
+        "worldNodes": 2,
+        "volumes": 1,
+        "chapters": 10,
+        "wordsPerChapter": 2000,
+        "registryCoverage": "ALL_APPLICABLE_PROJECT_TABLES",
+        "sourceAndImportedPrimaryKeysMustDiffer": true
+      },
+      "currentValidation": {
+        "status": "PASS_ARTIFACT_GENERATED_VALIDATED",
+        "evidence": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+        "referenceRemapStatus": "PASS",
+        "referenceRemapEvidence": [
+          "tests/regression/R-export-nested-reference-remap.test.ts",
+          "tests/desktop-contract/D0.4-fixtures.test.ts"
+        ],
+        "verifiedPaths": [
+          "detailedOutlines[].appearingCharacterIds[]",
+          "detailedOutlines[].scenes[].characterIds[]",
+          "detailedOutlines[].foreshadowIds[]",
+          "creativeRules[].citedReferenceIds[]",
+          "codexEntries[].refs.*[]"
+        ],
+        "treeExportOrderStatus": "PASS",
+        "roundtripHashStatus": "PASS",
+        "roundtripComparatorVersion": "d04-roundtrip-v1",
+        "roundtripHashEvidence": [
+          "tests/desktop-contract/D0.4-fixtures.test.ts",
+          "tests/regression/R-export-tree-order-stability.test.ts"
+        ],
+        "roundtripHashRule": "Both sides cross the real JSON stringify/parse artifact boundary before comparison. Tree tables are exported in stable parent-before-child order. The canonicalizer validates the complete input graph before excluding only the declared runtime paths, requires target project name to equal source name plus exactly one '（导入）' suffix, replaces only that verified target projection, preserves every other field and array position, and fails closed on Blob or unsupported JSON values.",
+        "rule": "The committed small-v1 v4 export crosses the real JSON artifact boundary, imports with fresh primary keys, re-exports with an equal normalized business hash, and is byte-for-byte rebuildable through scripts/windows-desktop-fixtures.mjs."
+      }
+    },
+    {
+      "id": "large-synthetic-v1",
+      "required": true,
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/large-synthetic-v1.storyforge.json",
+      "artifactBytes": 9256819,
+      "artifactSha256": "212e37e5ebcf939e00845d74384c1d2fde80b9bcd033dab355317e8951382141",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
+      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "purpose": "Deterministic worst-normal project for opening, editor, graph/canvas and 30-minute memory workloads.",
+      "expected": {
+        "projects": 1,
+        "worldGroups": 1,
+        "worldviews": 1,
+        "worldNodes": 128,
+        "volumes": 10,
+        "chaptersPerVolume": 100,
+        "chapters": 1000,
+        "wordsPerChapter": 5000,
+        "registryCoverage": "ALL_APPLICABLE_PROJECT_TABLES",
+        "crossReferences": "DETERMINISTIC_DENSE_BUT_VALID"
+      },
+      "currentValidation": {
+        "status": "PASS_ARTIFACT_GENERATED_VALIDATED",
+        "editorCharacters": 5000000,
+        "characterRelations": 257,
+        "temporalFacts": 2000,
+        "roundtripHashStatus": "PASS",
+        "registeredReferenceIntegrity": "PASS"
+      }
+    },
+    {
+      "id": "blob-ladder-v1",
+      "required": true,
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/blob-ladder-v1.json",
+      "artifactBytes": 1077,
+      "artifactSha256": "b8fa2ae11a5db9c1d7a4e9874be27ec02775d7876904138a977d88f43a4286ee",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
+      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "purpose": "Binary persistence, memory pressure and byte-exact import/export.",
+      "expected": {
+        "sizesBytes": [
+          10485760,
+          104857600,
+          524288000,
+          1073741824
+        ],
+        "sha256BySize": {
+          "10485760": "d67229b9fb611bafc5d5d76c1876eb2dcf97d8ff0ecd1c3e1fa4fc20daf363a6",
+          "104857600": "67a626e4d3e7910d7cdbaa586afc1b80451cef362bfc4d3d544f3f70abbc0f74",
+          "524288000": "42d2e4c3356043bb931c490556eb64ccd65f9d5497a7642902971643cdf16e9d",
+          "1073741824": "a8a8bc69a2efdbfe810cf0c7d7528dde07ca885f745662fab30085b7975e77dc"
+        },
+        "chunkBytes": 1048576,
+        "fullGenerationMode": "EXPLICIT_COMMAND_ONLY",
+        "ordinaryCi": false,
+        "fakeIndexedDbPersistence": false
+      }
+    },
+    {
+      "id": "legacy-matrix-v1",
+      "required": true,
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/legacy-matrix-v1.json",
+      "artifactBytes": 11320,
+      "artifactSha256": "5f59b9bbaab0553c37ab418d1f6265404f3c223e676513725d906b597fb211c0",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
+      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "purpose": "Upgrade and import compatibility across every schema version still declared by the current database implementation.",
+      "expected": {
+        "versionSource": "src/lib/db/schema.ts: every this.version(n) declaration",
+        "currentlyDetectedRange": {
+          "minimum": 1,
+          "maximum": 37
+        },
+        "artifactFormat": "REBUILDABLE_RECIPE_AND_ASSERTIONS",
+        "forbiddenArtifactFormat": "BROWSER_PROFILE_OR_LEVELDB_SNAPSHOT",
+        "artifactPerVersion": true,
+        "latestNormalizedHashMustMatch": true,
+        "latestNormalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57"
+      }
+    },
+    {
+      "id": "real-anonymized-v1",
+      "required": false,
+      "artifactStatus": "NOT_AVAILABLE",
+      "purpose": "Local-only representative real project for supplementary validation.",
+      "expected": {
+        "repositoryContent": "COUNTS_AND_HASHES_ONLY",
+        "containsUserText": false,
+        "containsSecrets": false
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "id": "ASSERT-REGISTRY-COVERAGE",
+      "required": true,
+      "rule": "Generated fixture manifest covers every applicable PROJECT_TABLES entry exactly once according to its declared ownership/export policy."
+    },
+    {
+      "id": "ASSERT-PRIMARY-KEYS",
+      "required": true,
+      "rule": "All primary keys are present and unique within their table."
+    },
+    {
+      "id": "ASSERT-REFERENCES",
+      "required": true,
+      "rule": "Every project/table relationship and cross-entity reference resolves to the expected owner."
+    },
+    {
+      "id": "ASSERT-NORMALIZED-HASH",
+      "required": true,
+      "rule": "Canonical JSON sorts object keys lexicographically, preserves array order, excludes declared runtime-only metadata, and has the recorded SHA-256. Exported table rows must already follow PROJECT_TABLES exportOrderBy metadata."
+    },
+    {
+      "id": "ASSERT-ROUNDTRIP",
+      "required": true,
+      "rule": "Export, clear, import and re-export produce the same canonical business-data SHA-256."
+    },
+    {
+      "id": "ASSERT-BLOB-HASH",
+      "required": true,
+      "rule": "Every Blob has the expected byte length and SHA-256 before and after persistence/export/import."
+    },
+    {
+      "id": "ASSERT-NO-PRIVATE-DATA",
+      "required": true,
+      "rule": "Committed fixtures contain no API key, credential, hostname, username, browser profile, absolute local path or real user prose."
+    }
+  ]
+}

@@ -3,3 +3,6 @@
 # git 检出与 GitHub「下载 ZIP」都会得到 CRLF，且防止编辑器/工具再把它写回 LF。
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+# D0.4 fixture hashes cover committed raw bytes; keep them stable on Windows.
+tests/fixtures/windows-desktop/** text eol=lf

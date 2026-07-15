@@ -1,91 +1,86 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import ErrorBoundary from './components/shared/ErrorBoundary'
 import { DialogProvider } from './components/shared/Dialog'
 import { ToastProvider } from './components/shared/Toast'
-import { usePromptStore } from './stores/prompt'
-import { useWorkflowStore } from './stores/workflow'
-import { ensureSchema, REQUIRED_TABLES } from './lib/db/ensure-schema'
+import { initializeApplicationSeeds, prepareApplicationData } from './lib/db/bootstrap'
+import { prepareMigrationStartup } from './lib/migration/profile-import'
 import { validateRegistry } from './lib/registry/validate'
-import { db } from './lib/db/schema'
-import { finalizeCharacterAxesMigrationSnapshots } from './lib/migrations/finalize-character-axes-snapshots'
 import { applyStoryForgeTheme, resolveStoryForgeTheme } from './lib/theme'
-import { registerStoryForgeServiceWorker } from './lib/pwa/register-service-worker'
+import { getRuntime } from './runtime'
+import { initializeRuntimeCapabilities } from './runtime/bootstrap'
+import { desktopPlaintextCredentialCanaries, migrateLegacyRuntimeCredentials } from './runtime/credential-migration'
+import { RuntimeRouter } from './runtime/router'
+import { useGistStore } from './stores/gist'
 import './index.css'
 
-// 从 localStorage 恢复主题（兼容旧主题名迁移）
-applyStoryForgeTheme(resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')))
-registerStoryForgeServiceWorker()
-
-/**
- * FB-11 数据持久 · 启动期申请「持久化存储」。
- * 不申请时浏览器把 IndexedDB 当 best-effort,可在磁盘压力/关闭清理/隐私插件下
- * 直接驱逐整库 → 用户表现为"数据被重置"。persist() 在 Chrome 是静默授予(按使用度
- * 启发式,不弹窗),被拒或不支持都不影响主流程,故 fire-and-forget。
- */
-async function requestPersistentStorage() {
-  try {
-    if (navigator.storage?.persist) {
-      const already = await navigator.storage.persisted()
-      if (!already) {
-        const granted = await navigator.storage.persist()
-        console.info(`[bootstrap] persistent storage ${granted ? '已授予' : '未授予(浏览器启发式未满足,可稍后再试)'}`)
-      }
-    }
-  } catch (e) {
-    console.warn('[bootstrap] persist storage 申请失败(不影响运行):', e)
-  }
+if (import.meta.env.VITE_DESKTOP_CHANNEL === 'dev') {
+  void import('./runtime/tauri/dev-smoke').then(({ installDesktopDevSmoke }) => {
+    installDesktopDevSmoke()
+  })
 }
 
-async function bootstrap() {
-  // 0. FB-11: 尽早申请持久化存储,降低 IndexedDB 被浏览器驱逐("重置")的概率。
-  void requestPersistentStorage()
+applyStoryForgeTheme(resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')))
 
-  // 0. Phase 1.1b: 注册表完整性校验。开发环境 throw(立刻发现漏登记),生产环境只告警。
+async function bootstrap() {
+  try {
+    await migrateLegacyRuntimeCredentials(getRuntime())
+    await useGistStore.getState().initializeCredential()
+    const canaries = getRuntime().secrets.policy.migrateLegacyPlaintext
+      ? desktopPlaintextCredentialCanaries()
+      : []
+    if (canaries.length > 0) console.error('[bootstrap] desktop plaintext credential canaries:', canaries)
+  } catch (error) {
+    console.error('[bootstrap] runtime credential migration failed:', error)
+  }
+  void initializeRuntimeCapabilities(getRuntime())
+
+  // Phase 1.1b: validate the three registries before opening application data.
   try {
     validateRegistry({ throwOnError: import.meta.env.DEV })
-  } catch (e) {
-    console.error('[bootstrap] registry validation failed:', e)
+  } catch (error) {
+    console.error('[bootstrap] registry validation failed:', error)
   }
 
-  // 1. Schema 健康自检：开发环境可自动 reset，生产环境绝不自动删库。
+  // Open and finalize the database without seeds. Desktop first-run migration
+  // needs an actually empty target until the user imports or chooses a new profile.
+  let migrationState
   try {
-    await ensureSchema(REQUIRED_TABLES, { allowReset: import.meta.env.DEV })
-    await db.open()
-    await finalizeCharacterAxesMigrationSnapshots()
-  } catch (e) {
-    console.error('[bootstrap] schema check failed:', e)
-  }
-
-  // 2. Phase 1：初始化提示词模板（必要时 seed 系统模板）
-  try {
-    await usePromptStore.getState().init()
-  } catch (e) {
-    console.error('[bootstrap] prompt store init failed:', e)
-  }
-
-  // 3. Phase 16：初始化工作流（必要时 seed 系统工作流）
-  try {
-    await useWorkflowStore.getState().init()
-  } catch (e) {
-    console.error('[bootstrap] workflow store init failed:', e)
+    await prepareApplicationData(import.meta.env.DEV)
+    migrationState = await prepareMigrationStartup({ runtime: getRuntime() })
+    if (migrationState.status === 'ready') await initializeApplicationSeeds()
+  } catch (error) {
+    console.error('[bootstrap] application data initialization failed:', error)
+    const message = error instanceof Error ? error.message : String(error)
+    ReactDOM.createRoot(document.getElementById('root')!).render(
+      <div className="min-h-screen bg-bg-base px-6 py-16 text-text-primary">
+        <div className="mx-auto max-w-xl rounded-xl border border-border bg-bg-elevated p-6">
+          <h1 className="text-lg font-semibold">无法打开 StoryForge 数据</h1>
+          <p className="mt-2 text-sm text-text-secondary">启动检查没有完成，应用没有继续写入数据。</p>
+          <pre className="mt-4 overflow-auto whitespace-pre-wrap rounded-lg bg-bg-surface p-3 text-xs text-error">{message}</pre>
+        </div>
+      </div>,
+    )
+    return
   }
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <ErrorBoundary>
-        <BrowserRouter basename="/storyforge">
+        <RuntimeRouter>
           <ToastProvider>
             <DialogProvider>
-              <App />
+              <App
+                initialMigrationState={migrationState}
+                initializeSeeds={initializeApplicationSeeds}
+              />
             </DialogProvider>
           </ToastProvider>
-        </BrowserRouter>
+        </RuntimeRouter>
       </ErrorBoundary>
     </React.StrictMode>,
   )
 }
 
-bootstrap()
+void bootstrap()

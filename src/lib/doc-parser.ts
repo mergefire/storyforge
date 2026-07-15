@@ -10,35 +10,23 @@
 // Vite URL import — pdfjs 的 worker 必须走 URL 引入（仅 URL 字符串，不进主包）
 // @ts-ignore - Vite 的 ?url 后缀 import TS 无法识别
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
+import {
+  ACCEPT_ATTR,
+  FILE_SIZE_LIMITS,
+  UNSUPPORTED_EXTS,
+  type SupportedExt,
+} from './source-document-policy'
+
+export {
+  ACCEPT_ATTR,
+  FILE_LIMIT_HINTS,
+  FILE_SIZE_LIMITS,
+  UNSUPPORTED_EXTS,
+} from './source-document-policy'
+export type { SupportedExt } from './source-document-policy'
 
 // pdfjs / mammoth 体积大（~870KB）且仅在用户导入文件时才需要，改为动态导入按需加载，
 // 不进首屏主包。下面在解析函数内 await import。
-
-/** 各文件类型的本地大小限制（单位字节） */
-export const FILE_SIZE_LIMITS = {
-  txt:  5 * 1024 * 1024,  // 5 MB —— 纯文本，理论可更大，但粘进 textarea 浏览器会卡
-  md:   5 * 1024 * 1024,  // 5 MB
-  csv:  2 * 1024 * 1024,  // 2 MB
-  pdf: 20 * 1024 * 1024,  // 20 MB —— pdfjs 能吃更大，但 20M 以上浏览器内抽文本很慢
-  docx: 10 * 1024 * 1024, // 10 MB
-} as const
-
-export type SupportedExt = keyof typeof FILE_SIZE_LIMITS
-
-/** 列表里面明确告诉用户 `.doc` 不行 */
-export const UNSUPPORTED_EXTS = ['doc'] as const
-
-/** 浏览器 <input accept> 字符串 */
-export const ACCEPT_ATTR = '.txt,.md,.csv,.pdf,.docx'
-
-/** 人类可读的大小说明（给 UI 用） */
-export const FILE_LIMIT_HINTS: Array<{ ext: string; label: string; mb: number }> = [
-  { ext: 'txt',  label: '纯文本',   mb: FILE_SIZE_LIMITS.txt  / 1024 / 1024 },
-  { ext: 'md',   label: 'Markdown', mb: FILE_SIZE_LIMITS.md   / 1024 / 1024 },
-  { ext: 'csv',  label: 'CSV',      mb: FILE_SIZE_LIMITS.csv  / 1024 / 1024 },
-  { ext: 'pdf',  label: 'PDF',      mb: FILE_SIZE_LIMITS.pdf  / 1024 / 1024 },
-  { ext: 'docx', label: 'Word',     mb: FILE_SIZE_LIMITS.docx / 1024 / 1024 },
-]
 
 export interface ExtractResult {
   text: string

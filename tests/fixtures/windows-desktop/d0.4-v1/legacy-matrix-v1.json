@@ -1,0 +1,275 @@
+{
+  "artifactKind": "schema-upgrade-matrix-v1",
+  "currentProjectTableCount": 42,
+  "declarationSetSha256": "32bc91bcbf4de82f9a763c10e7ec1704c0ca58cb941b17abb380343c82666ad6",
+  "fixtureId": "legacy-matrix-v1",
+  "normalizedLatestSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+  "schemaSource": "src/lib/db/schema.ts",
+  "schemaVersion": "1.0.0",
+  "sourceArtifacts": [
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "0a87c61cd846a275e187f4391febdbaa065e8539ac25458caa9a8163d063de83",
+      "sourceStoreCount": 9,
+      "sourceVersion": 1,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "814eed8596359c9b1512720929afd634fb252f5e32f3f1e84748eb21902f75e2",
+      "sourceStoreCount": 13,
+      "sourceVersion": 2,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "ec05cf09e261f9bf42daffb2ad8d71daa2a0feb9378550a4e88416d103ac97c8",
+      "sourceStoreCount": 14,
+      "sourceVersion": 3,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "11271e3152d9735d933103cb1bfef6c5f5d028d8790a59e46c627b622cf40261",
+      "sourceStoreCount": 15,
+      "sourceVersion": 4,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "90d00d99bdd584c14f09512332e4f0cc920dd2d89adcf054a4fc6e552ab26396",
+      "sourceStoreCount": 16,
+      "sourceVersion": 5,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "5c9451294bd88ec3422a7726764cd743c2e8bdb693a88e52b049ee9b423bf793",
+      "sourceStoreCount": 17,
+      "sourceVersion": 6,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "971ebdf2400638511e14c7f7e7d6d32477e7efcc88b660f460a6d97f4ca00c9b",
+      "sourceStoreCount": 19,
+      "sourceVersion": 7,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "a9bcd3ec701f4a2b539ed360d4ba84cd20f3fadc6bc55d7bddd16e458fbc6e0c",
+      "sourceStoreCount": 20,
+      "sourceVersion": 8,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "b47d875c434bb96fd5b832954aa40b882331771d46b546439e6e71d1c89866b5",
+      "sourceStoreCount": 22,
+      "sourceVersion": 9,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "a196ca6e6cf17138d7e75fd41b2b24d7c015e22af67ec463e04f765d9e6e0624",
+      "sourceStoreCount": 23,
+      "sourceVersion": 10,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "f21717a75e4a61852532458f76aaf39e870901f42dd44e7491b33fb0a7a5ae11",
+      "sourceStoreCount": 28,
+      "sourceVersion": 11,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "ea3ed8c17373d55f2155f525675b3411b370b226b6076b3ebdc492b71d385147",
+      "sourceStoreCount": 29,
+      "sourceVersion": 12,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "d15d4351f7c0f33a7904dcb4eb7bc2afcb9ce23274d2733a9256a4d58cdccd50",
+      "sourceStoreCount": 30,
+      "sourceVersion": 13,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "45e19ce22a0b8acdcb815634627c9282a07bc8b8718316e0864857e05a9bc49b",
+      "sourceStoreCount": 31,
+      "sourceVersion": 14,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "1e9709f7b5ca9cbe3a347d852b326c2d89c0c963dce03e9e4ca27bd356eb7bcd",
+      "sourceStoreCount": 32,
+      "sourceVersion": 15,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "b7f1b98e042981c552aa3ea59e31f5be6b8cb79e1d94e2b4c9bd434f183afe58",
+      "sourceStoreCount": 33,
+      "sourceVersion": 16,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "2ad0a780233a20c47c09faa0ceac0287db347ca6b9c3b5138d5872e73d3e1bc7",
+      "sourceStoreCount": 34,
+      "sourceVersion": 17,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "7f66b3215d289ff0ae3093ca69b3f10fe18f629570bf1c4f962a14c748c5a766",
+      "sourceStoreCount": 35,
+      "sourceVersion": 18,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "72ca4cbb0005882a6d8542bb3d459cf294a4083cff2de0a29057e38140ab3104",
+      "sourceStoreCount": 36,
+      "sourceVersion": 19,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "127e1cfe59464862b36297f6013881c9beb62b4a81ddb1eb779da3f343cf7476",
+      "sourceStoreCount": 37,
+      "sourceVersion": 20,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "de587eaaeb2022a2be7849f2b707af81511fceb722a9477e6e700176c51211ac",
+      "sourceStoreCount": 38,
+      "sourceVersion": 21,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "c5e9256057bb3760dca3f2fa26d4317616f82f10b2283d80c4c4e611f2ddd7e5",
+      "sourceStoreCount": 40,
+      "sourceVersion": 22,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "d99aec4df809c1d0f291866c9a8d1dca0beca123e464aab3f5d44cc7bf84afa3",
+      "sourceStoreCount": 41,
+      "sourceVersion": 23,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "eecf56c39f6f8c84338532b734ba90954c8d6c7ce9c977a95248a32e088ccaf9",
+      "sourceStoreCount": 42,
+      "sourceVersion": 24,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "d84495d65bfe540725ee4554e51935f2c2b0e862d74ea09100327f8ac6c97865",
+      "sourceStoreCount": 44,
+      "sourceVersion": 25,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "ab1fcd863d6085df612c86f01e7d18f20271da7cd1a53d27741a26dabaebb696",
+      "sourceStoreCount": 45,
+      "sourceVersion": 26,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "2b8b9093fa8be753986f1af504043d632393cda8f729d14170c0f2dab71e528f",
+      "sourceStoreCount": 45,
+      "sourceVersion": 27,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "535ae8ada6dd1837eed169e6849c17d1479ea0e6ddc1b3314eacfe15a8967649",
+      "sourceStoreCount": 45,
+      "sourceVersion": 28,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "9cd83e8dddca9aafe265e01ba3569895a3aa9064347be44829f2aabe0bdfa603",
+      "sourceStoreCount": 43,
+      "sourceVersion": 29,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "36267d77fb82b6586380031c722204562d1b3d843fab5c9f21c46440f470d86d",
+      "sourceStoreCount": 44,
+      "sourceVersion": 30,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "062038a376c23a4ffeb404f23da6b74a1fb7fe83d3a506e5bfc9eb93aaee933a",
+      "sourceStoreCount": 44,
+      "sourceVersion": 31,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "6c702b2698d2e349add11dc7af5c0618c328854927e0c0272f01a1aaa9645cbb",
+      "sourceStoreCount": 39,
+      "sourceVersion": 32,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "11e47c60a1cc1fd6a538645ab83b8bdb9f9202871038cc2f386f81871031ac6a",
+      "sourceStoreCount": 39,
+      "sourceVersion": 33,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "79139da0c4805ce472cbf6d59a12e8c9d3ce89afa182187201098bc0551bad39",
+      "sourceStoreCount": 39,
+      "sourceVersion": 34,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "6850d91d0f80b817fe1e02629daa957ee417d64a92fdd06fa1df8659d7875af5",
+      "sourceStoreCount": 40,
+      "sourceVersion": 35,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "078b82eac4f467713f556e12e7d68fb1422a1495e3b0b237c24372b0e23745aa",
+      "sourceStoreCount": 41,
+      "sourceVersion": 36,
+      "upgradedVersion": 37
+    },
+    {
+      "normalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "sourceDeclarationSha256": "32bc91bcbf4de82f9a763c10e7ec1704c0ca58cb941b17abb380343c82666ad6",
+      "sourceStoreCount": 42,
+      "sourceVersion": 37,
+      "upgradedVersion": 37
+    }
+  ],
+  "sourceVersionRange": {
+    "count": 37,
+    "maximum": 37,
+    "minimum": 1
+  }
+}

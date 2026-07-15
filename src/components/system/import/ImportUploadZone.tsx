@@ -1,5 +1,4 @@
 import { Upload, Sparkles, AlertTriangle, FileText, Wand2 } from 'lucide-react'
-import { ACCEPT_ATTR } from '../../../lib/doc-parser'
 import type { ChunkPlan } from '../../../lib/import/chunker'
 
 interface Props {
@@ -10,7 +9,7 @@ interface Props {
   extractInfo: string | null
   chunkSize: number
   previewPlans: ChunkPlan[] | null
-  onFile: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onFile: () => void
   onRawTextChange: (text: string) => void
   onStart: () => void
 }
@@ -35,21 +34,17 @@ export default function ImportUploadZone({
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <label className="text-xs text-text-secondary">文档内容</label>
-        <label
+        <button
+          type="button"
+          onClick={onFile}
+          disabled={loadingFile}
           className={`flex items-center gap-1 px-2 py-1 text-xs rounded cursor-pointer ${
             loadingFile ? 'text-text-muted bg-bg-hover' : 'text-accent hover:bg-accent/10'
           }`}
         >
           <Upload className="w-3 h-3" />
           {loadingFile ? '正在提取...' : '上传文件'}
-          <input
-            type="file"
-            accept={ACCEPT_ATTR}
-            disabled={loadingFile}
-            className="hidden"
-            onChange={onFile}
-          />
-        </label>
+        </button>
       </div>
 
       {fileError && (

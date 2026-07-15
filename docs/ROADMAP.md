@@ -2,12 +2,33 @@
 
 > 🔒 **接手者必读宪法**: [`/CLAUDE.md`](../CLAUDE.md) — 三注册表铁律 + 动手前的「四问」+ 反面教材
 > 📐 **施工权威**: [`docs/MASTER-BLUEPRINT.md`](MASTER-BLUEPRINT.md) — 重构 Phase 0/1/2/3 完整流程
-> 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律。**Codex 请过目并在文末 §7 确认。**
+> 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
+> 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — M0～M3 当前施工步骤；授权、状态和闸门只看 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-02（追加社区反馈待开发批次：角色弧光自动填充、英文混入、卷纲依据、本地模型配置、中文输入粘连、流派 ID 约束、多模型任务路由、本地模型列表刷新等；施工权威见 MASTER-BLUEPRINT）
-> **说明**: 本文档是唯一的功能规划文档。旧文档已归档至 `docs/archive/`。
+> **最后更新**: 2026-07-15（Windows Desktop M0～M2 已 PASS，下一里程碑 M3 尚未启动；真实数据仍需单独授权）
+> **说明**: 本文档是任务索引，不是施工权威。旧文档已归档至 `docs/archive/`；实施与放行以 MASTER-BLUEPRINT 为准。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
+
+---
+
+# ═══ 当前执行焦点 ═══
+
+## 🟢 Windows Desktop 作者自用路线（M0～M2 已完成，M3 待启动）
+
+> **目标**：先以最短路线形成作者可长期使用的 Windows 10/11 x64 客户端，同时保留全部现有功能和完整安全迁移；公开发布、受信任签名、Updater 与安装矩阵后移。技术栈保持 Tauri 2 + React/Vite + WebView2 + Dexie/IndexedDB。
+>
+> **红线**：三注册表、dev/stable 隔离、stable 禁止 CDP/devtools、全部现有功能、Credential Manager、应用层完整迁移与回滚、源数据只读、禁止直接复制/修改 UDF、Web 回归均不简化。
+
+| 里程碑 | 当前状态 | 完成条件 |
+|---|---|---|
+| M0 · 稳定开发壳 | ✅ PASS | stable 预启动拒绝调试、外部参数隔离、Cache/SW/UDF/identity 隔离、真实 pdf.js worker、AI manual 一致性及 dev 持久化 smoke 均已通过 |
+| M1 · 合成数据全功能 | ✅ PASS | 1,351 个唯一动作登记；窄 IPC、secret、文件/备份和脱敏诊断落地；合成重启、AI 流/取消、100 MiB Blob 与实机核心使用通过（剩余 soak 时长由作者明确豁免） |
+| M2 · 完整迁移演练 | ✅ PASS | `.storyforge-migrate` 只读导出、空目标导入、逐表/hash/Blob/设置验证、receipt、失败/中断恢复、激活和回滚均用合成资料通过 |
+| M3 · 作者真实数据切换 | ⬜ NOT STARTED | 明确授权和 profile 确认后完成真实迁移、全功能验收、观察和回滚，达到 `SELF_USE_READY` |
+| 公开发布路线 | ⏸ DEFERRED | G2、NSIS、受信任签名、Updater、beta/stable、公开材料和完整 Windows/卸载矩阵由作者另行启动 |
+
+当前已有 1 个开发隔离身份的无签名验证 exe，但尚未达到 `SELF_USE_READY`，没有读取、复制或改写真实浏览器数据。本文只保留这张索引；详细施工见专项规划，当前状态只看 MASTER-BLUEPRINT §17，既有 `windows-desktop/*STATUS|REPORT|REVIEW*` 文件仅为只读历史证据。
 
 ---
 
@@ -1270,11 +1291,11 @@ for each character:
 - **安全网（数据红线）**：`R-export-fullcoverage`（全 31 表 + 双世界组往返）锁当前行为 → `R-export-derive-equivalence`（派生导出 ≡ 真实旧格式 fixture，逐字段）→ `R-export-derive-roundtrip`（派生往返 + 旧 fixture 向后兼容）。等价仅两处无害差异：派生版去掉了旧版冗余的 outlineNodes/worldNodes 原始 parentId 死字段。
 - **验收达成**：新增 exportable 表只登记注册表即自动进出导出/导入；旧备份/Gist 云存档格式不变（fixture 锁死）；往返测试全绿。
 
-### 🟢 AUDIT-1b（AUDIT-1 派生时发现 · 待修）— 细纲数组/JSON 内的角色引用导入未重映射
-- **现状**：`detailedOutlines.appearingCharacterIds`（number[]）与 `scenes[].characterIds`（JSON 内）当前导入**未重映射**到新角色 id（注册表 `refs` 已声明为 character 引用，但导出/导入只处理 `exportRemap` 字段，不处理 refs 里的 array/json 引用）。同类：`creativeRules.citedReferenceIds` → references。
-- **影响**：导入后细纲「本章出场角色」可能指向错误/不存在的角色。属次要元数据，非正文/主外键，不致命。
-- **改法**：派生引擎已统一架构，后续可让 `refs` 中 `kind: 'array' | 'json'` 且指向 exportable 表的引用也纳入导出/导入重映射（开启后 `R-export-fullcoverage` 里被锁的 `appearingCharacterIds` 断言可恢复为「重映射到新 id」）。
-- **优先级**：🟢 低（次要元数据，且已有架构支撑，增量小）。
+### ✅ AUDIT-1b（AUDIT-1 派生时发现 · 2026-07-15 已修）— 数组/JSON 嵌套引用可移植重映射
+- **实现**：`PROJECT_TABLES.refs` 的 `kind: 'array' | 'json'` 可登记 portable 规则；项目 JSON 升级为 `version: 4`，并以 `nestedRefEncoding: "export-index-v1"` 显式声明嵌套引用使用目标表导出序号。导入在所有目标表映射建立后统一回填，覆盖 `detailedOutlines.appearingCharacterIds`、`scenes[].characterIds`、`foreshadowIds`、JSON-string `creativeRules.citedReferenceIds` 与 `codexEntries.refs` 自引用。
+- **数据边界**：v4 marker 缺失或错误时 fail closed，非法序号使整个导入事务回滚且不留下半数据。旧 v1/v2/v3 仍可导入，但其嵌套数字缺乏可移植映射元数据，只按历史 raw database ID 原样保留，绝不猜测为 v4 export index。
+- **验证证据**：`tests/regression/R-export-nested-reference-remap.test.ts` 覆盖高位非连续源主键、export index 0、重复值、多场景、JSON-string、非法序号原子回滚、legacy v3 与 marker fail-closed；`tests/desktop-contract/D0.4-fixtures.test.ts` 的固定 `small-v1` 导出→清库→导入得到 `dangling=[]`，`referenceRemapStatus=PASS`。
+- **D0.4 后续闭环（2026-07-15）**：树表导出已改为稳定父先顺序，精确项目名成对变换与路径级运行时字段排除后，`small-v1` 的 source/re-export 业务 hash 等值且嵌套业务字段仍保持敏感。`empty-v1`、`small-v1`、`large-synthetic-v1`、`blob-ladder-v1`、`legacy-matrix-v1` 与严格 manifest 已实际生成、哈希并通过可重建校验；生产 `web-tab` 动态功能、数据 hash、性能、恢复和安全实测仍未完成，D0.4 继续保持 `NOT_ELIGIBLE`。
 
 ### ✅ AUDIT-2（已完成 2026-06-16 · 核实收尾）— 原生 alert/confirm/prompt 全面替换为 Dialog
 - **现状核实（2026-06-16）**：UI 层（`src/components` / `hooks` / `pages`）原生弹窗**已全部替换**——`Dialog` 组件已被 **22 个文件**使用，`check:architecture` ⑥号守卫（禁 UI 层 `alert/confirm/prompt`）持续绿。审查报告时的"约 23 文件"已在商业审查 P0/P1 批次及后续逐步替换完毕。
