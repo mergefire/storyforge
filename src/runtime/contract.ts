@@ -57,6 +57,14 @@ export type SecretDescriptor =
   }
 
 export interface SecretStore {
+  readonly policy: {
+    /** Web keeps its existing storage semantics; native vaults scrub config plaintext. */
+    readonly storesPlaintextConfiguration: boolean
+    /** Native config can recover an opaque reference after restart without plaintext in JS. */
+    readonly reuseReferenceWhenPlaintextOmitted: boolean
+    readonly migrateLegacyPlaintext: boolean
+    readonly storageLabel: string
+  }
   /** Writes a secret and returns an opaque reference bound to that exact value. */
   put(descriptor: SecretDescriptor, value: string): Promise<CredentialId>
   has(key: SecretKey): Promise<boolean>

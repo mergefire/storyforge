@@ -39,6 +39,12 @@ const requiredFiles = [
   'src-tauri/build.rs',
   'src-tauri/src/main.rs',
   'src-tauri/src/lib.rs',
+  'src-tauri/src/commands/ai.rs',
+  'src-tauri/src/commands/dev.rs',
+  'src-tauri/src/commands/files.rs',
+  'src-tauri/src/commands/gist.rs',
+  'src-tauri/src/commands/secrets.rs',
+  'src-tauri/src/commands/system.rs',
   'src-tauri/tauri.conf.json',
   'src-tauri/tauri.stable.conf.json',
   'src-tauri/capabilities/main.json',
@@ -109,8 +115,58 @@ assert(cargo.includes('default = ["custom-protocol"]'), 'release 壳必须默认
 assert(cargo.includes('custom-protocol = ["tauri/custom-protocol"]'), 'custom-protocol 必须映射 tauri/custom-protocol')
 assert(cargo.includes('dev-identity = []'), '缺少显式 dev-identity Cargo feature')
 assert(!cargo.includes('tauri-plugin-'), 'D1.1 不得引入 Tauri plugin')
-assert(!lib.includes('#[tauri::command]'), 'D1.1 Rust 壳不得暴露 IPC command')
-assert(!lib.includes('generate_handler!'), 'D1.1 Rust 壳不得注册万能 handler')
+assert(!lib.includes('#[tauri::command]'), 'M1 command 实现不得散落在组合根')
+const commonCommands = [
+  'commands::ai::runtime_ai_approve_endpoint',
+  'commands::ai::runtime_ai_execute',
+  'commands::gist::runtime_gist_validate',
+  'commands::gist::runtime_gist_write',
+  'commands::gist::runtime_gist_list',
+  'commands::gist::runtime_gist_read',
+  'commands::gist::runtime_gist_revisions',
+  'commands::secrets::runtime_secret_put',
+  'commands::secrets::runtime_secret_has',
+  'commands::secrets::runtime_secret_reference',
+  'commands::secrets::runtime_secret_delete',
+  'commands::files::runtime_file_begin_save',
+  'commands::files::runtime_file_write_chunk',
+  'commands::files::runtime_file_finish_write',
+  'commands::files::runtime_file_abort_write',
+  'commands::files::runtime_file_open',
+  'commands::files::runtime_backup_bind',
+  'commands::files::runtime_backup_inspect',
+  'commands::files::runtime_backup_clear',
+  'commands::files::runtime_backup_begin_write',
+  'commands::files::runtime_backup_list',
+  'commands::files::runtime_backup_read',
+  'commands::system::runtime_cancel_request',
+  'commands::system::runtime_clipboard_write',
+  'commands::system::runtime_external_open',
+  'commands::system::runtime_durability_status',
+  'commands::system::runtime_diagnostics_snapshot',
+]
+const devOnlyCommands = [
+  'commands::dev::runtime_dev_prepare_synthetic_binding',
+  'commands::dev::runtime_dev_synthetic_fixture_digest',
+  'commands::dev::runtime_dev_reset_synthetic_fixtures',
+]
+const handlerBlocks = [...lib.matchAll(/tauri::generate_handler!\[([\s\S]*?)\]/g)]
+assert(handlerBlocks.length === 2, 'M1 必须分别注册 stable 白名单与 dev-identity 扩展白名单')
+const registeredCommands = block => [...block.matchAll(/commands::[a-z_]+::[a-z_]+/g)].map(match => match[0])
+assertExactArray(registeredCommands(handlerBlocks[0][1]), commonCommands, 'stable M1 IPC 白名单')
+assertExactArray(registeredCommands(handlerBlocks[1][1]), [...commonCommands, ...devOnlyCommands], 'dev M1 IPC 白名单')
+assert(lib.includes('#[cfg(not(feature = "dev-identity"))]'), 'stable handler 必须显式排除 dev-identity')
+assert(lib.includes('#[cfg(feature = "dev-identity")]'), 'dev handler 必须受 dev-identity feature 保护')
+const commandSources = ['ai', 'dev', 'files', 'gist', 'secrets', 'system']
+  .map(name => read(`src-tauri/src/commands/${name}.rs`))
+  .join('\n')
+const implementedCommands = [...commandSources.matchAll(/#\[tauri::command\]\s*pub\s+(?:async\s+)?fn\s+([a-z_]+)/g)]
+  .map(match => match[1])
+  .sort()
+const allowedImplementations = [...commonCommands, ...devOnlyCommands]
+  .map(command => command.split('::').at(-1))
+  .sort()
+assertExactArray(implementedCommands, allowedImplementations, 'M1 command 实现集合')
 assert(lib.includes('clear_inherited_webview2_environment()'), 'Rust 壳必须清除继承的 WEBVIEW2_* 环境')
 assert(lib.includes('#[cfg(feature = "dev-identity")]'), 'Rust 壳 dev overrides 必须受 dev-identity feature 保护')
 assert(main.includes('storyforge_desktop_lib::run()'), 'main.rs 必须只转发到 lib::run')
@@ -123,6 +179,9 @@ assert(routeSmoke.includes('verifyPackagedPdfWorker'), 'Desktop smoke 必须运�
 assert(routeSmoke.includes("cliArgs.includes('--persistence')"), 'Desktop smoke 必须提供 D1.3 persistence mode')
 assert(routeSmoke.includes("cliArgs.indexOf('--upgrade-exe')"), 'Desktop smoke 必须支持不同版本的同身份覆盖升级')
 assert(routeSmoke.includes('sameIdentityOverwriteUpgradePersisted'), 'Desktop smoke 必须报告覆盖升级持久化结果')
+assert(routeSmoke.includes("cliArgs.includes('--m1')"), 'Desktop smoke 必须提供 M1 capability mode')
+assert(routeSmoke.includes('runM1CoreUseSoak'), 'Desktop smoke 必须保留 M1 核心使用验证入口')
+assert(pkg.scripts['check:desktop-m1'] === 'node scripts/windows-desktop-route-smoke.mjs --persistence --m1', '缺少 M1 快速实机 smoke')
 assert(upgradeSmoke.includes("identifier: 'io.github.yuanbw2025.storyforge.dev'"), '覆盖升级 smoke 必须固定 dev identity')
 assert((upgradeSmoke.match(/'dev-identity'/g) || []).length === 2, '覆盖升级 smoke 的两个 artifact 都必须显式启用 dev-identity')
 assert(upgradeSmoke.includes('fs.rmSync(targetExe, { force: true })'), '覆盖升级 smoke 必须恢复“目标 exe 原本不存在”的状态')
@@ -130,4 +189,4 @@ assert(stableBoundary.includes('stableRejectedBeforeLaunch: true'), 'stable boun
 assert(stableBoundary.includes('stableLaunchAttempted: false'), 'stable boundary 必须证明没有启动 stable artifact')
 assert(!stableBoundary.includes('spawn('), 'stable boundary 不得启动任何 stable artifact')
 
-console.log('D1.1 desktop shell static contract passed.')
+console.log('M1 desktop shell and narrow IPC static contract passed.')

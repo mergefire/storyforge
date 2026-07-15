@@ -335,6 +335,12 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
   }
 
   readonly secrets: RuntimeAdapter['secrets'] = {
+    policy: {
+      storesPlaintextConfiguration: true,
+      reuseReferenceWhenPlaintextOmitted: false,
+      migrateLegacyPlaintext: false,
+      storageLabel: '测试凭据存储',
+    },
     put: async (descriptor, value) => {
       this.assertNoFailure('secrets.put')
       assertSecretDescriptor(descriptor, 'secrets.put')

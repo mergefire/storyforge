@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function CloudBackupCard({ projectId, onImported }: Props) {
-  const { pat, username, rememberPat, autoBackup, busy, error, connect, disconnect, backupProject, restoreFromGist, listBackups, listRevisions, setAutoBackup, projBackup } = useGistStore()
+  const { connected, username, rememberPat, autoBackup, busy, error, connect, disconnect, backupProject, restoreFromGist, listBackups, listRevisions, setAutoBackup, projBackup } = useGistStore()
   const dialog = useDialog()
   const [patInput, setPatInput] = useState('')
   const [rememberPatInput, setRememberPatInput] = useState(false)
@@ -26,6 +26,7 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
   const [backups, setBackups] = useState<GistBackupMeta[] | null>(null)
   const [revisions, setRevisions] = useState<GistRevisionMeta[] | null>(null)
   const proj = projBackup(projectId)
+  const credentialStoreLabel = getRuntime().secrets.policy.storageLabel
 
   const handleOpenTokenHelp = async () => {
     setExternalError(null)
@@ -91,7 +92,7 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
         备份到你的 GitHub 私密 Gist —— 数据存在云端，<strong>清浏览器 / 换设备都不丢</strong>，可一键拉回。
       </p>
 
-      {!pat ? (
+      {!connected ? (
         // 未连接:填 PAT
         <div className="space-y-2">
           <input
@@ -118,7 +119,7 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
               onChange={e => setRememberPatInput(e.target.checked)}
               className="mt-0.5 accent-sky-400"
             />
-            <span>在本机记住 Token（写入 localStorage）。不勾选时仅本次浏览器会话有效。</span>
+            <span>在本机记住 Token（写入{credentialStoreLabel}）。不勾选时仅本次会话有效。</span>
           </label>
           <p className="text-[11px] text-text-muted">
             云备份会把完整项目 JSON 明文上传到你的 GitHub 私密 Gist；Private Gist 不是端到端加密保险箱。
@@ -139,7 +140,7 @@ export default function CloudBackupCard({ projectId, onImported }: Props) {
             </button>
           </div>
           <p className="text-[11px] text-text-muted">
-            备份内容会作为完整项目 JSON 明文上传到 GitHub 私密 Gist；Token {rememberPat ? '保存在本机 localStorage' : '仅保存在本次浏览器会话'}。
+            备份内容会作为完整项目 JSON 明文上传到 GitHub 私密 Gist；Token {rememberPat ? `保存在${credentialStoreLabel}` : '仅保存在本次会话'}。
           </p>
 
           <div className="flex flex-wrap gap-2">

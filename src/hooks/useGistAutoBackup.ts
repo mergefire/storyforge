@@ -16,8 +16,8 @@ export function useGistAutoBackup(projectId: number | null) {
     if (!projectId) return
 
     timerRef.current = setInterval(async () => {
-      const { autoBackup, pat, backupProject } = useGistStore.getState()
-      if (!autoBackup || !pat) return
+      const { autoBackup, connected, backupProject } = useGistStore.getState()
+      if (!autoBackup || !connected) return
       try {
         await backupProject(projectId)
       } catch (err) {

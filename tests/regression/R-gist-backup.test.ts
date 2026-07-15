@@ -38,6 +38,8 @@ function resetGistState() {
   sessionStorage.clear()
   useGistStore.setState({
     pat: null,
+    credentialId: null,
+    connected: false,
     username: null,
     rememberPat: false,
     autoBackup: false,
@@ -67,21 +69,23 @@ describe('R-GIST · PAT 存储策略', () => {
   beforeEach(() => resetGistState())
   afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); resetGistState() })
 
-  it('默认只存 sessionStorage,不落 localStorage', async () => {
+  it('默认只把凭据放入 session 运行时保险库,旧明文位置保持为空', async () => {
     mockValidatePAT('session-user')
     const ok = await useGistStore.getState().connect(PAT)
     expect(ok).toBe(true)
-    expect(sessionStorage.getItem('sf-gist-pat')).toBe(PAT)
+    expect(sessionStorage.getItem('sf-gist-pat')).toBeNull()
     expect(localStorage.getItem('sf-gist-pat')).toBeNull()
+    expect(JSON.parse(sessionStorage.getItem(RUNTIME_GIST_SECRET_KEY) ?? '{}')).toMatchObject({ value: PAT })
     expect(useGistStore.getState().rememberPat).toBe(false)
   })
 
-  it('显式记住本机时才写 localStorage', async () => {
+  it('显式记住本机时写入 device 运行时保险库,不写旧明文键', async () => {
     mockValidatePAT('local-user')
     const ok = await useGistStore.getState().connect(PAT, true)
     expect(ok).toBe(true)
-    expect(localStorage.getItem('sf-gist-pat')).toBe(PAT)
+    expect(localStorage.getItem('sf-gist-pat')).toBeNull()
     expect(sessionStorage.getItem('sf-gist-pat')).toBeNull()
+    expect(JSON.parse(localStorage.getItem(RUNTIME_GIST_SECRET_KEY) ?? '{}')).toMatchObject({ value: PAT })
     expect(useGistStore.getState().rememberPat).toBe(true)
   })
 
@@ -111,10 +115,10 @@ describe('R-GIST · PAT 存储策略', () => {
     expect(await useGistStore.getState().connect(PAT, true)).toBe(true)
     useGistStore.getState().setAutoBackup(true)
     useGistStore.setState({ busy: true, error: 'old error' })
-    expect(JSON.parse(sessionStorage.getItem(RUNTIME_GIST_SECRET_KEY) ?? '{}')).toEqual({
+    expect(JSON.parse(localStorage.getItem(RUNTIME_GIST_SECRET_KEY) ?? '{}')).toEqual({
       descriptor: {
         key: 'storyforge.github.gist',
-        persistence: 'session',
+        persistence: 'device',
         scope: { kind: 'github-gist' },
       },
       value: PAT,

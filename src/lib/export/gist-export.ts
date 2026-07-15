@@ -37,11 +37,18 @@ export function gistBackupFilename(projectName: string): string {
   return `${GIST_FILENAME_PREFIX}${stem}${GIST_FILENAME_SUFFIX}`
 }
 
-function sessionCredential(pat: string): Promise<CredentialId> {
+export function storeGitHubPATCredential(
+  pat: string,
+  persistence: 'session' | 'device' = 'session',
+): Promise<CredentialId> {
   return getRuntime().secrets.put(
-    { key: GIST_CREDENTIAL_KEY, persistence: 'session', scope: { kind: 'github-gist' } },
+    { key: GIST_CREDENTIAL_KEY, persistence, scope: { kind: 'github-gist' } },
     pat,
   )
+}
+
+export function storedGitHubPATCredential(): Promise<CredentialId | null> {
+  return getRuntime().secrets.reference(GIST_CREDENTIAL_KEY)
 }
 
 export function clearGitHubPATCredential(): Promise<void> {
@@ -57,11 +64,19 @@ export async function exportToGist(
   data: ProjectExportData,
   config: GistConfig,
 ): Promise<GistResult> {
+  const credentialId = await storeGitHubPATCredential(config.pat)
+  return exportToGistWithCredential(data, credentialId, config.gistId)
+}
+
+export async function exportToGistWithCredential(
+  data: ProjectExportData,
+  credentialId: CredentialId,
+  gistId?: string,
+): Promise<GistResult> {
   const filename = gistBackupFilename(data.project.name)
-  const credentialId = await sessionCredential(config.pat)
   return getRuntime().gist.writeBackup({
     credentialId,
-    ...(config.gistId ? { gistId: config.gistId } : {}),
+    ...(gistId ? { gistId } : {}),
     filename,
     description: `故事熔炉备份 — ${data.project.name} (${new Date().toLocaleString('zh-CN')})`,
     content: JSON.stringify(data, null, 2),
@@ -69,7 +84,11 @@ export async function exportToGist(
 }
 
 export async function listStoryforgeGists(pat: string): Promise<GistBackupMeta[]> {
-  return getRuntime().gist.listBackups(await sessionCredential(pat))
+  return getRuntime().gist.listBackups(await storeGitHubPATCredential(pat))
+}
+
+export function listStoryforgeGistsWithCredential(credentialId: CredentialId): Promise<GistBackupMeta[]> {
+  return getRuntime().gist.listBackups(credentialId)
 }
 
 /** The returned JSON is still validated/imported by the shared TS layer. */
@@ -78,7 +97,15 @@ export async function importFromGist(
   pat: string,
   revision?: string,
 ): Promise<ProjectExportData> {
-  const credentialId = await sessionCredential(pat)
+  const credentialId = await storeGitHubPATCredential(pat)
+  return importFromGistWithCredential(gistId, credentialId, revision)
+}
+
+export async function importFromGistWithCredential(
+  gistId: string,
+  credentialId: CredentialId,
+  revision?: string,
+): Promise<ProjectExportData> {
   const backup = await getRuntime().gist.readBackup(
     credentialId,
     gistId,
@@ -88,14 +115,35 @@ export async function importFromGist(
 }
 
 export async function listGistRevisions(gistId: string, pat: string): Promise<GistRevisionMeta[]> {
-  return getRuntime().gist.listRevisions(await sessionCredential(pat), gistId)
+  return getRuntime().gist.listRevisions(await storeGitHubPATCredential(pat), gistId)
+}
+
+export function listGistRevisionsWithCredential(
+  gistId: string,
+  credentialId: CredentialId,
+): Promise<GistRevisionMeta[]> {
+  return getRuntime().gist.listRevisions(credentialId, gistId)
 }
 
 export async function validateGitHubPAT(pat: string): Promise<string> {
-  const credentialId = await sessionCredential(pat)
+  const credentialId = await storeGitHubPATCredential(pat)
   try {
     const result = await getRuntime().gist.validateCredential(credentialId)
     return result.login
+  } catch (error) {
+    await clearGitHubPATCredential()
+    throw error
+  }
+}
+
+export async function connectGitHubPAT(
+  pat: string,
+  persistence: 'session' | 'device',
+): Promise<{ login: string; credentialId: CredentialId }> {
+  const credentialId = await storeGitHubPATCredential(pat, persistence)
+  try {
+    const result = await getRuntime().gist.validateCredential(credentialId)
+    return { login: result.login, credentialId }
   } catch (error) {
     await clearGitHubPATCredential()
     throw error

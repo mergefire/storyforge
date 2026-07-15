@@ -9,7 +9,9 @@ import { validateRegistry } from './lib/registry/validate'
 import { applyStoryForgeTheme, resolveStoryForgeTheme } from './lib/theme'
 import { getRuntime } from './runtime'
 import { initializeRuntimeCapabilities } from './runtime/bootstrap'
+import { desktopPlaintextCredentialCanaries, migrateLegacyRuntimeCredentials } from './runtime/credential-migration'
 import { RuntimeRouter } from './runtime/router'
+import { useGistStore } from './stores/gist'
 import './index.css'
 
 if (import.meta.env.VITE_DESKTOP_CHANNEL === 'dev') {
@@ -19,9 +21,20 @@ if (import.meta.env.VITE_DESKTOP_CHANNEL === 'dev') {
 }
 
 applyStoryForgeTheme(resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')))
-void initializeRuntimeCapabilities(getRuntime())
 
 async function bootstrap() {
+  try {
+    await migrateLegacyRuntimeCredentials(getRuntime())
+    await useGistStore.getState().initializeCredential()
+    const canaries = getRuntime().secrets.policy.migrateLegacyPlaintext
+      ? desktopPlaintextCredentialCanaries()
+      : []
+    if (canaries.length > 0) console.error('[bootstrap] desktop plaintext credential canaries:', canaries)
+  } catch (error) {
+    console.error('[bootstrap] runtime credential migration failed:', error)
+  }
+  void initializeRuntimeCapabilities(getRuntime())
+
   // Phase 1.1b: validate the three registries before opening application data.
   try {
     validateRegistry({ throwOnError: import.meta.env.DEV })

@@ -4,6 +4,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
+mod commands;
+mod dto;
+mod error;
+mod platform;
+mod security;
+mod state;
+
+use tauri::Manager;
+
 const WEBVIEW2_ENV_PREFIX: &str = "WEBVIEW2_";
 #[cfg(feature = "dev-identity")]
 const WEBVIEW2_USER_DATA_FOLDER: &str = "WEBVIEW2_USER_DATA_FOLDER";
@@ -116,7 +125,78 @@ fn apply_owned_webview2_environment() {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     apply_owned_webview2_environment();
-    tauri::Builder::default()
+    let builder = tauri::Builder::default().setup(|app| {
+        let state = state::AppState::new(&app.handle().clone())?;
+        app.manage(state);
+        Ok(())
+    });
+
+    #[cfg(not(feature = "dev-identity"))]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        commands::ai::runtime_ai_approve_endpoint,
+        commands::ai::runtime_ai_execute,
+        commands::gist::runtime_gist_validate,
+        commands::gist::runtime_gist_write,
+        commands::gist::runtime_gist_list,
+        commands::gist::runtime_gist_read,
+        commands::gist::runtime_gist_revisions,
+        commands::secrets::runtime_secret_put,
+        commands::secrets::runtime_secret_has,
+        commands::secrets::runtime_secret_reference,
+        commands::secrets::runtime_secret_delete,
+        commands::files::runtime_file_begin_save,
+        commands::files::runtime_file_write_chunk,
+        commands::files::runtime_file_finish_write,
+        commands::files::runtime_file_abort_write,
+        commands::files::runtime_file_open,
+        commands::files::runtime_backup_bind,
+        commands::files::runtime_backup_inspect,
+        commands::files::runtime_backup_clear,
+        commands::files::runtime_backup_begin_write,
+        commands::files::runtime_backup_list,
+        commands::files::runtime_backup_read,
+        commands::system::runtime_cancel_request,
+        commands::system::runtime_clipboard_write,
+        commands::system::runtime_external_open,
+        commands::system::runtime_durability_status,
+        commands::system::runtime_diagnostics_snapshot,
+    ]);
+
+    #[cfg(feature = "dev-identity")]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        commands::ai::runtime_ai_approve_endpoint,
+        commands::ai::runtime_ai_execute,
+        commands::gist::runtime_gist_validate,
+        commands::gist::runtime_gist_write,
+        commands::gist::runtime_gist_list,
+        commands::gist::runtime_gist_read,
+        commands::gist::runtime_gist_revisions,
+        commands::secrets::runtime_secret_put,
+        commands::secrets::runtime_secret_has,
+        commands::secrets::runtime_secret_reference,
+        commands::secrets::runtime_secret_delete,
+        commands::files::runtime_file_begin_save,
+        commands::files::runtime_file_write_chunk,
+        commands::files::runtime_file_finish_write,
+        commands::files::runtime_file_abort_write,
+        commands::files::runtime_file_open,
+        commands::files::runtime_backup_bind,
+        commands::files::runtime_backup_inspect,
+        commands::files::runtime_backup_clear,
+        commands::files::runtime_backup_begin_write,
+        commands::files::runtime_backup_list,
+        commands::files::runtime_backup_read,
+        commands::system::runtime_cancel_request,
+        commands::system::runtime_clipboard_write,
+        commands::system::runtime_external_open,
+        commands::system::runtime_durability_status,
+        commands::system::runtime_diagnostics_snapshot,
+        commands::dev::runtime_dev_prepare_synthetic_binding,
+        commands::dev::runtime_dev_synthetic_fixture_digest,
+        commands::dev::runtime_dev_reset_synthetic_fixtures,
+    ]);
+
+    builder
         .run(tauri::generate_context!())
         .expect("failed to run StoryForge desktop client")
 }

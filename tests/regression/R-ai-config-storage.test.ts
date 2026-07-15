@@ -8,6 +8,9 @@ const REMEMBER_KEY = 'storyforge-ai-api-key-remember'
 
 async function freshStore() {
   vi.resetModules()
+  const runtimeApi = await import('../../src/runtime')
+  const { createFakeRuntime } = await import('../../src/runtime/fake')
+  runtimeApi.setRuntimeAdapter(createFakeRuntime())
   const mod = await import('../../src/stores/ai-config')
   return mod.useAIConfigStore
 }
@@ -31,7 +34,7 @@ afterEach(() => {
 describe('R-AI-CONFIG · API Key 存储策略', () => {
   it('默认只把 API Key 存入 sessionStorage,localStorage 配置不落 key', async () => {
     const useAIConfigStore = await freshStore()
-    useAIConfigStore.getState().setConfig({ apiKey: 'sk-session' })
+    await useAIConfigStore.getState().setConfig({ apiKey: 'sk-session' })
 
     expect(useAIConfigStore.getState().rememberApiKey).toBe(false)
     expect(sessionStorage.getItem(SESSION_KEY)).toBe('sk-session')
@@ -42,7 +45,7 @@ describe('R-AI-CONFIG · API Key 存储策略', () => {
   it('显式记住本机时才把 API Key 写入 localStorage', async () => {
     const useAIConfigStore = await freshStore()
     await useAIConfigStore.getState().setRememberApiKey(true)
-    useAIConfigStore.getState().setConfig({ apiKey: 'sk-local' })
+    await useAIConfigStore.getState().setConfig({ apiKey: 'sk-local' })
 
     expect(useAIConfigStore.getState().rememberApiKey).toBe(true)
     expect(sessionStorage.getItem(SESSION_KEY)).toBeNull()
@@ -68,7 +71,7 @@ describe('R-AI-CONFIG · API Key 存储策略', () => {
 
   it('session-only 模式保存预设时不把当前 API Key 写进预设 localStorage', async () => {
     const useAIConfigStore = await freshStore()
-    useAIConfigStore.getState().setConfig({ apiKey: 'sk-session' })
+    await useAIConfigStore.getState().setConfig({ apiKey: 'sk-session' })
     useAIConfigStore.getState().saveAsPreset('会话预设')
 
     const presets = JSON.parse(localStorage.getItem('storyforge-ai-presets') || '[]')

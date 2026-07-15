@@ -195,6 +195,12 @@ class WebSecretVault {
     private readonly session: StorageLike,
   ) {
     this.publicStore = {
+      policy: {
+        storesPlaintextConfiguration: true,
+        reuseReferenceWhenPlaintextOmitted: false,
+        migrateLegacyPlaintext: false,
+        storageLabel: '浏览器本机凭据存储',
+      },
       put: (descriptor, value) => this.put(descriptor, value),
       has: key => this.has(key),
       reference: key => this.reference(key),
