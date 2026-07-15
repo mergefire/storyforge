@@ -5,7 +5,7 @@
 > 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
 > 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — D0～D5 详细规格；项目级授权、依赖、闸门与状态见 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-15（Windows Desktop D0.1 / D0.3 已 PASS，D0.2 / D0.4 进行中，D0.5 未开始；D1.1 正式 Tauri 壳、受限 adapter、开发身份 exe 和离线首页证据已落地，但 D0 总门未闭环，仍不可使用真实数据）
+> **最后更新**: 2026-07-15（Windows Desktop D0.1 / D0.2 / D0.3 已 PASS，D0.4 进行中，D0.5 未开始；D1.1/D1.2 受限实现已落地，D1.3 已开始但完整持久化矩阵未完成；D0 总门未闭环，仍不可使用真实数据）
 > **说明**: 本文档是任务索引，不是施工权威。旧文档已归档至 `docs/archive/`；实施与放行以 MASTER-BLUEPRINT 为准。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
@@ -23,15 +23,16 @@
 | 项目 | 当前状态 | 下一完成条件 |
 |---|---|---|
 | D0.1 纳入唯一施工权威 | ✅ PASS：2026-07-14 Claude 独立审查无阻断项 | 治理提交推送后保持唯一施工权威 |
-| D0.2 身份与支持范围 | 🟠 进行中：技术身份、UDF、支持矩阵、回滚及作者自用本机自签名边界已冻结 | 提交本次决议并完成独立审查；受公共信任的正式 Authenticode Subject 延后到 D5.2 |
+| D0.2 身份与支持范围 | ✅ PASS：source `dd151db`；静态身份决议完成，Codex 独立只读审查 APPROVE、无 P0/P1/P2/P3 | D1.3 补交运行矩阵；任一失败重开 D0.2。受公共信任的正式 Authenticode Subject 延后到 D5.2 |
 | D0.3 RuntimeAdapter 契约 | ✅ PASS：source `c062b19`；contract、Web/Fake、浏览器能力接管和架构守卫完成，独立审查 APPROVE | Tauri target 继续 fail closed，待 D1.1 注册最小 native adapter |
 | D0.4 功能/性能/安全基线 | 🟠 进行中：`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验；`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS | 补 large/blob/legacy 冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
 | D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
-| D1.1 正式 Tauri 2 壳 | 🟠 IN PROGRESS：`src-tauri/`、受限 adapter、最小 capability/CSP、双构建、开发身份 exe 和真实 WebView2 离线首页 smoke 已落地 | D0.2/D0.4/D0.5 闭环并完成独立审查；未满足前不得标 PASS或接真实数据 |
-| D1.2 条件化构建/路由/PWA | 🟠 IN PROGRESS：双 base、BrowserRouter/HashRouter、PWA/Service Worker 和输出目录条件化已落地 | 补本地字体与首页/设置页/项目页直接启动、重启 smoke |
-| D1.3～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
+| D1.1 正式 Tauri 2 壳 | 🟠 IN PROGRESS：`src-tauri/`、受限 adapter、最小 capability/CSP、双构建、开发身份 exe 和真实 WebView2 离线首页 smoke 已落地 | D0.2 已 PASS；D0.4/D0.5 闭环并完成独立审查前不得标 PASS 或接真实数据 |
+| D1.2 条件化构建/路由/PWA | 🟠 IN PROGRESS：双 base、BrowserRouter/HashRouter、PWA/Service Worker、输出目录、本地字体和三路由重启 smoke 已落地 | 最终 PASS 等待 D1.1 硬依赖闭环；当前证据不得替代 D1.3 |
+| D1.3 Dexie/WebView2 持久化 | 🟠 IN PROGRESS：已核对身份/UDF/Dexie/自动保存边界；单个合成项目跨进程可见仅为前置信号 | 补章节/关联数据、dev/stable 隔离、覆盖升级、卸载保留和失败注入；未提交本地证据不得计入基线 |
+| D1.4～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
 
-当前作者自用版交付准备度管理估算约 30%～35%；已有 1 个开发隔离身份的无签名验证 exe，但动作级 Desktop PASS 和真实数据迁移仍为 0。当前没有可导入真实数据或可公开分发的 Windows 客户端。不得把“离线首页可打开”写成“客户端已完成”；阶段记录只追加到 MASTER-BLUEPRINT §17.7。
+当前作者自用版交付准备度管理估算约 35%～40%；已有 1 个开发隔离身份的无签名验证 exe，但动作级 Desktop PASS 和真实数据迁移仍为 0。当前没有可导入真实数据或可公开分发的 Windows 客户端。不得把“离线首页可打开”或“D0.2 PASS”写成“客户端已完成”；阶段记录只追加到 MASTER-BLUEPRINT §17.7。
 
 ---
 

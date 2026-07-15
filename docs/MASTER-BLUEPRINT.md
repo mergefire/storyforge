@@ -2313,8 +2313,8 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 3. 专项规划提供本节已登记任务的详细施工规格；若与本节或 `CLAUDE.md` 冲突，立即停止并先修正文档，不得自行择一执行。
 4. 功能等价动作清单的机器可读事实源在 D0.5 建立：`docs/windows-desktop/feature-parity-baseline.json`；专项规划 §5 是其人工初始矩阵，不复制进本蓝图维护第二份 68 项清单。
 5. D0.4 `d0.4-v2` 以当前生产 `web-tab` 作为唯一必需参考基线；installed PWA 仅为可选补充，缺失不阻塞 D0.4、D0.5 或 D1。该调整不放宽夹具、功能、规范化数据 hash、性能、恢复、安全或功能零丢失硬门。
-6. 本专项当前状态为 **D0 进行中，D1.1 / D1.2 受限实现已落地，D1.3 dev-only 优先链路与同身份 exe 覆盖升级已通过**。D0.1、D0.3 已 PASS；D0.2、D0.4 进行中；D0.5 未开始；D1.1 已建立正式 `src-tauri/`、受限 Tauri adapter、双构建和可离线启动的 exe；D1.2 已完成本地字体、Web/Desktop 构建边界和真实 dev-identity WebView2 三路由启动/重启 smoke；D1.3 已在新构建的 `3.7.5/3.7.6` dev artifacts 上验证合成项目、outline、章节正文自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile 和同 identifier/同临时 exe 路径覆盖升级，并已锁定 schema/Dexie open/迁移收尾早于 Prompt/Workflow seed 的启动顺序。D1.1 最终 PASS 仍等待 D0 总门，D1.2 最终 PASS 仍等待 D1.1 硬依赖闭环；D1.3 的安装保留、stable 非 CDP 身份矩阵和失败注入仍缺证据，D1.4～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过功能等价验证”。
-7. 用户于 2026-07-15 明确授权 D0.4 剩余动态基线不阻塞开发，并允许先推进只使用合成数据和开发隔离身份的 D1.1 最小壳。该授权只调整施工顺序，不放宽完成门槛：D0.2、D0.4、D0.5 未闭环前 D1.1 不得标 PASS，不得连接真实密钥、正式 profile 或真实用户数据，也不得越过 G1/G2。
+6. 本专项当前状态为 **D0 进行中，D1.1 / D1.2 受限实现已落地，D1.3 dev-only 优先链路与同身份 exe 覆盖升级已通过**。D0.1、D0.2、D0.3 已 PASS；D0.4 进行中；D0.5 未开始；D1.1 已建立正式 `src-tauri/`、受限 Tauri adapter、双构建和可离线启动的 exe；D1.2 已完成本地字体、Web/Desktop 构建边界和真实 dev-identity WebView2 三路由启动/重启 smoke；D1.3 已在新构建的 `3.7.5/3.7.6` dev artifacts 上验证合成项目、outline、章节正文自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile 和同 identifier/同临时 exe 路径覆盖升级，并已锁定 schema/Dexie open/迁移收尾早于 Prompt/Workflow seed 的启动顺序。D1.1 最终 PASS 仍等待 D0 总门，D1.2 最终 PASS 仍等待 D1.1 硬依赖闭环；D1.3 的安装保留、stable 非 CDP 身份矩阵和失败注入仍缺证据，D1.4～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过功能等价验证”。
+7. 用户于 2026-07-15 明确授权 D0.4 剩余动态基线不阻塞开发，并允许先推进只使用合成数据和开发隔离身份的 D1.1 最小壳。该授权只调整施工顺序，不放宽完成门槛：D0.2 已闭环；D0.4、D0.5 未闭环前 D1.1 仍不得标 PASS，不得连接真实密钥、正式 profile 或真实用户数据，也不得越过 G1/G2。
 
 #### 2026-07-15 进度快照
 
@@ -2346,11 +2346,11 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 | ID | 任务 | 硬依赖 / 接口依赖 | 当前状态 |
 |---|---|---|---|
 | D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | PASS（2026-07-14；Claude 独立审查无阻断项） |
-| D0.2 | 冻结应用身份与支持范围 | D0.1；作者自用候选签名边界已确认；正式 Authenticode publisher/受公共信任证书 Subject 延后到 D5.2 | IN PROGRESS（技术身份、UDF、支持矩阵、回滚及 `CN=StoryForge Self-Use` 本机自签名边界已冻结；待本次决议提交与独立审查） |
+| D0.2 | 冻结应用身份与支持范围 | D0.1；作者自用候选签名边界已确认；正式 Authenticode publisher/受公共信任证书 Subject 延后到 D5.2 | PASS（2026-07-15；静态身份决议完成，Codex 独立只读审查 APPROVE、无 P0/P1/P2/P3；D1.3 运行矩阵仍为延后门槛） |
 | D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | PASS（source `c062b19`；RuntimeAdapter contract、Web/Fake、浏览器能力接管和架构守卫完成；独立审查 APPROVE） |
 | D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议已落地；`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验，`small-v1` 嵌套引用及规范化往返业务 hash 均为 PASS；large/blob/legacy 完整夹具与生产 `web-tab` 实测尚未齐全；installed PWA 可选） |
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
-| D1.1 | 建立正式 Tauri 2 壳 | 最终 PASS 仍依赖 D0.1～D0.5；2026-07-15 特别授权仅允许开发隔离身份 + 合成数据的前置施工 | IN PROGRESS（正式 `src-tauri/`、最小 capability/CSP、受限 adapter、可重复 Desktop build、无服务离线首页和真实 WebView2 smoke 已落地；D0.2/D0.4/D0.5 未闭环，不得标 PASS） |
+| D1.1 | 建立正式 Tauri 2 壳 | 最终 PASS 仍依赖 D0.1～D0.5；2026-07-15 特别授权仅允许开发隔离身份 + 合成数据的前置施工 | IN PROGRESS（正式 `src-tauri/`、最小 capability/CSP、受限 adapter、可重复 Desktop build、无服务离线首页和真实 WebView2 smoke 已落地；D0.2 已 PASS，D0.4/D0.5 未闭环，仍不得标 PASS） |
 | D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | IN PROGRESS（受限实现已完成：Web/Desktop 独立 base、BrowserRouter/HashRouter、PWA/Service Worker 和输出目录条件化，本地字体、双产物契约及三路由两次真实启动 smoke 均通过；最终 PASS 等待 D1.1 硬依赖闭环） |
 | D1.3 | 验证 Dexie/WebView2 数据持久化 | D1.2；仅合成夹具 | IN PROGRESS（dev-only 合成项目、outline、章节正文自动保存、正常关闭重启、独立空 profile、恢复原 profile、非密 localStorage 哨兵、同 identifier/同路径 exe 覆盖升级、schema fixtures 和 seed 顺序门已通过；卸载保留、stable 非 CDP 身份矩阵和失败注入尚未完成） |
 | D1.4 | 验证 IPC、流式和文件最短闭环 | D0.3、D1.1；不得接真实密钥/数据 | NOT STARTED |
@@ -2382,7 +2382,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 - D0.2、D0.3、D0.4 可在 D0.1 PASS 后由独立 checkout 并行；D0.5 等三者全部完成后统一冻结。
 - G1=Go 后，D2 与 D3 可按上表并行；共享类型/事件契约先定接口，D4 必须等待两条线全部 PASS。
 
-另有一次已登记的专项授权：2026-07-15 起，D1.1 可与 D0.2 / D0.4 / D0.5 的剩余闭环并行，但仅限开发隔离身份、合成数据和最小 capability 的前置实现；D1.1 的 PASS、正式 profile、真实密钥、真实数据、G1 及后续任务仍严格等待原硬依赖。
+另有一次已登记的专项授权：2026-07-15 起，D1.1 可与 D0.2 / D0.4 / D0.5 的剩余闭环并行，但仅限开发隔离身份、合成数据和最小 capability 的前置实现。D0.2 现已闭环，D0.4 / D0.5 仍未闭环；D1.1 的 PASS、正式 profile、真实密钥、真实数据、G1 及后续任务仍严格等待原硬依赖。
 
 除上表明确允许外不得越过硬依赖。并行任务必须各占独立 checkout、各自分支和 PR；合入 `main` 仍按 `COLLAB-WORKFLOW.md` 串行 rebase、验证、审查。
 
@@ -2430,17 +2430,18 @@ G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量�
 - **验证**：专项规划与本蓝图均包含 31 个唯一任务 ID；权威关系、依赖、链接和状态由 Claude 只读复核；无 TypeScript、Rust、Windows 客户端或 Web 运行时变更；
 - **Codex 交付状态**：PASS；独立 checkout `storyforge-desktop-d0`，分支 `refactor/phase-desktop-task-d0`；
 - **Claude 审查状态**：APPROVE，无阻断发现；两项非阻断观察为 D0.2/D0.4 草案须继续标 Draft、治理内容须提交并推送。审查证据见 [`windows-desktop/D0.1-CLAUDE-REVIEW.md`](./windows-desktop/D0.1-CLAUDE-REVIEW.md)；
-- **未决风险**：D0.2 已选择首个作者自用候选使用仅作者机器信任的 `CN=StoryForge Self-Use` 自签名 Authenticode，正式 publisher/受公共信任证书主体延后到 D5.2 且不得据仓库 owner 猜测；D0.3/D0.4 仍在进行中；D0.5～D5.5 未开始，G1/G2 未通过，尚无可用于真实数据的 Windows 客户端。
+- **未决风险**：D0.2 已 PASS，并选择首个作者自用候选使用仅作者机器信任的 `CN=StoryForge Self-Use` 自签名 Authenticode；正式 publisher/受公共信任证书主体延后到 D5.2 且不得据仓库 owner 猜测；D0.3 已 PASS，D0.4 仍在进行中；D0.5 未开始，D1～D5/G1/G2 均未完成，尚无可用于真实数据的 Windows 客户端。
 
-#### 🟠 D0.2 · 冻结应用身份与支持范围（2026-07-15 进行中）
+#### ✅ D0.2 · 冻结应用身份与支持范围（2026-07-15）
 
 - **source commit**：`dd151db`；已集成到 D1 前置施工树；
 - **实现摘要**：正式/开发 identity、UDF、Windows 10/11 x64 支持矩阵、升级回滚和 `CN=StoryForge Self-Use` 作者本机自签名边界已冻结；公开发行的 Authenticode publisher/受信任证书 Subject 延后到 D5.2；
 - **功能等价 / 数据红线**：本任务只冻结身份和支持边界，不创建 UDF、不生成证书、不导入数据；真实 profile 验证延后到 D1.3，失败会重开 D0.2；
-- **验证**：静态身份矩阵和决议已形成；尚无 Tauri profile、安装升级或卸载保留运行证据；
-- **Codex 交付状态**：IN PROGRESS；决议实现已提交，未冒充客户端可用；
-- **Claude 审查状态**：待独立审查闭环；
-- **未决风险**：D1.3 已完成 dev 同身份 exe 覆盖升级；dev/stable 双向隔离、stable 非 CDP 同身份升级和 UDF 失败恢复仍未执行。
+- **验证**：静态身份矩阵与品牌、dev/stable identifier、label、`dataDirectory`、stable `devtools=false`、支持范围、UDF/回滚及签名边界交叉核对通过；`npm.cmd run check:desktop-shell` PASS；尚无 Tauri profile、安装升级或卸载保留运行证据；
+- **Codex 交付状态**：PASS；决议实现与审查闭环已完成，未冒充客户端可用；
+- **Claude 审查状态**：未执行；本次由作者直接指定 Codex 在新独立 checkout 中执行只读审查，不冒充 Claude；
+- **独立审查结论**：APPROVE，P0/P1/P2/P3 均无 finding；审查基线 `f257e92`，source `dd151db`；证据见 [`windows-desktop/D0.2-CODEX-REVIEW.md`](./windows-desktop/D0.2-CODEX-REVIEW.md)；
+- **未决风险**：D1.3 已完成 dev 同身份 exe 覆盖升级；dev/stable 双向隔离、stable 非 CDP 同身份升级、卸载保留和 UDF 失败恢复仍未执行；任一失败会重开 D0.2。正式 publisher/受公共信任证书 Subject 仍须在 D5.2 冻结。
 
 #### ✅ D0.3 · 定义 RuntimeAdapter 契约（2026-07-14）
 
@@ -2470,7 +2471,7 @@ G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量�
 - **验证**：`cargo tauri build --no-bundle` PASS；开发身份 release exe 可在无 Vite/Node 时从 `tauri.localhost` 渲染真实首页，过程无 JS exception/CSP error；Web/PWA build、Desktop build contract、42 表、架构、基线/夹具、lint 0 errors、Rust fmt/clippy/test 均通过；全量 Vitest 513/514，唯一失败为既有 AI manual 漂移；详见 `docs/windows-desktop/D1.1-TAURI-SHELL-STATUS.md`；
 - **Codex 交付状态**：IN PROGRESS（受限实现已落地，未标 PASS）；
 - **Claude 审查状态**：实现已具备交付审查条件，尚未完成独立审查；
-- **未决风险**：D0.2/D0.4/D0.5 门禁未闭环；D1.3 持久化/身份隔离和 D1.4 IPC 尚未完成；不得连接真实密钥、默认正式 profile 或真实数据。
+- **未决风险**：D0.2 已 PASS；D0.4/D0.5 门禁仍未闭环；D1.3 持久化/身份隔离和 D1.4 IPC 尚未完成；不得连接真实密钥、默认正式 profile 或真实数据。
 
 #### 🟠 D1.2 · 条件化 base、router、PWA 与 Service Worker（2026-07-15 进行中）
 

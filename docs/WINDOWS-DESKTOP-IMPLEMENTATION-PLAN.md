@@ -12,7 +12,7 @@
 | --- | --- |
 | 规划日期 | 2026-07-14 |
 | 技术路线 | 已由用户确认 |
-| 当前状态 | D0.1 / D0.3 已 PASS；D0.2 / D0.4 进行中；D0.5 未开始；D1.1 与 D1.2 受限实现已落地，均仍为 IN PROGRESS；D1.3 dev-only 优先持久化、同身份 exe 覆盖升级和启动顺序门已通过，完整矩阵仍在施工 |
+| 当前状态 | D0.1 / D0.2 / D0.3 已 PASS；D0.4 进行中；D0.5 未开始；D1.1 与 D1.2 受限实现已落地，均仍为 IN PROGRESS；D1.3 dev-only 优先持久化、同身份 exe 覆盖升级和启动顺序门已通过，完整矩阵仍在施工 |
 | 第一平台 | Windows 10/11 x64 |
 | 第一验证人 | 项目作者本人 |
 | 数据迁移责任 | Codex 开发迁移工具、执行首次迁移并出具验证结果 |
@@ -33,14 +33,14 @@
 已完成或已形成的具体资产：
 
 - D0.1 已把 31 个桌面任务、功能零丢失、迁移和发布闸门纳入主蓝图，并通过独立治理审查；
-- D0.2 已冻结正式/开发 identity、UDF、Windows 支持边界和 `CN=StoryForge Self-Use` 作者本机自签名边界，仍待独立审查闭环；
+- D0.2 已冻结正式/开发 identity、UDF、Windows 支持边界和 `CN=StoryForge Self-Use` 作者本机自签名边界；作者指定 Codex 独立只读审查 APPROVE，P0/P1/P2/P3 均无 finding，任务已 PASS；
 - D0.3 已完成 `RuntimeAdapter` 契约、Web/Fake 实现、浏览器专属能力接管和架构守卫，并通过独立审查；Tauri target 在原生 adapter 注册前继续 fail closed；
 - D0.4 已落地 `d0.4-v2` 协议、静态采集器、`empty-v1` / `small-v1` 可重建夹具和严格 manifest；全量 Vitest 最近一次为 105 files / 414 tests PASS，其中 410 个为项目原有用例、4 个为本次桌面夹具与 manifest 新增用例；
 - D1.1 已创建正式 Rust/Tauri 壳、受限 adapter、最小 capability/CSP、双构建和开发身份 exe；真实 WebView2 首页冒烟通过，验证进程及动态调试端口均已清理。证据见 `windows-desktop/D1.1-TAURI-SHELL-STATUS.md`。
 - D1.2 已把 Inter、Source Serif 4、JetBrains Mono 改为随产物分发的本地字体；Web 保持 `/storyforge/` + BrowserRouter + PWA，Desktop 保持相对 base + HashRouter 且不含 PWA/Service Worker；真实 WebView2 两次启动的首页/设置/项目路由、合成项目重启可见和进程清理均通过。证据见 `windows-desktop/D1.2-BUILD-ROUTING-STATUS.md`。
 - D1.3 已在新构建 dev artifacts 上通过合成项目、outline、章节正文 1.5 秒自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile、非密 localStorage 哨兵，以及 `3.7.5` → `3.7.6` 同 identifier/同临时 exe 路径覆盖升级验证；五条真实 Dexie upgrade fixtures 和“迁移检查早于 Prompt/Workflow seed”顺序门回归也已通过。自动化/CDP 仍只允许 dev identity，stable 默认 UDF 未打开或覆盖。卸载保留、stable 非 CDP 身份矩阵和失败注入仍待实测，证据见 `windows-desktop/D1.3-PERSISTENCE-STATUS.md`。
 
-用户已于 2026-07-15 明确授权：D0.4 剩余动态基线不得继续阻塞开发，允许先推进只使用合成数据和开发隔离身份的 D1.1 前置施工。该授权只改变施工顺序，不改变完成门槛：D0.2、D0.4、D0.5 未闭环前，D1.1 不能标 PASS；不得接真实密钥、正式 profile 或真实用户数据。
+用户已于 2026-07-15 明确授权：D0.4 剩余动态基线不得继续阻塞开发，允许先推进只使用合成数据和开发隔离身份的 D1.1 前置施工。该授权只改变施工顺序，不改变完成门槛：D0.2 已闭环；D0.4、D0.5 未闭环前，D1.1 仍不能标 PASS；不得接真实密钥、正式 profile 或真实用户数据。
 
 本文件是 Windows 客户端专项施工规划，但不得覆盖仓库宪法和主蓝图：
 
@@ -479,6 +479,8 @@ beta/stable 的 PWA 回归是 D4/D5 发布阶段的独立质量要求，不把 i
 
 ### D0.2 · 冻结应用身份与支持范围
 
+**当前状态（2026-07-15）**：`PASS`。source `dd151db0c31b9c09e898c897870ec01fdffd9a08` 已集成；作者指定 Codex 基于审查基线 `f257e92114afd1eb3384f7736dc01a1dd670ae0e` 在新独立 checkout 中完成只读审查，结论 `APPROVE`，P0/P1/P2/P3 均无 finding。D1.3 延后运行矩阵尚未执行，失败时仍会重开 D0.2；本 PASS 不等于 D1.3、G1 或客户端可用。证据见 [`windows-desktop/D0.2-CODEX-REVIEW.md`](./windows-desktop/D0.2-CODEX-REVIEW.md)。
+
 **位置**
 
 - 新增桌面决策记录。
@@ -687,7 +689,7 @@ D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能
 
 ### D1.1 · 建立正式 Tauri 2 壳
 
-**当前状态（2026-07-15）**：受限实现与离线首页验证已完成，仍为 `IN PROGRESS`；D0.2、D0.4、D0.5 未闭环前不得标 `PASS`。详细证据见 [`windows-desktop/D1.1-TAURI-SHELL-STATUS.md`](./windows-desktop/D1.1-TAURI-SHELL-STATUS.md)。
+**当前状态（2026-07-15）**：受限实现与离线首页验证已完成，仍为 `IN PROGRESS`；D0.2 已 PASS，D0.4、D0.5 未闭环前仍不得标 `PASS`。详细证据见 [`windows-desktop/D1.1-TAURI-SHELL-STATUS.md`](./windows-desktop/D1.1-TAURI-SHELL-STATUS.md)。
 
 **位置**
 
