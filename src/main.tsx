@@ -22,6 +22,12 @@ applyStoryForgeTheme(resolveStoryForgeTheme(localStorage.getItem('storyforge-the
 registerStoryForgeServiceWorker()
 installRuntimeDiagnostics()
 
+if (import.meta.env.VITE_DESKTOP_CHANNEL === 'dev') {
+  void import('./runtime/tauri/dev-smoke').then(({ installDesktopDevSmoke }) => {
+    installDesktopDevSmoke()
+  })
+}
+
 /**
  * FB-11 数据持久 · 启动期申请「持久化存储」。
  * 不申请时浏览器把 IndexedDB 当 best-effort,可在磁盘压力/关闭清理/隐私插件下
