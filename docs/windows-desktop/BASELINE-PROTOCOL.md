@@ -2,6 +2,7 @@
 
 > 协议版本：`d0.4-v2`
 > 当前状态：**协议及 empty/small 可重建夹具已落地，生产 `web-tab` 完整实测尚未完成；installed PWA 仅为可选补充**
+> 夹具 source commit：`e62ae88`（2026-07-15）；105 test files / 414 tests PASS，其中 410 个为项目原有用例、4 个为 D0.4 新增用例
 > 适用对象：`web-tab`、`installed-pwa`、`tauri-dev`、`desktop-production`
 
 ## 1. 目标与边界

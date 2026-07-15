@@ -2313,7 +2313,18 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 3. 专项规划提供本节已登记任务的详细施工规格；若与本节或 `CLAUDE.md` 冲突，立即停止并先修正文档，不得自行择一执行。
 4. 功能等价动作清单的机器可读事实源在 D0.5 建立：`docs/windows-desktop/feature-parity-baseline.json`；专项规划 §5 是其人工初始矩阵，不复制进本蓝图维护第二份 68 项清单。
 5. D0.4 `d0.4-v2` 以当前生产 `web-tab` 作为唯一必需参考基线；installed PWA 仅为可选补充，缺失不阻塞 D0.4、D0.5 或 D1。该调整不放宽夹具、功能、规范化数据 hash、性能、恢复、安全或功能零丢失硬门。
-6. 本专项当前状态为 **D0 进行中**。D0.1 已由 Codex 交付并于 2026-07-14 通过 Claude 独立治理审查；D0.2 已冻结作者自用本机自签名边界，仍待本次决议提交与独立审查，D0.3～D0.4 进行中；D0.5～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过桌面验证”。
+6. 本专项当前状态为 **D0 进行中，D1.1 受限前置施工已启动**。D0.1、D0.3 已 PASS；D0.2、D0.4 进行中；D0.5 未开始；D1.1 当前仅完成依赖集成和规格核对，尚无正式 `src-tauri/`、可运行 exe 或 Windows 客户端验证。D1.2～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过桌面验证”。
+7. 用户于 2026-07-15 明确授权 D0.4 剩余动态基线不阻塞开发，并允许先推进只使用合成数据和开发隔离身份的 D1.1 最小壳。该授权只调整施工顺序，不放宽完成门槛：D0.2、D0.4、D0.5 未闭环前 D1.1 不得标 PASS，不得连接真实密钥、正式 profile 或真实用户数据，也不得越过 G1/G2。
+
+#### 2026-07-15 进度快照
+
+| 口径 | 当前事实 |
+|---|---|
+| 作者自用版交付准备度 | 约 **25%～30%**，仅为管理估算；主要完成治理、运行时边界和部分可重建基线，不是闸门通过比例 |
+| 可运行客户端 | 0 个可交付 exe；正式 Tauri/Rust 壳、离线启动、WebView2/Dexie 持久化均无完成证据 |
+| 功能等价 | D0.5 未建立，68 个聚合 FP 行及其 actionId 尚无 Desktop PASS |
+| 旧数据迁移 | D2 未开始；未读取、复制或改写作者真实浏览器数据 |
+| 发布状态 | G1、G2、stable 均未通过；不能使用真实数据、封测或公开分发 |
 
 ### 17.2 功能等价与数据迁移永久红线
 
@@ -2336,10 +2347,10 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 |---|---|---|---|
 | D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | PASS（2026-07-14；Claude 独立审查无阻断项） |
 | D0.2 | 冻结应用身份与支持范围 | D0.1；作者自用候选签名边界已确认；正式 Authenticode publisher/受公共信任证书 Subject 延后到 D5.2 | IN PROGRESS（技术身份、UDF、支持矩阵、回滚及 `CN=StoryForge Self-Use` 本机自签名边界已冻结；待本次决议提交与独立审查） |
-| D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | IN PROGRESS（浏览器专属能力与 PoC 风险盘点完成） |
+| D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | PASS（source `c062b19`；RuntimeAdapter contract、Web/Fake、浏览器能力接管和架构守卫完成；独立审查 APPROVE） |
 | D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议已落地；`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验，`small-v1` 嵌套引用及规范化往返业务 hash 均为 PASS；large/blob/legacy 完整夹具与生产 `web-tab` 实测尚未齐全；installed PWA 可选） |
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
-| D1.1 | 建立正式 Tauri 2 壳 | D0.1～D0.5 全部 PASS | NOT STARTED |
+| D1.1 | 建立正式 Tauri 2 壳 | 最终 PASS 仍依赖 D0.1～D0.5；2026-07-15 特别授权仅允许开发隔离身份 + 合成数据的前置施工 | IN PROGRESS（仅依赖集成与规格核对；`src-tauri/`、Tauri 依赖、exe 和离线启动证据均未落地） |
 | D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | NOT STARTED |
 | D1.3 | 验证 Dexie/WebView2 数据持久化 | D1.2；仅合成夹具 | NOT STARTED |
 | D1.4 | 验证 IPC、流式和文件最短闭环 | D0.3、D1.1；不得接真实密钥/数据 | NOT STARTED |
@@ -2366,10 +2377,12 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 | D5.4 | 系统化 QA 与发布矩阵 | 功能冻结；D5.1～D5.3 形成待测候选 | NOT STARTED |
 | D5.5 | 公开稳定版准入 | D5.1～D5.4；beta 观察完成；同一 artifact hash 冻结 | NOT STARTED |
 
-允许并行的边界只有两处：
+常规允许并行的边界只有两处：
 
 - D0.2、D0.3、D0.4 可在 D0.1 PASS 后由独立 checkout 并行；D0.5 等三者全部完成后统一冻结。
 - G1=Go 后，D2 与 D3 可按上表并行；共享类型/事件契约先定接口，D4 必须等待两条线全部 PASS。
+
+另有一次已登记的专项授权：2026-07-15 起，D1.1 可与 D0.2 / D0.4 / D0.5 的剩余闭环并行，但仅限开发隔离身份、合成数据和最小 capability 的前置实现；D1.1 的 PASS、正式 profile、真实密钥、真实数据、G1 及后续任务仍严格等待原硬依赖。
 
 除上表明确允许外不得越过硬依赖。并行任务必须各占独立 checkout、各自分支和 PR；合入 `main` 仍按 `COLLAB-WORKFLOW.md` 串行 rebase、验证、审查。
 
@@ -2418,6 +2431,46 @@ G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量�
 - **Codex 交付状态**：PASS；独立 checkout `storyforge-desktop-d0`，分支 `refactor/phase-desktop-task-d0`；
 - **Claude 审查状态**：APPROVE，无阻断发现；两项非阻断观察为 D0.2/D0.4 草案须继续标 Draft、治理内容须提交并推送。审查证据见 [`windows-desktop/D0.1-CLAUDE-REVIEW.md`](./windows-desktop/D0.1-CLAUDE-REVIEW.md)；
 - **未决风险**：D0.2 已选择首个作者自用候选使用仅作者机器信任的 `CN=StoryForge Self-Use` 自签名 Authenticode，正式 publisher/受公共信任证书主体延后到 D5.2 且不得据仓库 owner 猜测；D0.3/D0.4 仍在进行中；D0.5～D5.5 未开始，G1/G2 未通过，尚无可用于真实数据的 Windows 客户端。
+
+#### 🟠 D0.2 · 冻结应用身份与支持范围（2026-07-15 进行中）
+
+- **source commit**：`dd151db`；已集成到 D1 前置施工树；
+- **实现摘要**：正式/开发 identity、UDF、Windows 10/11 x64 支持矩阵、升级回滚和 `CN=StoryForge Self-Use` 作者本机自签名边界已冻结；公开发行的 Authenticode publisher/受信任证书 Subject 延后到 D5.2；
+- **功能等价 / 数据红线**：本任务只冻结身份和支持边界，不创建 UDF、不生成证书、不导入数据；真实 profile 验证延后到 D1.3，失败会重开 D0.2；
+- **验证**：静态身份矩阵和决议已形成；尚无 Tauri profile、安装升级或卸载保留运行证据；
+- **Codex 交付状态**：IN PROGRESS；决议实现已提交，未冒充客户端可用；
+- **Claude 审查状态**：待独立审查闭环；
+- **未决风险**：D1.3 的 dev/stable 双向隔离、同身份覆盖升级、UDF 失败恢复仍未执行。
+
+#### ✅ D0.3 · 定义 RuntimeAdapter 契约（2026-07-14）
+
+- **source commit**：`c062b19`；
+- **实现摘要**：共享 TypeScript contract、Web/Fake adapter、AI/Gist/文件/备份/secret/clipboard/external/durability/distribution/update/diagnostics 接管完成；Tauri target 在 native adapter 注册前 fail closed；
+- **功能等价 / 数据红线**：AI 读写和表生命周期仍由三个注册表负责；RuntimeAdapter 只移动已组装的请求、响应、文本和字节，不直接读写业务表；
+- **验证**：独立复跑 architecture 17 + Web runtime 41 + Gist 9，共 67/67 PASS；D0.3 定向 11 files / 109 tests、TypeScript、architecture、42 required tables、Web build 和 lint 0 errors 通过；
+- **Codex 交付状态**：PASS；
+- **Claude 审查状态**：APPROVE，无 P0/P1 或 D0.3 新增 P2 blocker；
+- **未决风险**：正式 Tauri/Rust、Credential Manager、原生文件、打包和真实数据迁移属于 D1～D4，不在本 PASS 范围。
+
+#### 🟠 D0.4 · 建立功能、性能和安全基线（2026-07-15 进行中）
+
+- **source commit**：`e62ae88`；分支 `refactor/phase-desktop-task-d0-4-fixtures` 已推送；
+- **实现摘要**：`d0.4-v2` 协议、schema、静态采集器、`empty-v1` / `small-v1` 可重建夹具、严格 manifest、嵌套引用 remap 和规范化往返业务 hash 已落地；
+- **功能等价 / 数据红线**：夹具表集合从 `PROJECT_TABLES` 派生；源数据未被修改，未采集指标保持 `NOT_MEASURED/NOT_ELIGIBLE`，不会用估算值冒充结果；
+- **验证**：105 test files / 414 tests PASS（410 个项目原有用例 + 4 个本次新增用例）；fixture 重建、baseline contract、42 required tables、AI manual、architecture、TypeScript、production build 和 lint 0 errors 全部通过；
+- **Codex 交付状态**：IN PROGRESS；empty/small 静态资产完成，未标 D0.4 PASS；
+- **Claude 审查状态**：待完整 D0.4 闭环后独立审查；
+- **未决风险**：large/blob/legacy 夹具与生产 `web-tab` 功能、性能、恢复、安全实测未齐；installed PWA 仅为可选补充。
+
+#### 🟠 D1.1 · 建立正式 Tauri 2 壳（2026-07-15 进行中）
+
+- **source commit**：`36d3b72` 仅承载 D0.2～D0.4 依赖/契约集成，尚无 Tauri 产品代码提交；
+- **实现摘要**：已核对 identity、UDF、runtime target、Web/Desktop 双构建、最小 capability、CSP 和离线壳边界；正式 `src-tauri/` 与受限 Tauri adapter 尚未创建；
+- **功能等价 / 数据红线**：只允许开发隔离身份和合成数据；不得把 desktop target 伪装成 web，不得使用正式 profile、真实密钥或真实数据；
+- **验证**：当前仅确认仓库没有 `src-tauri/` 和 Tauri npm 依赖；未构建 exe，未运行 WebView2、Cargo 或离线启动 smoke；
+- **Codex 交付状态**：IN PROGRESS（前置施工）；
+- **Claude 审查状态**：未进入可审查实现阶段；
+- **未决风险**：D0.2/D0.4/D0.5 门禁未闭环，D1.1 不能标 PASS；`src/runtime/index.ts` 对 tauri target 仍 fail closed，最小 native adapter 与 Rust 壳必须同时落地才能避免白屏。
 
 ---
 
