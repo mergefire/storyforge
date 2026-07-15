@@ -1,9 +1,16 @@
-import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import type { Character } from '../../lib/types'
 import { dimensionsByGroup, type CharacterDimensionKey, type CharacterDimensionSpec } from '../../lib/character/character-dimensions'
 import { CTextarea } from '../shared/CompositionInput'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAIStream } from '../../hooks/useAIStream'
+import { createAISessionKey } from '../../stores/ai-generation-session'
+import { buildCharacterDimensionPrompt } from '../../lib/ai/adapters/character-adapter'
+import { assembleContext } from '../../lib/registry/assemble-context'
+import { useAIConfigStore } from '../../stores/ai-config'
+import AIStreamOutput from '../shared/AIStreamOutput'
+import AIFieldModeTabs from '../shared/AIFieldModeTabs'
+import type { FieldGenerationMode } from '../../lib/ai/field-generation-context'
 
 interface Props {
   character: Character
@@ -86,7 +93,7 @@ function CharacterDimensionField({ dimension, value, onCommit }: DimensionFieldP
  * 加一个维度只改 CHARACTER_DIMENSIONS + FIELD_REGISTRY,这里自动出现。
  * 传入 project 时,每个字段可就地单独 AI 生成/修改（扩写/重写/润色）。
  */
-export default function CharacterDimensionFields({ character, onChange, exclude = [], projectId, worldGroupId = null }: Props) {
+export default function CharacterDimensionFields({ character, onChange, exclude = [] }: Props) {
   const skip = new Set<CharacterDimensionKey>(exclude)
 
   return (
@@ -113,58 +120,6 @@ export default function CharacterDimensionFields({ character, onChange, exclude 
           </div>
         )
       })}
-    </div>
-  )
-}
-
-// ── 单维度行（含可选的就地 AI 编辑器） ──────────────────────────
-
-function DimensionRow({ dim, character, onChange, projectId, worldGroupId }: {
-  dim: { key: CharacterDimensionKey; label: string; rows: number }
-  character: Character
-  onChange: (patch: Partial<Character>) => void
-  projectId?: number
-  worldGroupId: number | null
-}) {
-  const [aiOpen, setAiOpen] = useState(false)
-  const value = (character[dim.key] as string) || ''
-
-  return (
-    <div>
-      <div className="flex gap-2">
-        <span className="w-20 flex-shrink-0 pt-1.5 text-xs text-text-muted">{dim.label}</span>
-        <CTextarea
-          value={value}
-          onChange={e => onChange({ [dim.key]: e.target.value } as Partial<Character>)}
-          placeholder={`${dim.label}…`}
-          rows={dim.rows}
-          className="flex-1 px-2 py-1 bg-bg-base border border-border rounded text-xs text-text-primary resize-y focus:outline-none focus:border-accent"
-        />
-        {projectId != null && (
-          <button
-            onClick={() => setAiOpen(v => !v)}
-            title={`AI ${value ? '修改' : '生成'}「${dim.label}」`}
-            className={`shrink-0 self-start mt-0.5 p-1.5 rounded transition-colors ${
-              aiOpen ? 'bg-accent/20 text-accent' : 'text-text-muted hover:text-accent hover:bg-accent/10'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-      {projectId != null && aiOpen && (
-        <div className="ml-[5.5rem] mt-1.5">
-          <CharacterFieldAIEditor
-            fieldKey={dim.key}
-            fieldLabel={dim.label}
-            character={character}
-            projectId={projectId}
-            worldGroupId={worldGroupId}
-            currentValue={value}
-            onAccept={text => { onChange({ [dim.key]: text } as Partial<Character>); setAiOpen(false) }}
-          />
-        </div>
-      )}
     </div>
   )
 }

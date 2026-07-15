@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-14T11:41:20.501Z",
+  "title": "Design System: StoryForge / 故事熔炉",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "窑火陶棕",
+        "canonical": "#965A3A",
+        "tonalRamp": ["oklch(15% 0.07 45)", "oklch(26% 0.08 45)", "oklch(38% 0.09 45)", "oklch(50% 0.10 45)", "oklch(62% 0.09 45)", "oklch(74% 0.07 45)", "oklch(86% 0.04 45)", "oklch(95% 0.02 45)"]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "窑火深棕",
+        "canonical": "#85492F",
+        "tonalRamp": ["oklch(15% 0.07 45)", "oklch(26% 0.08 45)", "oklch(38% 0.09 45)", "oklch(50% 0.10 45)", "oklch(62% 0.09 45)", "oklch(74% 0.07 45)", "oklch(86% 0.04 45)", "oklch(95% 0.02 45)"]
+      },
+      "primary-muted": {
+        "role": "primary",
+        "displayName": "窑火余温",
+        "canonical": "#D3A47C",
+        "tonalRamp": ["oklch(15% 0.05 55)", "oklch(26% 0.06 55)", "oklch(38% 0.07 55)", "oklch(50% 0.08 55)", "oklch(62% 0.07 55)", "oklch(74% 0.06 55)", "oklch(86% 0.04 55)", "oklch(95% 0.02 55)"]
+      },
+      "primary-soft": {
+        "role": "primary",
+        "displayName": "窑火浅染",
+        "canonical": "#965A3A1F",
+        "tonalRamp": ["oklch(15% 0.07 45)", "oklch(26% 0.08 45)", "oklch(38% 0.09 45)", "oklch(50% 0.10 45)", "oklch(62% 0.09 45)", "oklch(74% 0.07 45)", "oklch(86% 0.04 45)", "oklch(95% 0.02 45)"]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "暖白底台",
+        "canonical": "#F4EFE7",
+        "tonalRamp": ["oklch(15% 0.015 75)", "oklch(27% 0.016 75)", "oklch(39% 0.017 75)", "oklch(51% 0.018 75)", "oklch(63% 0.017 75)", "oklch(75% 0.015 75)", "oklch(87% 0.012 75)", "oklch(95% 0.008 75)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "浅陶工作面",
+        "canonical": "#E9E0D4",
+        "tonalRamp": ["oklch(15% 0.018 70)", "oklch(27% 0.019 70)", "oklch(39% 0.020 70)", "oklch(51% 0.021 70)", "oklch(63% 0.020 70)", "oklch(75% 0.017 70)", "oklch(87% 0.013 70)", "oklch(95% 0.008 70)"]
+      },
+      "surface-elevated": {
+        "role": "neutral",
+        "displayName": "暖白稿纸",
+        "canonical": "#FFFDF8",
+        "tonalRamp": ["oklch(15% 0.010 75)", "oklch(27% 0.011 75)", "oklch(39% 0.012 75)", "oklch(51% 0.013 75)", "oklch(63% 0.012 75)", "oklch(75% 0.010 75)", "oklch(87% 0.007 75)", "oklch(95% 0.004 75)"]
+      },
+      "hover": {
+        "role": "neutral",
+        "displayName": "炭墨悬停",
+        "canonical": "#362D240D",
+        "tonalRamp": ["oklch(15% 0.025 55)", "oklch(27% 0.026 55)", "oklch(39% 0.027 55)", "oklch(51% 0.025 55)", "oklch(63% 0.021 55)", "oklch(75% 0.016 55)", "oklch(87% 0.010 55)", "oklch(95% 0.005 55)"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "炭墨",
+        "canonical": "#2B2620",
+        "tonalRamp": ["oklch(15% 0.025 55)", "oklch(27% 0.026 55)", "oklch(39% 0.027 55)", "oklch(51% 0.025 55)", "oklch(63% 0.021 55)", "oklch(75% 0.016 55)", "oklch(87% 0.010 55)", "oklch(95% 0.005 55)"]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "焦褐副墨",
+        "canonical": "#6A5B4B",
+        "tonalRamp": ["oklch(15% 0.030 60)", "oklch(27% 0.032 60)", "oklch(39% 0.034 60)", "oklch(51% 0.032 60)", "oklch(63% 0.027 60)", "oklch(75% 0.020 60)", "oklch(87% 0.012 60)", "oklch(95% 0.006 60)"]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "灰褐注记",
+        "canonical": "#9A8A78",
+        "tonalRamp": ["oklch(15% 0.025 65)", "oklch(27% 0.028 65)", "oklch(39% 0.030 65)", "oklch(51% 0.028 65)", "oklch(63% 0.024 65)", "oklch(75% 0.018 65)", "oklch(87% 0.011 65)", "oklch(95% 0.005 65)"]
+      },
+      "on-primary": {
+        "role": "neutral",
+        "displayName": "主动作前景",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(27% 0 0)", "oklch(39% 0 0)", "oklch(51% 0 0)", "oklch(63% 0 0)", "oklch(75% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "细墨边界",
+        "canonical": "#362D2424",
+        "tonalRamp": ["oklch(15% 0.025 55)", "oklch(27% 0.026 55)", "oklch(39% 0.027 55)", "oklch(51% 0.025 55)", "oklch(63% 0.021 55)", "oklch(75% 0.016 55)", "oklch(87% 0.010 55)", "oklch(95% 0.005 55)"]
+      },
+      "border-hover": {
+        "role": "neutral",
+        "displayName": "交互边界",
+        "canonical": "#362D2442",
+        "tonalRamp": ["oklch(15% 0.025 55)", "oklch(27% 0.026 55)", "oklch(39% 0.027 55)", "oklch(51% 0.025 55)", "oklch(63% 0.021 55)", "oklch(75% 0.016 55)", "oklch(87% 0.010 55)", "oklch(95% 0.005 55)"]
+      },
+      "border-subtle": {
+        "role": "neutral",
+        "displayName": "弱分隔边界",
+        "canonical": "#362D2412",
+        "tonalRamp": ["oklch(15% 0.025 55)", "oklch(27% 0.026 55)", "oklch(39% 0.027 55)", "oklch(51% 0.025 55)", "oklch(63% 0.021 55)", "oklch(75% 0.016 55)", "oklch(87% 0.010 55)", "oklch(95% 0.005 55)"]
+      },
+      "editor-page": {
+        "role": "neutral",
+        "displayName": "暖白稿纸",
+        "canonical": "#FFFDF8",
+        "tonalRamp": ["oklch(15% 0.010 75)", "oklch(27% 0.011 75)", "oklch(39% 0.012 75)", "oklch(51% 0.013 75)", "oklch(63% 0.012 75)", "oklch(75% 0.010 75)", "oklch(87% 0.007 75)", "oklch(95% 0.004 75)"]
+      },
+      "selection-bg": {
+        "role": "primary",
+        "displayName": "选区陶棕",
+        "canonical": "#A66A4A38",
+        "tonalRamp": ["oklch(15% 0.07 45)", "oklch(26% 0.08 45)", "oklch(38% 0.09 45)", "oklch(50% 0.10 45)", "oklch(62% 0.09 45)", "oklch(74% 0.07 45)", "oklch(86% 0.04 45)", "oklch(95% 0.02 45)"]
+      },
+      "selection-ink": {
+        "role": "neutral",
+        "displayName": "选区深墨",
+        "canonical": "#1E1711",
+        "tonalRamp": ["oklch(15% 0.030 50)", "oklch(27% 0.032 50)", "oklch(39% 0.030 50)", "oklch(51% 0.027 50)", "oklch(63% 0.022 50)", "oklch(75% 0.016 50)", "oklch(87% 0.010 50)", "oklch(95% 0.005 50)"]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "完成绿",
+        "canonical": "#15803D",
+        "tonalRamp": ["oklch(15% 0.09 145)", "oklch(27% 0.11 145)", "oklch(39% 0.13 145)", "oklch(51% 0.14 145)", "oklch(63% 0.12 145)", "oklch(75% 0.09 145)", "oklch(87% 0.05 145)", "oklch(95% 0.02 145)"]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "提醒棕",
+        "canonical": "#B45309",
+        "tonalRamp": ["oklch(15% 0.10 65)", "oklch(27% 0.12 65)", "oklch(39% 0.14 65)", "oklch(51% 0.15 65)", "oklch(63% 0.13 65)", "oklch(75% 0.10 65)", "oklch(87% 0.06 65)", "oklch(95% 0.03 65)"]
+      },
+      "error": {
+        "role": "semantic",
+        "displayName": "错误红",
+        "canonical": "#B91C1C",
+        "tonalRamp": ["oklch(15% 0.10 25)", "oklch(27% 0.13 25)", "oklch(39% 0.16 25)", "oklch(51% 0.17 25)", "oklch(63% 0.14 25)", "oklch(75% 0.10 25)", "oklch(87% 0.06 25)", "oklch(95% 0.03 25)"]
+      },
+      "info": {
+        "role": "semantic",
+        "displayName": "说明蓝",
+        "canonical": "#1D4ED8",
+        "tonalRamp": ["oklch(15% 0.09 255)", "oklch(27% 0.12 255)", "oklch(39% 0.15 255)", "oklch(51% 0.16 255)", "oklch(63% 0.13 255)", "oklch(75% 0.09 255)", "oklch(87% 0.05 255)", "oklch(95% 0.02 255)"]
+      },
+      "jade-accent": {
+        "role": "secondary",
+        "displayName": "墨玉青",
+        "canonical": "#65BFA8",
+        "tonalRamp": ["oklch(15% 0.07 165)", "oklch(27% 0.09 165)", "oklch(39% 0.11 165)", "oklch(51% 0.12 165)", "oklch(63% 0.11 165)", "oklch(75% 0.08 165)", "oklch(87% 0.05 165)", "oklch(95% 0.02 165)"]
+      },
+      "slate-accent": {
+        "role": "secondary",
+        "displayName": "冷灰银蓝",
+        "canonical": "#3F6F96",
+        "tonalRamp": ["oklch(15% 0.06 245)", "oklch(27% 0.08 245)", "oklch(39% 0.10 245)", "oklch(51% 0.11 245)", "oklch(63% 0.09 245)", "oklch(75% 0.07 245)", "oklch(87% 0.04 245)", "oklch(95% 0.02 245)"]
+      },
+      "forge-accent": {
+        "role": "secondary",
+        "displayName": "熔炉余烬",
+        "canonical": "#D97757",
+        "tonalRamp": ["oklch(15% 0.09 40)", "oklch(27% 0.11 40)", "oklch(39% 0.13 40)", "oklch(51% 0.14 40)", "oklch(63% 0.12 40)", "oklch(75% 0.09 40)", "oklch(87% 0.05 40)", "oklch(95% 0.02 40)"]
+      },
+      "scroll-accent": {
+        "role": "secondary",
+        "displayName": "古卷赭棕",
+        "canonical": "#7B3A1A",
+        "tonalRamp": ["oklch(15% 0.08 45)", "oklch(27% 0.10 45)", "oklch(39% 0.12 45)", "oklch(51% 0.13 45)", "oklch(63% 0.11 45)", "oklch(75% 0.08 45)", "oklch(87% 0.05 45)", "oklch(95% 0.02 45)"]
+      },
+      "paper-accent": {
+        "role": "secondary",
+        "displayName": "纸墨陶红",
+        "canonical": "#A04E35",
+        "tonalRamp": ["oklch(15% 0.08 35)", "oklch(27% 0.10 35)", "oklch(39% 0.12 35)", "oklch(51% 0.13 35)", "oklch(63% 0.11 35)", "oklch(75% 0.08 35)", "oklch(87% 0.05 35)", "oklch(95% 0.02 35)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "仪式标题", "purpose": "首页、项目仪式和极少数最高层标题。" },
+      "headline": { "displayName": "创作对象标题", "purpose": "章节或当前创作对象的最高层标题。" },
+      "title": { "displayName": "工作区标题", "purpose": "面板主标题和重要对象名称。" },
+      "manuscript": { "displayName": "长篇正文", "purpose": "16px、2.2 行高、65–75ch 的连续阅读。" },
+      "body": { "displayName": "产品正文", "purpose": "说明、属性、检查结果和常规界面内容。" },
+      "label": { "displayName": "控件标签", "purpose": "按钮、字段标签和紧凑状态。" },
+      "mono": { "displayName": "诊断数据", "purpose": "字数、版本、Token、时间戳和诊断信息。" }
+    },
+    "shadows": [
+      { "name": "theme-sm", "value": "0 1px 3px rgba(54,45,36,0.08)", "purpose": "紧凑菜单、提示和轻量拖拽状态。" },
+      { "name": "theme-md", "value": "0 6px 18px rgba(54,45,36,0.10)", "purpose": "浮动工具条、弹出选择器和非模态临时面板。" },
+      { "name": "theme-lg", "value": "0 16px 44px rgba(54,45,36,0.14)", "purpose": "模态对话框；常驻面板禁止使用。" }
+    ],
+    "motion": [
+      { "name": "state-standard", "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "颜色、边框和图标状态变化。" },
+      { "name": "panel-resize", "value": "200ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "侧栏展开与折叠。" },
+      { "name": "toast-enter", "value": "300ms cubic-bezier(0, 0, 0.2, 1)", "purpose": "Toast 淡入与短距离进入；必须提供 reduced-motion 替代。" }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "每个工作面唯一的高强调动作，按下时提供短促触感。",
+      "html": "<button type='button' class='ds-btn-primary'>续写</button>",
+      "css": ".ds-btn-primary{appearance:none;border:0;border-radius:6px;background:var(--accent);color:var(--bg-base);padding:8px 16px;min-height:36px;font:500 14px/1.4 var(--font-sans);cursor:pointer;transition:background-color 150ms cubic-bezier(.4,0,.2,1),transform 150ms cubic-bezier(.4,0,.2,1)}.ds-btn-primary:hover{background:var(--accent-hover)}.ds-btn-primary:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent);outline-offset:2px}.ds-btn-primary:active{transform:translateY(1px)}.ds-btn-primary:disabled{opacity:.55;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-btn-primary{transition:none}.ds-btn-primary:active{transform:none}}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "边界明确但不与主动作竞争的次级操作。",
+      "html": "<button type='button' class='ds-btn-secondary'>检查</button>",
+      "css": ".ds-btn-secondary{appearance:none;border:1px solid var(--border);border-radius:6px;background:var(--bg-elevated);color:var(--text-secondary);padding:6px 12px;min-height:32px;font:500 14px/1.4 var(--font-sans);cursor:pointer;box-shadow:none;transition:background-color 150ms cubic-bezier(.4,0,.2,1),color 150ms cubic-bezier(.4,0,.2,1),transform 150ms cubic-bezier(.4,0,.2,1)}.ds-btn-secondary:hover{background:var(--bg-hover);color:var(--text-primary)}.ds-btn-secondary:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent);outline-offset:2px}.ds-btn-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-btn-secondary{transition:none}.ds-btn-secondary:active{transform:none}}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "标签常驻、焦点清楚且占位符保持可读的文本字段。",
+      "html": "<label class='ds-field'><span class='ds-field-label'>修改要求</span><input class='ds-input' type='text' placeholder='例如：让冲突更紧张'></label>",
+      "css": ".ds-field{display:grid;gap:6px;color:var(--text-primary);font-family:var(--font-sans)}.ds-field-label{font-size:12px;font-weight:500}.ds-input{box-sizing:border-box;width:100%;min-height:40px;border:1px solid var(--border);border-radius:6px;background:var(--bg-elevated);color:var(--text-primary);padding:8px 12px;font:400 14px/1.5 var(--font-sans);transition:border-color 150ms cubic-bezier(.4,0,.2,1),outline-color 150ms cubic-bezier(.4,0,.2,1)}.ds-input::placeholder{color:var(--text-secondary);opacity:1}.ds-input:hover{border-color:var(--border-hover)}.ds-input:focus-visible{border-color:var(--accent);outline:3px solid color-mix(in srgb,var(--accent) 28%,transparent);outline-offset:1px}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}"
+    },
+    {
+      "name": "Selected Chip",
+      "kind": "chip",
+      "refersTo": "chip-selected",
+      "description": "以完整浅色选中面表达筛选或对象状态，不使用侧色条。",
+      "html": "<button type='button' class='ds-chip-selected' aria-pressed='true'>玄幻</button>",
+      "css": ".ds-chip-selected{appearance:none;border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);border-radius:9999px;background:var(--accent-soft);color:var(--accent);padding:4px 10px;font:500 12px/1.5 var(--font-sans);cursor:pointer;transition:background-color 150ms cubic-bezier(.4,0,.2,1),transform 150ms cubic-bezier(.4,0,.2,1)}.ds-chip-selected:hover{background:color-mix(in srgb,var(--accent) 18%,transparent)}.ds-chip-selected:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent);outline-offset:2px}.ds-chip-selected:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-chip-selected{transition:none}.ds-chip-selected:active{transform:none}}"
+    },
+    {
+      "name": "Sidebar Navigation Item",
+      "kind": "nav",
+      "description": "当前模块使用完整选中背景与文字状态，不延续 2px 彩色侧条。",
+      "html": "<button type='button' class='ds-nav-item' aria-current='page'><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='2' aria-hidden='true'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z'/></svg><span>世界观</span></button>",
+      "css": ".ds-nav-item{appearance:none;display:flex;align-items:center;gap:8px;width:100%;border:0;border-radius:6px;background:var(--accent-soft);color:var(--accent);padding:7px 10px;font:500 14px/1.4 var(--font-sans);text-align:left;cursor:pointer;transition:background-color 150ms cubic-bezier(.4,0,.2,1),transform 150ms cubic-bezier(.4,0,.2,1)}.ds-nav-item:hover{background:color-mix(in srgb,var(--accent) 18%,transparent)}.ds-nav-item:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent);outline-offset:2px}.ds-nav-item:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-nav-item{transition:none}.ds-nav-item:active{transform:none}}"
+    },
+    {
+      "name": "Editorial Project Row",
+      "kind": "custom",
+      "description": "项目保持出版式行列表，而不是转换为相同卡片矩阵。",
+      "html": "<button type='button' class='ds-project-row'><span class='ds-project-glyph' aria-hidden='true'>城</span><span class='ds-project-copy'><strong>城门夜雨</strong><small>玄幻 · 连载中 · 12.4 万字</small></span><span class='ds-project-progress'>今日 2,438 / 4,000</span></button>",
+      "css": ".ds-project-row{appearance:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid var(--border);border-radius:0;background:transparent;color:var(--text-primary);padding:14px 8px;font-family:var(--font-sans);text-align:left;cursor:pointer;transition:background-color 150ms cubic-bezier(.4,0,.2,1),transform 150ms cubic-bezier(.4,0,.2,1)}.ds-project-row:hover{border-radius:8px;background:var(--bg-hover);transform:translateX(2px)}.ds-project-row:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent);outline-offset:2px}.ds-project-row:active{transform:translateX(2px) translateY(1px)}.ds-project-glyph{display:grid;place-items:center;width:32px;height:32px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-family:var(--font-serif)}.ds-project-copy{display:grid;gap:3px;min-width:0}.ds-project-copy strong{font:500 15px/1.4 var(--font-serif)}.ds-project-copy small,.ds-project-progress{color:var(--text-secondary);font:400 12px/1.4 var(--font-sans)}@media(max-width:520px){.ds-project-row{grid-template-columns:auto minmax(0,1fr)}.ds-project-progress{grid-column:2}}@media(prefers-reduced-motion:reduce){.ds-project-row{transition:none}.ds-project-row:hover,.ds-project-row:active{transform:none}}"
+    },
+    {
+      "name": "Manuscript Page",
+      "kind": "custom",
+      "refersTo": "manuscript-page",
+      "description": "以排版和明度建立文学感的主稿件面，不使用横线纸纹或常驻阴影。",
+      "html": "<article class='ds-manuscript'><header><span>第十二章</span><h3>城门夜雨</h3></header><p>雨停之后，城墙上的火把仍在风里摇晃。</p><p>他把密信重新折好，没有立即交给身后的侍从。</p></article>",
+      "css": ".ds-manuscript{box-sizing:border-box;max-width:72ch;border:1px solid var(--border);border-radius:16px;background:var(--editor-page-bg);color:var(--editor-ink-primary);padding:32px;box-shadow:none;font:400 16px/2.2 var(--font-serif);letter-spacing:.01em}.ds-manuscript header{text-align:center;margin-bottom:24px}.ds-manuscript header span{display:block;color:var(--text-secondary);font:500 12px/1.5 var(--font-sans)}.ds-manuscript h3{margin:8px 0 0;color:var(--editor-ink-strong);font:600 30px/1.2 var(--font-serif);letter-spacing:.025em}.ds-manuscript p{margin:0 0 1.15em;text-indent:2em}.ds-manuscript p:last-child{margin-bottom:0}@media(max-width:520px){.ds-manuscript{padding:20px;border-radius:12px}}@media(prefers-reduced-motion:reduce){.ds-manuscript{scroll-behavior:auto}}"
+    },
+    {
+      "name": "Dialog",
+      "kind": "custom",
+      "description": "真正离开文档流的高层级表面，提供明确标题、说明、取消和确认。",
+      "html": "<section class='ds-dialog' role='dialog' aria-modal='true' aria-labelledby='ds-dialog-title'><header><h3 id='ds-dialog-title'>应用 AI 修改？</h3><p>将替换当前选区，应用后仍可撤销。</p></header><div class='ds-dialog-actions'><button type='button' class='ds-dialog-cancel'>取消</button><button type='button' class='ds-dialog-confirm'>应用修改</button></div></section>",
+      "css": ".ds-dialog{box-sizing:border-box;width:min(100%,420px);border:0;border-radius:8px;background:var(--bg-surface);color:var(--text-primary);padding:16px;box-shadow:var(--shadow-lg);font-family:var(--font-sans)}.ds-dialog h3{margin:0;font:600 16px/1.4 var(--font-sans)}.ds-dialog p{margin:6px 0 0;color:var(--text-secondary);font:400 14px/1.5 var(--font-sans)}.ds-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.ds-dialog button{appearance:none;border-radius:6px;padding:7px 12px;font:500 14px/1.4 var(--font-sans);cursor:pointer;transition:background-color 150ms cubic-bezier(.4,0,.2,1),transform 150ms cubic-bezier(.4,0,.2,1)}.ds-dialog-cancel{border:1px solid var(--border);background:transparent;color:var(--text-secondary)}.ds-dialog-confirm{border:0;background:var(--accent);color:var(--bg-base)}.ds-dialog button:hover{filter:brightness(.96)}.ds-dialog button:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent);outline-offset:2px}.ds-dialog button:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-dialog button{transition:none}.ds-dialog button:active{transform:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "作者主导的长篇创作编辑室",
+    "overview": "StoryForge 是服务长篇创作全过程的专业编辑环境，不是只围绕正文排布的码字器。世界观、角色、故事设计、大纲、章节正文和一致性检查都是核心创作对象。用户进入任一工作区后，当前对象必须获得视觉与交互主权；AI 以按需打开的辅助工作面参与，而不是包围或挤压创作对象。\n\n界面同时具有专业工具的结构稳定性、文学创作所需的阅读节奏，以及作者能够理解和撤销 AI 行为的可信感。组件采用“有触感的创作工坊”气质：操作紧凑、状态明确，按下、选择和执行都有即时反馈，但不依赖拟物装饰、夸张阴影或过量动画制造质感。\n\n当前代码包含暖白编辑室、墨玉青、冷灰银蓝、熔炉、古卷、纸与墨六套主题。六主题是现状而非最终决策：暖白编辑室是当前默认基准，其余主题暂作兼容层，后续应通过独立任务评估并收敛。现有响应式行为主要由可折叠侧栏和少量 Tailwind 断点构成，尚不能宣称已经形成完整的桌面窄窗或移动端体系；Tauri 桌面客户端重构必须逐屏验证窗口缩放、键盘操作与文本放大。",
+    "keyCharacteristics": [
+      "当前创作对象是唯一主舞台。",
+      "同一时间最多显示一个 AI 辅助工作面。",
+      "专业结构承载复杂能力，文学排版服务长文本。",
+      "明度分层优先，阴影仅属于真实浮层。",
+      "交互有触感，但能力强大而不外露。",
+      "AI 上下文、进度、结果用途和数据去向透明。",
+      "新功能必须满足 WCAG 2.2 AA，旧界面通过审计逐步补齐。",
+      "六主题是当前兼容事实，不是继续扩张主题的许可。"
+    ],
+    "rules": [
+      { "name": "一屏一强调", "body": "窑火陶棕只用于当前主动作、选择状态、焦点与关键 AI 进度；同一视区不得让多个彩色动作互相竞争。", "section": "colors" },
+      { "name": "主题收敛", "body": "六主题是当前代码事实，不是新增页面可任意扩张的许可；新设计必须以暖白编辑室为基准，其他主题仅做兼容适配，直至通过独立任务收敛。", "section": "colors" },
+      { "name": "对比度是门槛", "body": "普通文字至少达到 4.5:1，大号文字至少达到 3:1；占位符、禁用说明和辅助状态不能因“低调”而低于可读标准。", "section": "colors" },
+      { "name": "两种声音", "body": "衬线负责作品内容与少量仪式标题，无衬线负责工具交互；禁止在同一层级混用两套相似字体制造虚假层次。", "section": "typography" },
+      { "name": "创作内容优先", "body": "正文和其他连续长文本使用 65–75ch 的阅读宽度；结构化设定可以更紧凑，但当前对象名称、内容与操作层级必须清楚。", "section": "typography" },
+      { "name": "明度先于阴影", "body": "常驻区域靠 canvas → surface → surface-elevated 的明度关系和必要的 1px 边界分层；阴影只属于弹窗、浮动工具条、菜单和拖拽对象。", "section": "elevation" },
+      { "name": "真实浮起", "body": "如果一个元素不会覆盖相邻内容、不会随交互临时出现，它就没有资格使用浮层阴影。", "section": "elevation" },
+      { "name": "有触感但不喧闹", "body": "关键控件通过明确底色、完整选中面和最多 1px 按压位移反馈状态；常驻面板不得借助阴影、发光或动画争夺当前创作对象的注意力。", "section": "components" },
+      { "name": "一个动作一种语义", "body": "同一个 AI 动作在顶部、选区和辅助工作面中必须保持一致输入、上下文、结果和应用行为；不得复制出行为不同的同名按钮。", "section": "components" }
+    ],
+    "dos": [
+      "Do 让当前创作对象成为主舞台；无论正文、世界观、角色还是大纲，同一时间最多显示一个 AI 辅助工作面。",
+      "Do 使用暖白编辑室的 canvas → surface → surface-elevated 明度层级组织常驻区域，默认强调色只占少量关键状态。",
+      "Do 将正文和其他长文本控制在 65–75ch；正文默认使用 16px / 2.2 的衬线排版，并允许用户偏好覆盖。",
+      "Do 给按钮、输入框和可选择项目提供明确的 hover、active 与 focus-visible 状态；焦点状态和文字对比度必须达到 WCAG 2.2 AA。",
+      "Do 让 AI 上下文、执行进度、结果用途和数据去向可检查；应用内容前必须提供预览、确认与撤销。",
+      "Do 保留紧凑且可触知的按压反馈；动效仅使用颜色、轻微位移或短时明度变化，并为 prefers-reduced-motion 提供无位移替代。",
+      "Do 将现有六主题视为兼容现状，所有新组件先在暖白编辑室完成，再验证其他主题；主题收敛另立任务，不能伪称已完成。",
+      "Do 同时使用图标、文字或可读状态说明 AI 运行、完成、失败、保存和警告。",
+      "Do 在弹窗或浮层关闭后将焦点恢复到合理触发点，并确保主要流程可完全使用键盘操作。"
+    ],
+    "donts": [
+      "Don't 制造黑箱式“一键生成小说”。",
+      "Don't 让单轮生成后只能反复重新抽卡。",
+      "Don't 把整个产品做成只有聊天记录的 ChatGPT 仿制品。",
+      "Don't 将 AI 参数、上下文和按钮同时铺满当前创作对象周围，形成控制台式界面。",
+      "Don't 未经预览或确认便覆盖作者内容。",
+      "Don't 在 AI 失败后丢失原输入、修改意见或已经完成的结果。",
+      "Don't 为常驻卡片叠加宽软阴影；阴影只属于真正离开文档流的浮层。",
+      "Don't 延续彩色侧边条、渐变分隔线、重复横线纸纹或全大写宽字距小眉题作为默认装饰；这些是现有遗留而非规范。",
+      "Don't 把“文学感”翻译成泛黄古卷、伪手稿、装饰性花纹或牺牲可读性的低对比文字。",
+      "Don't 使用大于 1px 的 border-left 或 border-right 作为卡片、列表项、提示框或警告的彩色强调条。",
+      "Don't 使用渐变文字、默认玻璃拟态、重复斜纹、装饰性网格背景或相同尺寸的卡片矩阵制造“设计感”。",
+      "Don't 使用 32px 以上圆角的卡片、面板和输入框，或把非标签控件全部做成药丸形。",
+      "Don't 用颜色作为状态的唯一载体，或让焦点、AI 成功、失败与警告没有文字说明。",
+      "Don't 使用任意 z-index: 9999/10000 扩大战争；新浮层必须进入统一的语义层级。",
+      "Don't 宣称移动端或窄窗体验已经系统完成；新增界面必须逐屏验证窗口收缩、200% 文本缩放和键盘流程。"
+    ]
+  }
+}

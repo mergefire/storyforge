@@ -9,6 +9,16 @@ import {
   type AITaskKind,
   type AITaskRoutes,
 } from '../lib/ai/task-routing'
+import {
+  bindAiCredential,
+  deleteAiCredential,
+  executeAiRequest,
+  isAiAbortError,
+  isAiNetworkError,
+  isSuccessfulAiResponse,
+  readAiResponseText,
+} from '../lib/ai/runtime-transport'
+import { getRuntime } from '../runtime'
 
 const STORAGE_KEY = 'storyforge-ai-config'
 const PRESETS_KEY = 'storyforge-ai-presets'
@@ -16,7 +26,12 @@ const SESSION_API_KEY = 'storyforge-ai-api-key-session'
 const REMEMBER_API_KEY = 'storyforge-ai-api-key-remember'
 const EMBEDDING_KEY = 'storyforge-embedding-config'
 const EMBEDDING_SESSION_KEY = 'storyforge-embedding-key-session'
+const ACTIVE_PRESET_KEY = 'storyforge-ai-active-preset'
 export const TASK_ROUTES_KEY = 'storyforge-ai-task-routes'
+
+function storesPlaintextConfiguration(): boolean {
+  return getRuntime().secrets.policy.storesPlaintextConfiguration
+}
 
 const DEFAULT_CONFIG: AIConfig = {
   provider: 'deepseek',
@@ -214,7 +229,7 @@ interface AIConfigStore {
   applyPreset: (id: string) => Promise<void>
   updatePresetFromCurrent: (id: string) => void
   renamePreset: (id: string, name: string) => void
-  deletePreset: (id: string) => void
+  deletePreset: (id: string) => Promise<void>
   setTaskRoute: (taskKind: AITaskKind, presetId: string | null) => void
 }
 
@@ -230,10 +245,10 @@ if (!initialActivePresetId) setActivePreset(null)
 export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   config: initial.config,
   rememberApiKey: initial.rememberApiKey,
-  presets: loadPresets(),
+  presets: initialPresets,
   taskRoutes: loadTaskRoutes(),
-  activePresetId: null,
-  editingPresetId: null,
+  activePresetId: initialActivePresetId,
+  editingPresetId: initialActivePresetId,
   embedding: loadEmbeddingConfig(initial.rememberApiKey),
 
   setEmbeddingConfig: async (partial: Partial<EmbeddingConfig>) => {
@@ -448,11 +463,7 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
         configuredBaseUrl: normalized.baseUrl,
         credentialId,
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-        },
-        body: JSON.stringify({
+        body: {
           model: config.model,
           messages: [{ role: 'user', content: '请回复"连接成功"' }],
         },

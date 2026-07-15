@@ -16,6 +16,8 @@ import { useToast } from '../shared/Toast'
 import { useDialog } from '../shared/Dialog'
 import type { Project, Snapshot } from '../../lib/types'
 import { buildLocalDiagnosticReport } from '../../lib/diagnostics/local-diagnostic-report'
+import { decodeRuntimeFileText, openRuntimeFile } from '../../lib/runtime-file'
+import { getRuntime, type BackupBinding } from '../../runtime'
 
 type Tab = 'export' | 'backup'
 type ExportStatus = 'idle' | 'loading' | 'success' | 'error'

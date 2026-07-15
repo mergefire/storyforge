@@ -108,7 +108,7 @@ impl AppState {
             .redirect(Policy::none())
             .connect_timeout(Duration::from_secs(15))
             .timeout(Duration::from_secs(120))
-            .user_agent("StoryForge-Desktop/3.7.5")
+            .user_agent("StoryForge-Desktop/3.8.0")
             .build()
             .map_err(|_| {
                 RuntimeError::new(
@@ -122,7 +122,7 @@ impl AppState {
             .redirect(Policy::none())
             .connect_timeout(Duration::from_secs(15))
             .timeout(Duration::from_secs(120))
-            .user_agent("StoryForge-Desktop/3.7.5")
+            .user_agent("StoryForge-Desktop/3.8.0")
             .build()
             .map_err(|_| {
                 RuntimeError::new(
