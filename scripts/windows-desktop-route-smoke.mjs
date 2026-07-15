@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync, spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import net from 'node:net'
 import os from 'node:os'
@@ -12,22 +13,71 @@ const repoRoot = path.resolve(scriptDir, '..')
 const powershell = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
 const taskkill = 'C:\\Windows\\System32\\taskkill.exe'
 const defaultExe = path.join(repoRoot, 'src-tauri', 'target', 'release', 'storyforge-desktop.exe')
-const exePath = path.resolve(process.argv[2] || defaultExe)
-const syntheticProjectName = `D1.2 路由烟测 ${Date.now()}`
-const runDir = path.join(os.tmpdir(), `storyforge-d1.2-route-smoke-${process.pid}-${Date.now()}`)
-const profileDir = path.join(runDir, 'webview2-profile')
+const cliArgs = process.argv.slice(2)
+const persistenceMode = cliArgs.includes('--persistence')
+const upgradeOptionIndex = cliArgs.indexOf('--upgrade-exe')
+if (upgradeOptionIndex >= 0 && (!cliArgs[upgradeOptionIndex + 1] || cliArgs[upgradeOptionIndex + 1].startsWith('--'))) {
+  throw new Error('[desktop-route-smoke] --upgrade-exe requires an executable path')
+}
+const upgradeSourceExePath = upgradeOptionIndex >= 0
+  ? path.resolve(cliArgs[upgradeOptionIndex + 1])
+  : null
+const positionalArgs = cliArgs.filter((argument, index) => {
+  if (argument === '--persistence' || argument === '--upgrade-exe') return false
+  if (upgradeOptionIndex >= 0 && index === upgradeOptionIndex + 1) return false
+  if (argument.startsWith('--')) {
+    throw new Error(`[desktop-route-smoke] unknown option: ${argument}`)
+  }
+  return true
+})
+if (positionalArgs.length > 1) {
+  throw new Error('[desktop-route-smoke] expected at most one baseline executable path')
+}
+const sourceExePath = path.resolve(positionalArgs[0] || defaultExe)
+const upgradeMode = Boolean(upgradeSourceExePath)
+if (upgradeMode && !persistenceMode) {
+  throw new Error('[desktop-route-smoke] --upgrade-exe requires --persistence')
+}
+const devIdentity = 'io.github.yuanbw2025.storyforge.dev'
+const syntheticProjectName = `${upgradeMode ? 'D1.3 覆盖升级烟测' : persistenceMode ? 'D1.3 持久化烟测' : 'D1.2 路由烟测'} ${Date.now()}`
+const syntheticChapterTitle = `D1.3 合成章节 ${Date.now()}`
+const syntheticChapterText = `D1.3 自动保存正文 ${Date.now()}，用于验证关闭和重启后内容保持。`
+const localStorageSentinelKey = 'storyforge-d1.3-synthetic-sentinel'
+const localStorageSentinelValue = `sentinel-${Date.now()}`
+const runDir = path.join(
+  os.tmpdir(),
+  `storyforge-${upgradeMode ? 'd1.3-upgrade' : persistenceMode ? 'd1.3-persistence' : 'd1.2-route'}-smoke-${process.pid}-${Date.now()}`,
+)
+const runtimeDir = path.join(runDir, 'runtime')
+const exePath = upgradeMode
+  ? path.join(runtimeDir, path.basename(sourceExePath))
+  : sourceExePath
+const profileDir = path.join(runDir, 'webview2-profile-primary')
+const isolatedProfileDir = path.join(runDir, 'webview2-profile-isolated')
 const recordPath = path.join(runDir, 'run-record.json')
 
 const state = {
   cdp: null,
   launch: null,
   launches: [],
+  activeArtifact: null,
+  upgradeEvidence: null,
   runRecord: {
     schemaVersion: 1,
     workspace: repoRoot,
     executable: exePath,
+    sourceExecutables: upgradeMode
+      ? { baseline: sourceExePath, upgrade: upgradeSourceExePath }
+      : { baseline: sourceExePath },
     profileDirectory: profileDir,
-    reason: 'D1.2 home/settings/project direct-route and restart smoke',
+    profileDirectories: persistenceMode
+      ? { primary: profileDir, isolated: isolatedProfileDir }
+      : { primary: profileDir },
+    reason: upgradeMode
+      ? 'D1.3 same dev identity executable overwrite upgrade persistence smoke'
+      : persistenceMode
+        ? 'D1.3 synthetic project/chapter persistence and profile isolation smoke'
+      : 'D1.2 home/settings/project direct-route and restart smoke',
     startedAt: new Date().toISOString(),
     launches: [],
   },
@@ -41,6 +91,29 @@ function writeRunRecord() {
   fs.writeFileSync(recordPath, `${JSON.stringify(state.runRecord, null, 2)}\n`, 'utf8')
 }
 
+function sha256File(filePath) {
+  return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex').toUpperCase()
+}
+
+function assertDevIdentityExecutable(filePath = exePath) {
+  const executableBytes = fs.readFileSync(filePath)
+  assert(
+    executableBytes.includes(Buffer.from(devIdentity, 'utf8')),
+    `refusing to launch CDP smoke against a non-dev executable: ${filePath}`,
+  )
+}
+
+function removeRunDirectory() {
+  const resolvedRunDir = path.resolve(runDir)
+  const resolvedTempDir = path.resolve(os.tmpdir())
+  assert(
+    resolvedRunDir.startsWith(`${resolvedTempDir}${path.sep}`) &&
+      path.basename(resolvedRunDir).startsWith('storyforge-d1.'),
+    `refusing to remove unexpected run directory: ${resolvedRunDir}`,
+  )
+  fs.rmSync(resolvedRunDir, { recursive: true, force: true })
+}
+
 function runPowerShell(script) {
   return execFileSync(
     powershell,
@@ -49,22 +122,50 @@ function runPowerShell(script) {
   ).replace(/^\uFEFF/, '').trim()
 }
 
-function exactExecutablePids() {
-  const escapedPath = exePath.replaceAll("'", "''")
-  const escapedName = path.basename(exePath).replaceAll("'", "''")
+function exactExecutablePids(executablePath = exePath) {
+  const escapedPath = executablePath.replaceAll("'", "''")
+  const escapedName = path.basename(executablePath, path.extname(executablePath)).replaceAll("'", "''")
   const output = runPowerShell(`
 $ErrorActionPreference = 'Stop'
-$ProgressPreference = 'SilentlyContinue'
 $target = [IO.Path]::GetFullPath('${escapedPath}')
-$matches = Get-CimInstance Win32_Process -Filter "Name = '${escapedName}'" |
-  Where-Object { $_.ExecutablePath -and [IO.Path]::GetFullPath($_.ExecutablePath) -eq $target }
-ConvertTo-Json -Compress -InputObject @($matches.ProcessId)
+$pids = @()
+foreach ($process in [Diagnostics.Process]::GetProcessesByName('${escapedName}')) {
+  try {
+    if ($process.MainModule -and [IO.Path]::GetFullPath($process.MainModule.FileName) -eq $target) {
+      $pids += $process.Id
+    }
+  } catch {
+  } finally {
+    $process.Dispose()
+  }
+}
+[Console]::Write('[' + ($pids -join ',') + ']')
 `)
   if (!output) return []
   const value = JSON.parse(output)
   if (value == null) return []
   const pids = Array.isArray(value) ? value.map(Number) : [Number(value)]
   return pids.filter(pid => Number.isInteger(pid) && pid > 0)
+}
+
+function executableEvidence(filePath) {
+  const escapedPath = filePath.replaceAll("'", "''")
+  const versionInfo = JSON.parse(runPowerShell(`
+$ErrorActionPreference = 'Stop'
+$item = Get-Item -LiteralPath '${escapedPath}'
+$result = @{
+  fileVersion = $item.VersionInfo.FileVersion
+  productVersion = $item.VersionInfo.ProductVersion
+}
+[Console]::Write((ConvertTo-Json -Compress -InputObject $result))
+`))
+  return {
+    path: filePath,
+    bytes: fs.statSync(filePath).size,
+    sha256: sha256File(filePath),
+    fileVersion: versionInfo.fileVersion || null,
+    productVersion: versionInfo.productVersion || null,
+  }
 }
 
 async function freePort() {
@@ -115,6 +216,22 @@ async function waitForPortClosed(port) {
     socket.once('error', closed)
     socket.once('timeout', closed)
   }), `CDP port ${port} to close`, 10_000)
+}
+
+async function waitForChildExit(child, timeoutMs) {
+  const deadline = Date.now() + timeoutMs
+  while (child.exitCode === null && Date.now() < deadline) await delay(100)
+  return child.exitCode !== null
+}
+
+function requestGracefulWindowClose(pid) {
+  const output = runPowerShell(`
+$ErrorActionPreference = 'Stop'
+$process = [Diagnostics.Process]::GetProcessById(${pid})
+[Console]::Write($process.CloseMainWindow())
+$process.Dispose()
+`)
+  return output.toLowerCase() === 'true'
 }
 
 async function decodeWebSocketMessage(data) {
@@ -208,7 +325,7 @@ async function waitForTarget(port, launch) {
   }, `WebView2 CDP target on port ${port}`)
 }
 
-async function launchDesktop(label) {
+async function launchDesktop(label, profileDirectory = profileDir) {
   const port = await freePort()
   const stderr = []
   const stdout = []
@@ -216,7 +333,7 @@ async function launchDesktop(label) {
     cwd: path.dirname(exePath),
     env: {
       ...process.env,
-      WEBVIEW2_USER_DATA_FOLDER: profileDir,
+      WEBVIEW2_USER_DATA_FOLDER: profileDirectory,
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: [
         process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS || '',
         `--remote-debugging-port=${port}`,
@@ -231,13 +348,22 @@ async function launchDesktop(label) {
 
   const launch = { child, label, pid: child.pid, port, stderr, stdout }
   state.launch = launch
-  state.launches.push({ label, pid: child.pid, port })
+  state.launches.push({
+    label,
+    pid: child.pid,
+    port,
+    profileDirectory,
+    artifactSha256: state.activeArtifact?.sha256 || null,
+    artifactVersion: state.activeArtifact?.productVersion || state.activeArtifact?.fileVersion || null,
+  })
   state.runRecord.launches.push({
     label,
     pid: child.pid,
     cdpPort: port,
     executable: exePath,
-    profileDirectory: profileDir,
+    artifactSha256: state.activeArtifact?.sha256 || null,
+    artifactVersion: state.activeArtifact?.productVersion || state.activeArtifact?.fileVersion || null,
+    profileDirectory,
     launchedAt: new Date().toISOString(),
   })
   writeRunRecord()
@@ -256,23 +382,31 @@ async function stopDesktop() {
   state.cdp = null
 
   if (launch.child.exitCode === null && launch.child.pid) {
-    try {
-      execFileSync(taskkill, ['/PID', String(launch.child.pid), '/T', '/F'], {
-        encoding: 'utf8',
-        windowsHide: true,
-        stdio: 'ignore',
-      })
-    } catch (error) {
-      if (launch.child.exitCode === null) throw error
+    let shutdownMode = 'graceful'
+    const closeRequested = requestGracefulWindowClose(launch.child.pid)
+    const closedGracefully = closeRequested && await waitForChildExit(launch.child, 10_000)
+    if (!closedGracefully && launch.child.exitCode === null) {
+      shutdownMode = 'forced-fallback'
+      try {
+        execFileSync(taskkill, ['/PID', String(launch.child.pid), '/T', '/F'], {
+          encoding: 'utf8',
+          windowsHide: true,
+          stdio: 'ignore',
+        })
+      } catch (error) {
+        if (launch.child.exitCode === null) throw error
+      }
+      await waitForChildExit(launch.child, 5_000)
     }
+    const record = state.runRecord.launches.find(item => item.pid === launch.pid)
+    if (record) record.shutdownMode = shutdownMode
+    const summary = state.launches.find(item => item.pid === launch.pid)
+    if (summary) summary.shutdownMode = shutdownMode
   }
 
-  await Promise.race([
-    new Promise(resolve => launch.child.once('exit', resolve)),
-    delay(5_000),
-  ])
   await waitForPortClosed(launch.port)
-  state.runRecord.launches.find(item => item.pid === launch.pid).stoppedAt = new Date().toISOString()
+  const record = state.runRecord.launches.find(item => item.pid === launch.pid)
+  if (record) record.stoppedAt = new Date().toISOString()
   writeRunRecord()
   state.launch = null
 }
@@ -387,6 +521,216 @@ async function createSyntheticProject(cdp) {
   return projectId
 }
 
+async function clickExactButton(cdp, text, label) {
+  await evaluate(cdp, `(() => {
+    const button = [...document.querySelectorAll('button')]
+      .find(candidate => candidate.textContent.trim() === ${JSON.stringify(text)})
+    if (!button) throw new Error(${JSON.stringify(`${label} button not found`)})
+    button.click()
+    return true
+  })()`)
+}
+
+async function createSyntheticChapterAndEdit(cdp) {
+  await clickExactButton(cdp, '大纲', 'outline navigation')
+  await waitForExpression(cdp, `document.body.innerText.includes('添加卷')`, 'outline panel')
+  await clickExactButton(cdp, '添加卷', 'add volume')
+  await waitForExpression(
+    cdp,
+    `[...document.querySelectorAll('input')].some(input => input.value === '第1卷')`,
+    'synthetic volume creation',
+  )
+  await clickExactButton(cdp, '添加章节', 'add chapter')
+  await waitForExpression(
+    cdp,
+    `[...document.querySelectorAll('input')].some(input => input.value === '第1章')`,
+    'synthetic outline chapter creation',
+  )
+
+  await evaluate(cdp, `(() => {
+    const titleInput = [...document.querySelectorAll('input')]
+      .find(input => input.value === '第1章')
+    if (!titleInput) throw new Error('synthetic chapter title input not found')
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+    setter.call(titleInput, ${JSON.stringify(syntheticChapterTitle)})
+    titleInput.dispatchEvent(new Event('input', { bubbles: true }))
+    titleInput.dispatchEvent(new Event('change', { bubbles: true }))
+    return titleInput.value
+  })()`)
+  await waitForExpression(
+    cdp,
+    `[...document.querySelectorAll('input')].some(input => input.value === ${JSON.stringify(syntheticChapterTitle)})`,
+    'synthetic chapter title update',
+  )
+
+  await evaluate(cdp, `(() => {
+    const editButton = [...document.querySelectorAll('button')]
+      .find(button => button.getAttribute('title') === '编辑章节')
+    if (!editButton) throw new Error('edit chapter button not found')
+    editButton.click()
+    return true
+  })()`)
+  await waitForExpression(
+    cdp,
+    `document.body.innerText.includes('创作区 · 正文') && document.body.innerText.includes(${JSON.stringify(syntheticChapterTitle)})`,
+    'synthetic chapter editor',
+  )
+  await waitForExpression(
+    cdp,
+    `Boolean(document.querySelector('.tiptap-editor[contenteditable="true"]'))`,
+    'editable TipTap surface',
+  )
+  await evaluate(cdp, `(() => {
+    const editor = document.querySelector('.tiptap-editor[contenteditable="true"]')
+    if (!editor) throw new Error('editable TipTap surface not found')
+    editor.focus()
+    const selection = window.getSelection()
+    const range = document.createRange()
+    range.selectNodeContents(editor)
+    range.collapse(false)
+    selection.removeAllRanges()
+    selection.addRange(range)
+    return true
+  })()`)
+  await cdp.send('Input.insertText', { text: syntheticChapterText })
+  await waitForExpression(
+    cdp,
+    `document.querySelector('.tiptap-editor')?.innerText.includes(${JSON.stringify(syntheticChapterText)})`,
+    'synthetic chapter text input',
+  )
+  await evaluate(cdp, `localStorage.setItem(
+    ${JSON.stringify(localStorageSentinelKey)},
+    ${JSON.stringify(localStorageSentinelValue)},
+  )`)
+}
+
+async function readPersistenceSnapshot(cdp, projectId) {
+  return evaluate(cdp, `(async () => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open('storyforge')
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error || new Error('failed to open storyforge IndexedDB'))
+    })
+    try {
+      const storeNames = [...db.objectStoreNames].sort()
+      const transaction = db.transaction(['projects', 'outlineNodes', 'chapters'], 'readonly')
+      const readAll = storeName => new Promise((resolve, reject) => {
+        const request = transaction.objectStore(storeName).getAll()
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error || new Error('failed to read ' + storeName))
+      })
+      const [projects, outlineNodes, chapters] = await Promise.all([
+        readAll('projects'),
+        readAll('outlineNodes'),
+        readAll('chapters'),
+      ])
+      const project = projects.find(item => item.id === ${projectId}) || null
+      return {
+        databaseVersion: db.version,
+        storeNames,
+        project: project ? { id: project.id, name: project.name } : null,
+        outlineNodes: outlineNodes
+          .filter(item => item.projectId === ${projectId})
+          .map(item => ({
+            id: item.id,
+            parentId: item.parentId ?? null,
+            type: item.type,
+            title: item.title,
+            order: item.order,
+          }))
+          .sort((a, b) => a.id - b.id),
+        chapters: chapters
+          .filter(item => item.projectId === ${projectId})
+          .map(item => ({
+            id: item.id,
+            outlineNodeId: item.outlineNodeId,
+            title: item.title,
+            content: item.content,
+            wordCount: item.wordCount,
+            status: item.status,
+          }))
+          .sort((a, b) => a.id - b.id),
+        localStorageSentinel: localStorage.getItem(${JSON.stringify(localStorageSentinelKey)}),
+      }
+    } finally {
+      db.close()
+    }
+  })()`)
+}
+
+function assertPersistedSnapshot(snapshot, projectId, label, expectedIds = null) {
+  assert(snapshot.storeNames.length === 42, `${label}: expected 42 IndexedDB stores, got ${snapshot.storeNames.length}`)
+  for (const required of ['projects', 'outlineNodes', 'chapters']) {
+    assert(snapshot.storeNames.includes(required), `${label}: missing IndexedDB store ${required}`)
+  }
+  assert(snapshot.project?.id === projectId, `${label}: synthetic project id did not persist`)
+  assert(snapshot.project?.name === syntheticProjectName, `${label}: synthetic project name did not persist`)
+
+  const volume = snapshot.outlineNodes.find(node => node.type === 'volume' && node.title === '第1卷')
+  const chapterNode = snapshot.outlineNodes.find(
+    node => node.type === 'chapter' && node.title === syntheticChapterTitle,
+  )
+  const chapter = snapshot.chapters.find(item => item.title === syntheticChapterTitle)
+  assert(volume?.id > 0, `${label}: synthetic volume did not persist`)
+  assert(chapterNode?.id > 0, `${label}: synthetic outline chapter did not persist`)
+  assert(chapterNode?.parentId === volume.id, `${label}: outline parent relation changed`)
+  assert(chapter?.id > 0, `${label}: synthetic chapter record did not persist`)
+  assert(chapter?.outlineNodeId === chapterNode.id, `${label}: chapter -> outline relation changed`)
+  assert(chapter?.content.includes(syntheticChapterText), `${label}: autosaved chapter text did not persist`)
+  assert(chapter?.wordCount > 0, `${label}: autosaved chapter word count is empty`)
+  assert(
+    snapshot.localStorageSentinel === localStorageSentinelValue,
+    `${label}: localStorage sentinel did not persist`,
+  )
+
+  const ids = {
+    projectId: snapshot.project.id,
+    volumeId: volume.id,
+    outlineChapterId: chapterNode.id,
+    chapterId: chapter.id,
+  }
+  if (expectedIds) {
+    assert(JSON.stringify(ids) === JSON.stringify(expectedIds), `${label}: persisted primary keys changed`)
+  }
+  return ids
+}
+
+function assertEmptyProfileSnapshot(snapshot, label) {
+  assert(snapshot.storeNames.length === 42, `${label}: expected 42 IndexedDB stores, got ${snapshot.storeNames.length}`)
+  assert(snapshot.project === null, `${label}: isolated profile can see the primary synthetic project`)
+  assert(snapshot.outlineNodes.length === 0, `${label}: isolated profile can see primary outline data`)
+  assert(snapshot.chapters.length === 0, `${label}: isolated profile can see primary chapter data`)
+  assert(snapshot.localStorageSentinel === null, `${label}: isolated profile can see the primary localStorage sentinel`)
+}
+
+async function waitForAutosaveSnapshot(cdp, projectId) {
+  return waitFor(async () => {
+    const snapshot = await readPersistenceSnapshot(cdp, projectId)
+    const chapter = snapshot.chapters.find(item => item.title === syntheticChapterTitle)
+    return chapter?.content.includes(syntheticChapterText) && chapter.wordCount > 0
+      ? snapshot
+      : null
+  }, 'debounced chapter autosave in IndexedDB', 20_000)
+}
+
+async function openPersistedChapter(cdp, projectId, label) {
+  const workspace = await directRoute(
+    cdp,
+    `#/workspace/${projectId}`,
+    `document.body.innerText.includes(${JSON.stringify(syntheticProjectName)}) && !document.body.innerText.includes('加载中...')`,
+    `${label} workspace route`,
+  )
+  await clickExactButton(cdp, '章节', `${label} chapters navigation`)
+  await waitForExpression(
+    cdp,
+    `document.body.innerText.includes('创作区 · 正文') &&
+      document.body.innerText.includes(${JSON.stringify(syntheticChapterTitle)}) &&
+      document.querySelector('.tiptap-editor')?.innerText.includes(${JSON.stringify(syntheticChapterText)})`,
+    `${label} persisted chapter UI`,
+  )
+  return workspace
+}
+
 async function inspectDesktopRuntime(cdp) {
   return evaluate(cdp, `(async () => {
     await Promise.all([
@@ -438,14 +782,49 @@ function assertDesktopRequests(requests) {
 
 async function run() {
   assert(process.platform === 'win32', 'this smoke test is Windows-only')
-  assert(fs.existsSync(exePath), `release executable not found: ${exePath}`)
+  assert(fs.existsSync(sourceExePath), `baseline executable not found: ${sourceExePath}`)
+  assertDevIdentityExecutable(sourceExePath)
+  const baselineEvidence = executableEvidence(sourceExePath)
+  if (upgradeMode) {
+    assert(fs.existsSync(upgradeSourceExePath), `upgrade executable not found: ${upgradeSourceExePath}`)
+    assertDevIdentityExecutable(upgradeSourceExePath)
+    const upgradeEvidence = executableEvidence(upgradeSourceExePath)
+    assert(
+      baselineEvidence.sha256 !== upgradeEvidence.sha256,
+      'baseline and upgrade executables must have different SHA-256 values',
+    )
+    assert(
+      baselineEvidence.fileVersion !== upgradeEvidence.fileVersion ||
+        baselineEvidence.productVersion !== upgradeEvidence.productVersion,
+      'baseline and upgrade executables must have different version resources',
+    )
+    fs.mkdirSync(runtimeDir, { recursive: true })
+    fs.copyFileSync(sourceExePath, exePath)
+    const stagedBaseline = executableEvidence(exePath)
+    assert(stagedBaseline.sha256 === baselineEvidence.sha256, 'baseline executable staging changed its bytes')
+    state.activeArtifact = stagedBaseline
+    state.upgradeEvidence = {
+      identity: devIdentity,
+      runtimePath: exePath,
+      baseline: baselineEvidence,
+      upgrade: upgradeEvidence,
+      sameExecutablePathOverwrite: true,
+    }
+    state.runRecord.upgrade = state.upgradeEvidence
+  } else {
+    state.activeArtifact = baselineEvidence
+  }
+  assertDevIdentityExecutable()
   const existing = exactExecutablePids()
   assert(existing.length === 0, `refusing to reuse a running desktop executable; exact PIDs: ${existing.join(', ')}`)
   fs.mkdirSync(profileDir, { recursive: true })
+  if (persistenceMode) fs.mkdirSync(isolatedProfileDir, { recursive: true })
   writeRunRecord()
 
   const first = await launchDesktop('initial')
   const firstTelemetry = await prepareCdp(first)
+  const runtime = await inspectDesktopRuntime(first.cdp)
+  assert(runtime.devIdentityMarker, 'CDP smoke is restricted to the dev-identity build')
   const home = await directRoute(
     first.cdp,
     '#/',
@@ -466,17 +845,25 @@ async function run() {
     'home route before project creation',
   )
   const projectId = await createSyntheticProject(first.cdp)
-  const workspace = await directRoute(
-    first.cdp,
-    `#/workspace/${projectId}`,
-    `document.body.innerText.includes(${JSON.stringify(syntheticProjectName)}) && !document.body.innerText.includes('加载中...')`,
-    'workspace route',
-  )
-  const runtime = await inspectDesktopRuntime(first.cdp)
+  let workspace
+  let initialPersistence = null
+  let persistedIds = null
+  if (persistenceMode) {
+    workspace = { hash: locationHashForProject(projectId) }
+    await createSyntheticChapterAndEdit(first.cdp)
+    initialPersistence = await waitForAutosaveSnapshot(first.cdp, projectId)
+    persistedIds = assertPersistedSnapshot(initialPersistence, projectId, 'initial autosave')
+  } else {
+    workspace = await directRoute(
+      first.cdp,
+      `#/workspace/${projectId}`,
+      `document.body.innerText.includes(${JSON.stringify(syntheticProjectName)}) && !document.body.innerText.includes('加载中...')`,
+      'workspace route',
+    )
+  }
 
   assert(firstTelemetry.exceptions.length === 0, `JavaScript exceptions on first launch: ${JSON.stringify(firstTelemetry.exceptions)}`)
   assertDesktopRequests(firstTelemetry.requests)
-  assert(runtime.devIdentityMarker, 'CDP route smoke is restricted to the dev-identity build')
   assert(runtime.fonts.every(font => font.loaded), `packaged fonts not loaded: ${JSON.stringify(runtime.fonts)}`)
   assert(runtime.manifestLinks === 0, 'Desktop DOM must not contain a Web manifest link')
   assert(runtime.serviceWorkerRegistrations === 0, 'Desktop profile must not register a service worker')
@@ -512,17 +899,116 @@ async function run() {
   assert(restartTelemetry.exceptions.length === 0, `JavaScript exceptions after restart: ${JSON.stringify(restartTelemetry.exceptions)}`)
   assertDesktopRequests(restartTelemetry.requests)
 
+  let restartPersistence = null
+  let isolatedPersistence = null
+  let restoredPersistence = null
+  let restoreWorkspace = null
+  let upgradePersistence = null
+  let upgradeWorkspace = null
+  const extraTelemetry = []
+  if (persistenceMode) {
+    await openPersistedChapter(restarted.cdp, projectId, 'restart')
+    restartPersistence = await readPersistenceSnapshot(restarted.cdp, projectId)
+    assertPersistedSnapshot(restartPersistence, projectId, 'restart', persistedIds)
+    await stopDesktop()
+    assert(exactExecutablePids().length === 0, 'restart Desktop process tree did not stop cleanly')
+
+    const isolated = await launchDesktop('isolated-empty', isolatedProfileDir)
+    const isolatedTelemetry = await prepareCdp(isolated)
+    extraTelemetry.push(isolatedTelemetry)
+    const isolatedRuntime = await inspectDesktopRuntime(isolated.cdp)
+    assert(isolatedRuntime.devIdentityMarker, 'isolated profile smoke is restricted to the dev-identity build')
+    await directRoute(
+      isolated.cdp,
+      '#/',
+      `document.body.innerText.includes('故事熔炉') && document.body.innerText.includes('新建项目')`,
+      'isolated profile home route',
+    )
+    isolatedPersistence = await readPersistenceSnapshot(isolated.cdp, projectId)
+    assertEmptyProfileSnapshot(isolatedPersistence, 'isolated profile')
+    assert(
+      !documentTextContains(isolatedPersistence, syntheticProjectName),
+      'isolated profile unexpectedly contains the primary project name',
+    )
+    assert(isolatedTelemetry.exceptions.length === 0, `JavaScript exceptions in isolated profile: ${JSON.stringify(isolatedTelemetry.exceptions)}`)
+    assertDesktopRequests(isolatedTelemetry.requests)
+    await stopDesktop()
+    assert(exactExecutablePids().length === 0, 'isolated Desktop process tree did not stop cleanly')
+
+    const restored = await launchDesktop('restore-primary', profileDir)
+    const restoredTelemetry = await prepareCdp(restored)
+    extraTelemetry.push(restoredTelemetry)
+    restoreWorkspace = await openPersistedChapter(restored.cdp, projectId, 'restored primary profile')
+    restoredPersistence = await readPersistenceSnapshot(restored.cdp, projectId)
+    assertPersistedSnapshot(restoredPersistence, projectId, 'restored primary profile', persistedIds)
+    assert(restoredTelemetry.exceptions.length === 0, `JavaScript exceptions after primary profile restore: ${JSON.stringify(restoredTelemetry.exceptions)}`)
+    assertDesktopRequests(restoredTelemetry.requests)
+
+    if (upgradeMode) {
+      await stopDesktop()
+      assert(exactExecutablePids().length === 0, 'pre-upgrade Desktop process tree did not stop cleanly')
+      fs.copyFileSync(upgradeSourceExePath, exePath)
+      const stagedUpgrade = executableEvidence(exePath)
+      assert(
+        stagedUpgrade.sha256 === state.upgradeEvidence.upgrade.sha256,
+        'same-path upgrade overwrite changed the upgrade executable bytes',
+      )
+      assertDevIdentityExecutable()
+      state.activeArtifact = stagedUpgrade
+      state.runRecord.upgrade.overwrittenAt = new Date().toISOString()
+      state.runRecord.upgrade.stagedUpgrade = stagedUpgrade
+      writeRunRecord()
+
+      const upgraded = await launchDesktop('same-path-upgrade', profileDir)
+      const upgradeTelemetry = await prepareCdp(upgraded)
+      extraTelemetry.push(upgradeTelemetry)
+      const upgradedRuntime = await inspectDesktopRuntime(upgraded.cdp)
+      assert(upgradedRuntime.devIdentityMarker, 'upgrade smoke is restricted to the dev-identity build')
+      upgradeWorkspace = await openPersistedChapter(upgraded.cdp, projectId, 'same-path upgraded profile')
+      upgradePersistence = await readPersistenceSnapshot(upgraded.cdp, projectId)
+      assertPersistedSnapshot(upgradePersistence, projectId, 'same-path upgraded profile', persistedIds)
+      assert(upgradeTelemetry.exceptions.length === 0, `JavaScript exceptions after same-path upgrade: ${JSON.stringify(upgradeTelemetry.exceptions)}`)
+      assertDesktopRequests(upgradeTelemetry.requests)
+    }
+  }
+
+  await stopDesktop()
+  assert(exactExecutablePids().length === 0, 'final Desktop process tree did not stop cleanly')
+
   const report = {
     schemaVersion: 1,
     executable: exePath,
     profileWasIsolated: true,
-    identity: 'io.github.yuanbw2025.storyforge.dev',
+    identity: devIdentity,
+    mode: upgradeMode ? 'D1.3-upgrade' : persistenceMode ? 'D1.3-persistence' : 'D1.2-routes',
     launches: state.launches,
     routes: {
       initial: { home: home.hash, settings: settings.hash, workspace: workspace.hash },
       restart: { home: restartHome.hash, settings: restartSettings.hash, workspace: restartWorkspace.hash },
+      ...(restoreWorkspace ? { restoredPrimary: { workspace: restoreWorkspace.hash } } : {}),
+      ...(upgradeWorkspace ? { upgradedPrimary: { workspace: upgradeWorkspace.hash } } : {}),
     },
     syntheticProject: { id: projectId, name: syntheticProjectName, persistedAcrossRestart: true },
+    ...(persistenceMode ? {
+      persistence: {
+        primaryProfile: profileDir,
+        isolatedProfile: isolatedProfileDir,
+        syntheticChapter: {
+          title: syntheticChapterTitle,
+          text: syntheticChapterText,
+          ids: persistedIds,
+        },
+        databaseVersion: initialPersistence.databaseVersion,
+        objectStoreCount: initialPersistence.storeNames.length,
+        autosavePersisted: true,
+        restartPersisted: Boolean(restartPersistence),
+        isolatedProfileWasEmpty: Boolean(isolatedPersistence),
+        primaryProfileRestored: Boolean(restoredPersistence),
+        localStorageSentinelPersisted: true,
+        sameIdentityOverwriteUpgradePersisted: upgradeMode ? Boolean(upgradePersistence) : null,
+      },
+    } : {}),
+    ...(upgradeMode ? { upgrade: state.upgradeEvidence } : {}),
     packagedFonts: runtime.fonts,
     desktopPwaBoundary: {
       manifestLinks: runtime.manifestLinks,
@@ -531,9 +1017,23 @@ async function run() {
       forbiddenRequests: 0,
     },
     javascriptExceptions: 0,
-    consoleErrors: [...firstTelemetry.consoleErrors, ...restartTelemetry.consoleErrors],
+    consoleErrors: [
+      ...firstTelemetry.consoleErrors,
+      ...restartTelemetry.consoleErrors,
+      ...extraTelemetry.flatMap(telemetry => telemetry.consoleErrors),
+    ],
   }
   console.log(JSON.stringify(report, null, 2))
+}
+
+function locationHashForProject(projectId) {
+  return `#/workspace/${projectId}`
+}
+
+function documentTextContains(snapshot, text) {
+  return snapshot.project?.name?.includes(text) ||
+    snapshot.outlineNodes.some(node => node.title.includes(text)) ||
+    snapshot.chapters.some(chapter => chapter.title.includes(text) || chapter.content.includes(text))
 }
 
 let signalCleanupRunning = false
@@ -547,7 +1047,7 @@ async function handleSignal(signal) {
     console.error(`[desktop-route-smoke] signal cleanup failed: ${error.stack || error}`)
   }
   try {
-    fs.rmSync(runDir, { recursive: true, force: true })
+    removeRunDirectory()
   } catch (error) {
     console.error(`[desktop-route-smoke] signal profile cleanup failed: ${error.stack || error}`)
   }
@@ -581,7 +1081,7 @@ try {
     console.error(`[desktop-route-smoke] process verification failed: ${error.stack || error}`)
   }
   try {
-    fs.rmSync(runDir, { recursive: true, force: true })
+    removeRunDirectory()
   } catch (error) {
     exitCode = 1
     console.error(`[desktop-route-smoke] temporary profile cleanup failed: ${error.stack || error}`)

@@ -12,7 +12,7 @@
 | --- | --- |
 | 规划日期 | 2026-07-14 |
 | 技术路线 | 已由用户确认 |
-| 当前状态 | D0.1 / D0.3 已 PASS；D0.2 / D0.4 进行中；D0.5 未开始；D1.1 与 D1.2 受限实现已落地，均仍为 IN PROGRESS；D1.3 已开始合成数据持久化施工 |
+| 当前状态 | D0.1 / D0.3 已 PASS；D0.2 / D0.4 进行中；D0.5 未开始；D1.1 与 D1.2 受限实现已落地，均仍为 IN PROGRESS；D1.3 dev-only 优先持久化、同身份 exe 覆盖升级和启动顺序门已通过，完整矩阵仍在施工 |
 | 第一平台 | Windows 10/11 x64 |
 | 第一验证人 | 项目作者本人 |
 | 数据迁移责任 | Codex 开发迁移工具、执行首次迁移并出具验证结果 |
@@ -38,7 +38,7 @@
 - D0.4 已落地 `d0.4-v2` 协议、静态采集器、`empty-v1` / `small-v1` 可重建夹具和严格 manifest；全量 Vitest 最近一次为 105 files / 414 tests PASS，其中 410 个为项目原有用例、4 个为本次桌面夹具与 manifest 新增用例；
 - D1.1 已创建正式 Rust/Tauri 壳、受限 adapter、最小 capability/CSP、双构建和开发身份 exe；真实 WebView2 首页冒烟通过，验证进程及动态调试端口均已清理。证据见 `windows-desktop/D1.1-TAURI-SHELL-STATUS.md`。
 - D1.2 已把 Inter、Source Serif 4、JetBrains Mono 改为随产物分发的本地字体；Web 保持 `/storyforge/` + BrowserRouter + PWA，Desktop 保持相对 base + HashRouter 且不含 PWA/Service Worker；真实 WebView2 两次启动的首页/设置/项目路由、合成项目重启可见和进程清理均通过。证据见 `windows-desktop/D1.2-BUILD-ROUTING-STATUS.md`。
-- D1.3 已完成施工前边界核对：自动化/CDP 只能运行 dev identity，stable 默认 UDF 不得被调试参数覆盖；项目、章节、outline 和 1.5 秒自动保存路径已定位。项目/章节/关联数据重启、profile 隔离、升级/卸载和失败注入仍待实测，证据见 `windows-desktop/D1.3-PERSISTENCE-STATUS.md`。
+- D1.3 已在新构建 dev artifacts 上通过合成项目、outline、章节正文 1.5 秒自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile、非密 localStorage 哨兵，以及 `3.7.5` → `3.7.6` 同 identifier/同临时 exe 路径覆盖升级验证；五条真实 Dexie upgrade fixtures 和“迁移检查早于 Prompt/Workflow seed”顺序门回归也已通过。自动化/CDP 仍只允许 dev identity，stable 默认 UDF 未打开或覆盖。卸载保留、stable 非 CDP 身份矩阵和失败注入仍待实测，证据见 `windows-desktop/D1.3-PERSISTENCE-STATUS.md`。
 
 用户已于 2026-07-15 明确授权：D0.4 剩余动态基线不得继续阻塞开发，允许先推进只使用合成数据和开发隔离身份的 D1.1 前置施工。该授权只改变施工顺序，不改变完成门槛：D0.2、D0.4、D0.5 未闭环前，D1.1 不能标 PASS；不得接真实密钥、正式 profile 或真实用户数据。
 
@@ -762,7 +762,7 @@ Web 和 Desktop 两种构建各自正确，且只由单一 runtime target 控制
 
 ### D1.3 · 验证 Dexie/WebView2 数据持久化
 
-**当前状态（2026-07-15）**：`IN PROGRESS`；已核对 dev/stable identity、`dataDirectory=webview-data`、Dexie `storyforge`、项目/outline/章节 store 和正文 1.5 秒 debounce 自动保存路径。D1.2 的单个合成项目跨进程可见仅是前置信号；章节正文/关联数据、profile 隔离、覆盖升级、卸载保留与失败注入尚未完成。详细进度见 [`windows-desktop/D1.3-PERSISTENCE-STATUS.md`](./windows-desktop/D1.3-PERSISTENCE-STATUS.md)。
+**当前状态（2026-07-15）**：`IN PROGRESS — dev identity 优先链路、同身份 exe 覆盖升级和启动顺序门已通过`；新构建 `3.7.5/3.7.6` dev artifacts 已通过合成项目、outline、章节正文 1.5 秒自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile、非密 localStorage 哨兵和同临时 exe 路径覆盖升级验证。运行态 IndexedDB version 370 / 42 stores，五条真实 Dexie upgrade fixtures 与迁移检查失败不执行 Prompt/Workflow seed 的顺序回归全绿；记录进程、动态端口和临时 profiles 均已清理，stable 默认 UDF 未打开或覆盖。卸载保留、stable 非 CDP 身份矩阵与失败注入尚未完成。详细进度见 [`windows-desktop/D1.3-PERSISTENCE-STATUS.md`](./windows-desktop/D1.3-PERSISTENCE-STATUS.md)。
 
 **位置**
 
