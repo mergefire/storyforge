@@ -7,6 +7,12 @@ import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import {
+  canonicalFixtureManifestJson,
+  validateFixtureManifest,
+  verifyFixtureManifest,
+} from './lib/windows-desktop-fixture-manifest.mjs'
+
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(scriptDir, '..')
 
@@ -18,6 +24,14 @@ const paths = {
   fixtureSpec: path.join(repoRoot, 'docs', 'windows-desktop', 'baseline-fixtures.json'),
   reportSchema: path.join(repoRoot, 'docs', 'windows-desktop', 'schemas', 'baseline-report.schema.json'),
   sampleReport: path.join(repoRoot, 'docs', 'windows-desktop', 'samples', 'baseline-report.not-measured.json'),
+  fixtureArtifactManifest: path.join(
+    repoRoot,
+    'tests',
+    'fixtures',
+    'windows-desktop',
+    'd0.4-v1',
+    'fixture-manifest.json',
+  ),
   registry: path.join(repoRoot, 'src', 'lib', 'registry', 'project-tables.ts'),
   databaseSchema: path.join(repoRoot, 'src', 'lib', 'db', 'schema.ts'),
 }
@@ -126,6 +140,24 @@ function sha256(value) {
 
 function sha256File(filePath) {
   return sha256(fs.readFileSync(filePath))
+}
+
+export function readCommittedFixtureEvidence() {
+  const raw = fs.readFileSync(paths.fixtureArtifactManifest)
+  const text = raw.toString('utf8')
+  const manifest = JSON.parse(text)
+  validateFixtureManifest(manifest)
+  if (canonicalFixtureManifestJson(manifest) !== text) {
+    throw new Error('committed fixture manifest is not canonical JSON')
+  }
+  verifyFixtureManifest({
+    manifest,
+    fixtureRoot: path.dirname(paths.fixtureArtifactManifest),
+  })
+  return {
+    manifest,
+    manifestSha256: sha256(raw),
+  }
 }
 
 export function canonicalSourceTextForFingerprint(value) {
@@ -458,6 +490,9 @@ export function validateReport(report, fixtureSpec, registryFacts) {
     if (state.required !== fixture.required) {
       errors.push(fixture.id + ': required flag does not match fixture specification')
     }
+    if (state.artifactStatus !== fixture.artifactStatus) {
+      errors.push(fixture.id + ': artifact status does not match fixture specification')
+    }
     if (state.artifactStatus === 'GENERATED_VALID') {
       if (!/^[a-f0-9]{64}$/.test(state.manifestSha256 || '')) {
         errors.push(fixture.id + ': GENERATED_VALID requires manifestSha256')
@@ -537,6 +572,12 @@ export function validateStaticContract() {
   const sample = readJson(paths.sampleReport)
   const registryFacts = readRegistryFacts()
   const databaseSchemaVersions = readDatabaseSchemaVersionFacts()
+  let fixtureEvidence = null
+  try {
+    fixtureEvidence = readCommittedFixtureEvidence()
+  } catch (error) {
+    errors.push('committed fixture evidence is invalid: ' + error.message)
+  }
 
   for (const id of [...PERFORMANCE_SCENARIO_IDS, ...SECURITY_SCENARIO_IDS]) {
     if (!protocol.includes(id)) errors.push('protocol is missing scenario ' + id)
@@ -575,6 +616,33 @@ export function validateStaticContract() {
   }
   if (fixtureSpec.protocolVersion !== PROTOCOL_VERSION) {
     errors.push('fixture specification protocolVersion must be ' + PROTOCOL_VERSION)
+  }
+  if (fixtureEvidence) {
+    const { manifest, manifestSha256 } = fixtureEvidence
+    if (manifest.protocolVersion !== fixtureSpec.protocolVersion
+      || manifest.fixtureSpecVersion !== fixtureSpec.fixtureSpecVersion) {
+      errors.push('committed fixture manifest protocol/spec version is stale')
+    }
+    if (manifest.registry.count !== registryFacts.count
+      || manifest.registry.sourceSha256 !== registryFacts.sourceSha256
+      || manifest.registry.nameSetSha256 !== registryFacts.nameSetSha256) {
+      errors.push('committed fixture manifest registry facts are stale')
+    }
+    for (const fixture of fixtureSpec.fixtures) {
+      const generated = manifest.fixtures.find(candidate => candidate.id === fixture.id)
+      if (generated && (fixture.artifactStatus !== 'GENERATED_VALID'
+        || fixture.manifestSha256 !== manifestSha256
+        || fixture.manifestPath !== 'tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json'
+        || fixture.artifactPath !== 'tests/fixtures/windows-desktop/d0.4-v1/' + generated.artifactPath
+        || fixture.artifactBytes !== generated.byteLength
+        || fixture.artifactSha256 !== generated.sha256
+        || fixture.dataSourceCommit !== manifest.dataSourceCommit)) {
+        errors.push(fixture.id + ': fixture specification is stale against committed manifest')
+      }
+      if (!generated && fixture.artifactStatus === 'GENERATED_VALID') {
+        errors.push(fixture.id + ': GENERATED_VALID is missing from committed manifest')
+      }
+    }
   }
 
   if (schema.$schema !== 'https://json-schema.org/draft/2020-12/schema') {
@@ -622,8 +690,18 @@ export function validateStaticContract() {
   if (sample.security.some(scenario => scenario.status !== 'NOT_MEASURED')) {
     errors.push('sample report must not claim measured security')
   }
-  if (sample.fixtures.states.some(fixture => fixture.artifactStatus === 'GENERATED_VALID')) {
-    errors.push('sample report must not claim generated fixtures')
+  if (fixtureEvidence) {
+    const generatedIds = new Set(fixtureEvidence.manifest.fixtures.map(fixture => fixture.id))
+    for (const state of sample.fixtures.states) {
+      if (generatedIds.has(state.id)) {
+        if (state.artifactStatus !== 'GENERATED_VALID'
+          || state.manifestSha256 !== fixtureEvidence.manifestSha256) {
+          errors.push(state.id + ': sample report fixture evidence is stale')
+        }
+      } else if (state.manifestSha256 !== null) {
+        errors.push(state.id + ': incomplete sample fixture must not claim a manifest hash')
+      }
+    }
   }
 
   const dependencySignals = ['780 packages', '18', '1 low', '8 moderate', '7 high', '2 critical']
@@ -859,6 +937,7 @@ export function collectStatic(options = {}) {
   const sample = readJson(paths.sampleReport)
   const registryFacts = readRegistryFacts()
   const databaseSchemaVersions = readDatabaseSchemaVersionFacts()
+  const committedFixtureEvidence = readCommittedFixtureEvidence()
   const windowsFacts = captureWindowsFacts()
   const browserRuntimeDirectories = captureBrowserRuntimeDirectories()
   const browserRuntimes = [...(windowsFacts.browserRuntimes || []), ...browserRuntimeDirectories]
@@ -939,15 +1018,20 @@ export function collectStatic(options = {}) {
       namesIncludedInManifest: false,
     },
     databaseSchemaVersions,
-    fixtures: fixtureSpec.fixtures.map(fixture => ({
-      id: fixture.id,
-      required: fixture.required,
-      artifactStatus: fixture.artifactStatus,
-      manifestSha256: null,
-    })),
-    assertionsExecuted: [],
-    assertionStatus: 'NOT_MEASURED',
-    reasonCode: 'FIXTURE_ARTIFACTS_NOT_GENERATED',
+    fixtures: fixtureSpec.fixtures.map(fixture => {
+      const committed = committedFixtureEvidence.manifest.fixtures
+        .find(candidate => candidate.id === fixture.id)
+      return {
+        id: fixture.id,
+        required: fixture.required,
+        artifactStatus: fixture.artifactStatus,
+        manifestSha256: committed ? committedFixtureEvidence.manifestSha256 : null,
+      }
+    }),
+    assertionsExecuted: committedFixtureEvidence.manifest.fixtures
+      .flatMap(fixture => fixture.assertions.map(assertion => assertion.id)),
+    assertionStatus: 'PARTIAL_PASS',
+    reasonCode: 'REQUIRED_FIXTURE_ARTIFACTS_INCOMPLETE',
   }
 
   const processRecord = {

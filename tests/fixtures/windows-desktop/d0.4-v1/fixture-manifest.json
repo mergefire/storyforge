@@ -1,0 +1,145 @@
+{
+  "dataSourceCommit": "e0e7857b147f69c4166dde162ea2b08417f017d4",
+  "fixtureSpecVersion": "d0.4-fixtures-v1",
+  "fixtures": [
+    {
+      "artifactKind": "empty-database-recipe-v1",
+      "artifactPath": "empty-v1.json",
+      "assertions": [
+        {
+          "id": "EMPTY-ALL-REGISTERED-TABLES-ZERO",
+          "status": "PASS"
+        },
+        {
+          "id": "EMPTY-REGISTRY-COVERAGE-COMPLETE",
+          "status": "PASS"
+        }
+      ],
+      "businessSha256": "dcdd05d02618562e54baa7fa3874634f3008299f0dd842442c8728af23b034be",
+      "byteLength": 1244,
+      "id": "empty-v1",
+      "logicalCounts": {
+        "aiUsageLog": 0,
+        "chapters": 0,
+        "characterRelations": 0,
+        "characters": 0,
+        "codexCategories": 0,
+        "codexEntries": 0,
+        "creativeRules": 0,
+        "detailedOutlines": 0,
+        "emotionBeatCards": 0,
+        "foreshadows": 0,
+        "geographies": 0,
+        "historicalKeywords": 0,
+        "historicalTimelineEvents": 0,
+        "histories": 0,
+        "importFiles": 0,
+        "importJobs": 0,
+        "importLogs": 0,
+        "importSessions": 0,
+        "importantLocations": 0,
+        "itemLedger": 0,
+        "narrativeSummaryNodes": 0,
+        "notes": 0,
+        "outlineNodes": 0,
+        "powerSystems": 0,
+        "projects": 0,
+        "promptTemplates": 0,
+        "promptWorkflows": 0,
+        "referenceChunkAnalysis": 0,
+        "references": 0,
+        "retrievalChunks": 0,
+        "snapshots": 0,
+        "stateCards": 0,
+        "storyArcs": 0,
+        "storyCores": 0,
+        "storyTimelineEvents": 0,
+        "temporalFacts": 0,
+        "userStyleProfiles": 0,
+        "worldGroupLinks": 0,
+        "worldGroups": 0,
+        "worldNodes": 0,
+        "worldRulesProfiles": 0,
+        "worldviews": 0
+      },
+      "required": true,
+      "sha256": "dcdd05d02618562e54baa7fa3874634f3008299f0dd842442c8728af23b034be",
+      "status": "GENERATED_VALID"
+    },
+    {
+      "artifactKind": "project-export-v4",
+      "artifactPath": "small-v1.storyforge.json",
+      "assertions": [
+        {
+          "id": "SMALL-PROJECT-EXPORT-V4",
+          "status": "PASS"
+        },
+        {
+          "id": "SMALL-EXPORTABLE-TABLE-COVERAGE-COMPLETE",
+          "status": "PASS"
+        },
+        {
+          "id": "SMALL-PRIMARY-KEYS-REMAPPED",
+          "status": "PASS"
+        },
+        {
+          "id": "SMALL-ROUNDTRIP-BUSINESS-HASH-EQUAL",
+          "status": "PASS"
+        }
+      ],
+      "businessSha256": "50482fc7c6f8d4c3d0212818dad752040462f10f3e0aeaf41d11245c0262ae07",
+      "byteLength": 39843,
+      "id": "small-v1",
+      "logicalCounts": {
+        "chapters": 10,
+        "characterRelations": 1,
+        "characters": 2,
+        "codexCategories": 2,
+        "codexEntries": 1,
+        "creativeRules": 1,
+        "detailedOutlines": 10,
+        "emotionBeatCards": 10,
+        "foreshadows": 1,
+        "geographies": 1,
+        "historicalKeywords": 1,
+        "historicalTimelineEvents": 1,
+        "histories": 1,
+        "importantLocations": 2,
+        "itemLedger": 1,
+        "notes": 1,
+        "outlineNodes": 11,
+        "powerSystems": 1,
+        "projects": 1,
+        "referenceChunkAnalysis": 1,
+        "references": 1,
+        "stateCards": 1,
+        "storyArcs": 1,
+        "storyCores": 1,
+        "storyTimelineEvents": 1,
+        "temporalFacts": 1,
+        "userStyleProfiles": 1,
+        "worldGroupLinks": 1,
+        "worldGroups": 2,
+        "worldNodes": 2,
+        "worldRulesProfiles": 1,
+        "worldviews": 2
+      },
+      "required": true,
+      "sha256": "92f33232ffc977e06ee59d3f92d21f1ed341584f2f5a83235d5ae3d970a5249d",
+      "status": "GENERATED_VALID"
+    }
+  ],
+  "generatedAt": "2026-01-01T00:00:00.000Z",
+  "generator": {
+    "id": "storyforge-d04-fixtures",
+    "sourceSha256": "6255f5bafd3e9ad672c04fa0a7ec5aa5f02a6ff4a14056c7891bc323e5152707",
+    "version": "1.0.0"
+  },
+  "protocolVersion": "d0.4-v2",
+  "registry": {
+    "count": 42,
+    "nameSetSha256": "b6794b4faf2e4c87cc07d10c5eb51091c49e7c442ee878cf47ecded6d17db3f4",
+    "sourceSha256": "90788e79b1e90ee29bdce6db2e23288aebb1671998bdbb997b7e100a92f8a798"
+  },
+  "schemaVersion": "1.0.0"
+}

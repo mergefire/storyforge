@@ -134,6 +134,9 @@ function makeFullyMeasuredReport(): {
   report: any
 } {
   const fixtureSpec = readJson(fixtureSpecPath)
+  fixtureSpec.fixtures = fixtureSpec.fixtures.map((fixture: any) => (
+    fixture.required ? { ...fixture, artifactStatus: 'GENERATED_VALID' } : fixture
+  ))
   const registryFacts = readRegistryFacts()
   const report = structuredClone(readJson(samplePath))
   const evidenceHash = '0'.repeat(64)

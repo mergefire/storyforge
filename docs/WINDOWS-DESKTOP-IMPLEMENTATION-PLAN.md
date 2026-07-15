@@ -575,14 +575,14 @@ interface RuntimeAdapter {
 **验证**
 
 - `npm.cmd run check:desktop-baseline` 校验协议、Schema、样例与裁决边界。
-- `npm.cmd run check:desktop-fixtures` 校验确定性 ID/正文、canonicalizer 边界、42 表注册表覆盖，以及 `small-v1` 导出导入语义引用；在业务 ID/项目名归一化完成前，source/re-export hash 只作诊断值，不得宣称往返等值；该命令也不替代真实浏览器证据。
+- `npm.cmd run check:desktop-fixtures` 先从真实 Dexie schema 重建并逐字节核对已提交的 `empty-v1` / `small-v1` 与严格 manifest，再校验确定性 ID/正文、canonicalizer 边界、42 表注册表覆盖、主键重映射、导出导入语义引用与规范化 source/re-export 业务 hash 等值；该命令不替代真实浏览器证据。
 - 同一项目、章节和操作脚本至少运行三轮。
 - 记录环境、PID/进程树和原始指标。
 - 不使用“感觉更轻”作为结果。
 
 **完成判据**
 
-D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前确定性夹具核心已落地，`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS；empty/small 可交付夹具文件、其余完整夹具与动态实测仍未齐，不得标 PASS。
+D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前 `empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验，`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS；large/blob/legacy 完整夹具与动态实测仍未齐，不得标 PASS。
 
 ---
 

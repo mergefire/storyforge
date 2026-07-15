@@ -42,7 +42,13 @@
     {
       "id": "empty-v1",
       "required": true,
-      "artifactStatus": "NOT_GENERATED",
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/empty-v1.json",
+      "artifactBytes": 1244,
+      "artifactSha256": "dcdd05d02618562e54baa7fa3874634f3008299f0dd842442c8728af23b034be",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "a6ac6b88d6562ffa23d163187d0aea35e7648a3ac72da651bbe18a95e50db165",
+      "dataSourceCommit": "e0e7857b147f69c4166dde162ea2b08417f017d4",
       "purpose": "First launch, empty database, empty project list and import boundary.",
       "expected": {
         "projects": 0,
@@ -55,7 +61,13 @@
     {
       "id": "small-v1",
       "required": true,
-      "artifactStatus": "NOT_GENERATED",
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/small-v1.storyforge.json",
+      "artifactBytes": 39843,
+      "artifactSha256": "92f33232ffc977e06ee59d3f92d21f1ed341584f2f5a83235d5ae3d970a5249d",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "a6ac6b88d6562ffa23d163187d0aea35e7648a3ac72da651bbe18a95e50db165",
+      "dataSourceCommit": "e0e7857b147f69c4166dde162ea2b08417f017d4",
       "purpose": "Representative daily editing, save, restart, export and import.",
       "expected": {
         "projects": 1,
@@ -69,8 +81,8 @@
         "sourceAndImportedPrimaryKeysMustDiffer": true
       },
       "currentValidation": {
-        "status": "PASS_IN_MEMORY_READY_FOR_ARTIFACT_GENERATION",
-        "evidence": "tests/desktop-contract/D0.4-fixtures.test.ts",
+        "status": "PASS_ARTIFACT_GENERATED_VALIDATED",
+        "evidence": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
         "referenceRemapStatus": "PASS",
         "referenceRemapEvidence": [
           "tests/regression/R-export-nested-reference-remap.test.ts",
@@ -91,7 +103,7 @@
           "tests/regression/R-export-tree-order-stability.test.ts"
         ],
         "roundtripHashRule": "Both sides cross the real JSON stringify/parse artifact boundary before comparison. Tree tables are exported in stable parent-before-child order. The canonicalizer validates the complete input graph before excluding only the declared runtime paths, requires target project name to equal source name plus exactly one '（导入）' suffix, replaces only that verified target projection, preserves every other field and array position, and fails closed on Blob or unsupported JSON values.",
-        "rule": "In-memory reference and normalized hash gates are PASS. Keep artifactStatus NOT_GENERATED until the rebuildable empty-v1/small-v1 files and strict fixture manifest are generated, hashed, checked and committed."
+        "rule": "The committed small-v1 v4 export crosses the real JSON artifact boundary, imports with fresh primary keys, re-exports with an equal normalized business hash, and is byte-for-byte rebuildable through scripts/windows-desktop-fixtures.mjs."
       }
     },
     {

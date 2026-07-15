@@ -1,7 +1,7 @@
 # Windows 客户端 Web 参考基线协议（D0.4）
 
 > 协议版本：`d0.4-v2`
-> 当前状态：**协议已定义，生产 `web-tab` 完整实测尚未完成；installed PWA 仅为可选补充**
+> 当前状态：**协议及 empty/small 可重建夹具已落地，生产 `web-tab` 完整实测尚未完成；installed PWA 仅为可选补充**
 > 适用对象：`web-tab`、`installed-pwa`、`tauri-dev`、`desktop-production`
 
 ## 1. 目标与边界
@@ -99,11 +99,11 @@ D0.4 只建立可复现协议、固定夹具规格、结果格式和无浏览器
 npm.cmd run check:desktop-fixtures
 ```
 
-它从 `PROJECT_TABLES` 动态证明全部 42 个项目表恰好覆盖一次，并验证稳定 ID、固定时钟、精确正文长度、canonicalizer 的确定性/敏感性/危险键边界，以及 `small-v1` 的 10 章导出/清库/导入路径。两端数据先经过真实 JSON stringify/parse 产物边界；树表导出再稳定为父先顺序，防止清库导入后运输序号漂移。canonicalizer 会先验证完整输入图，再排除规格声明的根级/行级运行时路径；往返比较先精确验证目标项目名等于源名追加一次 `（导入）`，再还原该目标投影。源名本来带后缀时必须匹配双后缀；任何其他字段、嵌套同名时间字段、数组位置或引用变化都会使业务 hash 不等，Blob 与 JSON 不支持的值在排除前失败关闭。当前 `small-v1` 的规范化 source/re-export SHA-256 已相等。该命令仍只是生成器与数据断言的开发安全网，不会生成可交付夹具文件，也不能代替生产 `web-tab`、真实 IndexedDB、重启或性能证据。
+它先从真实 Dexie schema 重建并逐字节核对已提交的 `empty-v1`、`small-v1` 与严格 manifest，再从 `PROJECT_TABLES` 动态证明全部 42 个项目表恰好覆盖一次，并验证稳定 ID、固定时钟、精确正文长度、canonicalizer 的确定性/敏感性/危险键边界，以及 `small-v1` 的 10 章导出/清库/导入路径。两端数据先经过真实 JSON stringify/parse 产物边界；树表导出再稳定为父先顺序，防止清库导入后运输序号漂移。canonicalizer 会先验证完整输入图，再排除规格声明的根级/行级运行时路径；往返比较先精确验证目标项目名等于源名追加一次 `（导入）`，再还原该目标投影。源名本来带后缀时必须匹配双后缀；任何其他字段、嵌套同名时间字段、数组位置或引用变化都会使业务 hash 不等，Blob 与 JSON 不支持的值在排除前失败关闭。当前 `small-v1` 的规范化 source/re-export SHA-256 已相等。该命令仍不能代替生产 `web-tab`、真实浏览器 profile、重启或性能证据。
 
-当前项目 JSON 导出格式为 `version: 4`，并用精确 marker `nestedRefEncoding: "export-index-v1"` 声明嵌套数字是目标表的导出序号。`small-v1` 已确定性验证 `detailedOutlines` 的角色/场景角色/伏笔数组、`creativeRules[].citedReferenceIds[]` 与 `codexEntries[].refs.*[]` 在清库导入后全部解析到新主键，`dangling=[]`，`referenceRemapStatus=PASS`；规范化往返业务 hash 也为 `PASS`。旧 `version: 1/2/3` 仍可导入，但其嵌套数字只能按历史 raw database ID 原样保留；没有 v4 marker 时不得猜测或按导出序号解释。`small-v1` 当前状态是 `PASS_IN_MEMORY_READY_FOR_ARTIFACT_GENERATION`，但文件与严格 manifest 尚未生成，不能把 `artifactStatus` 标为已生成。
+当前项目 JSON 导出格式为 `version: 4`，并用精确 marker `nestedRefEncoding: "export-index-v1"` 声明嵌套数字是目标表的导出序号。`small-v1` 已确定性验证 `detailedOutlines` 的角色/场景角色/伏笔数组、`creativeRules[].citedReferenceIds[]` 与 `codexEntries[].refs.*[]` 在清库导入后全部解析到新主键，`dangling=[]`，`referenceRemapStatus=PASS`；规范化往返业务 hash 也为 `PASS`。旧 `version: 1/2/3` 仍可导入，但其嵌套数字只能按历史 raw database ID 原样保留；没有 v4 marker 时不得猜测或按导出序号解释。`empty-v1` / `small-v1` 当前状态为 `GENERATED_VALID`，文件、原始字节 SHA-256、业务 hash、逐表计数与断言记录在已提交的严格 manifest 中。
 
-在夹具生成并通过上述断言前，其状态只能是 `NOT_GENERATED` 或 `NOT_AVAILABLE`。
+尚未生成并通过上述断言的 large/blob/legacy/real 夹具，其状态仍只能是 `NOT_GENERATED` 或 `NOT_AVAILABLE`。
 
 ## 6. 运行纪律
 
@@ -254,4 +254,4 @@ npm.cmd run baseline:collect-static -- --output .qa-reports/windows-desktop/<rep
 4. 所有必需安全场景有可复核证据；
 5. 报告 Schema 校验通过且功能门及必需场景不存在 `NOT_MEASURED` 项。
 
-以上 PASS 条件除移除 installed PWA 的必需参考地位外均未放宽。当前已具备确定性夹具核心，`small-v1` 嵌套引用与规范化往返业务 hash 的内存门均已通过；empty/small 可交付文件与严格 manifest、其余完整夹具及生产 `web-tab` 的功能、性能、恢复、安全实测仍未齐，因此 D0.4 仍为 **IN PROGRESS / NOT_ELIGIBLE**。
+以上 PASS 条件除移除 installed PWA 的必需参考地位外均未放宽。当前 `empty-v1` / `small-v1` 可交付文件与严格 manifest 已生成并通过可重建、原始字节 hash、主键重映射及规范化往返业务 hash 校验；large/blob/legacy 完整夹具及生产 `web-tab` 的功能、性能、恢复、安全实测仍未齐，因此 D0.4 仍为 **IN PROGRESS / NOT_ELIGIBLE**。

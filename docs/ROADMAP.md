@@ -25,7 +25,7 @@
 | D0.1 纳入唯一施工权威 | ✅ PASS：2026-07-14 Claude 独立审查无阻断项 | 治理提交推送后保持唯一施工权威 |
 | D0.2 身份与支持范围 | 🟠 进行中：开发身份草案已建立 | 作者确认正式 publisher/证书主体；冻结 productName、identifier 与 UDF |
 | D0.3 RuntimeAdapter 契约 | 🟠 进行中：浏览器专属能力与 PoC 风险盘点完成 | 落地 contract、fake 与 Web wrapper，并通过架构检查 |
-| D0.4 功能/性能/安全基线 | 🟠 进行中：`d0.4-v2` 协议与确定性夹具核心已落地；`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS | 生成并校验 empty/small 可交付夹具，再补 large/blob/legacy 冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
+| D0.4 功能/性能/安全基线 | 🟠 进行中：`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验；`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS | 补 large/blob/legacy 冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
 | D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
 | D1～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
 
@@ -1296,7 +1296,7 @@ for each character:
 - **实现**：`PROJECT_TABLES.refs` 的 `kind: 'array' | 'json'` 可登记 portable 规则；项目 JSON 升级为 `version: 4`，并以 `nestedRefEncoding: "export-index-v1"` 显式声明嵌套引用使用目标表导出序号。导入在所有目标表映射建立后统一回填，覆盖 `detailedOutlines.appearingCharacterIds`、`scenes[].characterIds`、`foreshadowIds`、JSON-string `creativeRules.citedReferenceIds` 与 `codexEntries.refs` 自引用。
 - **数据边界**：v4 marker 缺失或错误时 fail closed，非法序号使整个导入事务回滚且不留下半数据。旧 v1/v2/v3 仍可导入，但其嵌套数字缺乏可移植映射元数据，只按历史 raw database ID 原样保留，绝不猜测为 v4 export index。
 - **验证证据**：`tests/regression/R-export-nested-reference-remap.test.ts` 覆盖高位非连续源主键、export index 0、重复值、多场景、JSON-string、非法序号原子回滚、legacy v3 与 marker fail-closed；`tests/desktop-contract/D0.4-fixtures.test.ts` 的固定 `small-v1` 导出→清库→导入得到 `dangling=[]`，`referenceRemapStatus=PASS`。
-- **D0.4 后续闭环（2026-07-15）**：树表导出已改为稳定父先顺序，精确项目名成对变换与路径级运行时字段排除后，`small-v1` 的 source/re-export 业务 hash 等值且嵌套业务字段仍保持敏感。该内存门已 PASS，但 `artifactStatus` 继续为 `NOT_GENERATED`，直至 empty/small 文件与严格 manifest 实际生成、哈希、校验并提交；其余 large/blob/legacy 夹具及生产 `web-tab` 实测也仍未完成。
+- **D0.4 后续闭环（2026-07-15）**：树表导出已改为稳定父先顺序，精确项目名成对变换与路径级运行时字段排除后，`small-v1` 的 source/re-export 业务 hash 等值且嵌套业务字段仍保持敏感。`empty-v1` / `small-v1` 文件与严格 manifest 已实际生成、哈希并通过可重建校验，二者 `artifactStatus=GENERATED_VALID`；其余 large/blob/legacy 夹具及生产 `web-tab` 实测仍未完成。
 
 ### ✅ AUDIT-2（已完成 2026-06-16 · 核实收尾）— 原生 alert/confirm/prompt 全面替换为 Dialog
 - **现状核实（2026-06-16）**：UI 层（`src/components` / `hooks` / `pages`）原生弹窗**已全部替换**——`Dialog` 组件已被 **22 个文件**使用，`check:architecture` ⑥号守卫（禁 UI 层 `alert/confirm/prompt`）持续绿。审查报告时的"约 23 文件"已在商业审查 P0/P1 批次及后续逐步替换完毕。

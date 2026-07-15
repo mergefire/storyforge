@@ -30,14 +30,14 @@
       {
         "id": "empty-v1",
         "required": true,
-        "artifactStatus": "NOT_GENERATED",
-        "manifestSha256": null
+        "artifactStatus": "GENERATED_VALID",
+        "manifestSha256": "a6ac6b88d6562ffa23d163187d0aea35e7648a3ac72da651bbe18a95e50db165"
       },
       {
         "id": "small-v1",
         "required": true,
-        "artifactStatus": "NOT_GENERATED",
-        "manifestSha256": null
+        "artifactStatus": "GENERATED_VALID",
+        "manifestSha256": "a6ac6b88d6562ffa23d163187d0aea35e7648a3ac72da651bbe18a95e50db165"
       },
       {
         "id": "large-synthetic-v1",

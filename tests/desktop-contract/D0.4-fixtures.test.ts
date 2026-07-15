@@ -409,7 +409,7 @@ describe('D0.4 deterministic fixture contract', () => {
     }
   })
 
-  it('passes semantic references and normalized business hash while artifacts remain ungenerated', async () => {
+  it('passes semantic references and normalized business hash for generated artifacts', async () => {
     const source = await seedFullProject({
       fixtureId: 'small-v1',
       projectName: 'D0.4 small-v1',
@@ -470,9 +470,9 @@ describe('D0.4 deterministic fixture contract', () => {
     const dangling = await collectDanglingFixtureReferences(importedProjectId)
     expect(dangling).toEqual([])
 
-    expect(smallFixtureSpec.artifactStatus).toBe('NOT_GENERATED')
+    expect(smallFixtureSpec.artifactStatus).toBe('GENERATED_VALID')
     expect(smallFixtureSpec.currentValidation.status).toBe(
-      'PASS_IN_MEMORY_READY_FOR_ARTIFACT_GENERATION',
+      'PASS_ARTIFACT_GENERATED_VALIDATED',
     )
     expect(smallFixtureSpec.currentValidation.referenceRemapStatus).toBe('PASS')
     expect(smallFixtureSpec.currentValidation.referenceRemapEvidence).toEqual(
