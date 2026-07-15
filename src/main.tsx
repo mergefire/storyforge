@@ -12,6 +12,12 @@ import { initializeRuntimeCapabilities } from './runtime/bootstrap'
 import { RuntimeRouter } from './runtime/router'
 import './index.css'
 
+if (import.meta.env.VITE_DESKTOP_CHANNEL === 'dev') {
+  void import('./runtime/tauri/dev-smoke').then(({ installDesktopDevSmoke }) => {
+    installDesktopDevSmoke()
+  })
+}
+
 applyStoryForgeTheme(resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')))
 void initializeRuntimeCapabilities(getRuntime())
 

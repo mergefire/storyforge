@@ -7,6 +7,10 @@ import net from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  assertDevIdentityExecutable,
+  DESKTOP_DEV_IDENTITY,
+} from './windows-desktop-artifact-guard.mjs'
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(scriptDir, '..')
@@ -38,7 +42,7 @@ const upgradeMode = Boolean(upgradeSourceExePath)
 if (upgradeMode && !persistenceMode) {
   throw new Error('[desktop-route-smoke] --upgrade-exe requires --persistence')
 }
-const devIdentity = 'io.github.yuanbw2025.storyforge.dev'
+const devIdentity = DESKTOP_DEV_IDENTITY
 const syntheticProjectName = `${upgradeMode ? 'D1.3 覆盖升级烟测' : persistenceMode ? 'D1.3 持久化烟测' : 'D1.2 路由烟测'} ${Date.now()}`
 const syntheticChapterTitle = `D1.3 合成章节 ${Date.now()}`
 const syntheticChapterText = `D1.3 自动保存正文 ${Date.now()}，用于验证关闭和重启后内容保持。`
@@ -95,12 +99,45 @@ function sha256File(filePath) {
   return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex').toUpperCase()
 }
 
-function assertDevIdentityExecutable(filePath = exePath) {
-  const executableBytes = fs.readFileSync(filePath)
-  assert(
-    executableBytes.includes(Buffer.from(devIdentity, 'utf8')),
-    `refusing to launch CDP smoke against a non-dev executable: ${filePath}`,
-  )
+function createSyntheticPdfBase64() {
+  const text = 'StoryForge M0 PDF worker'
+  const stream = `BT /F1 18 Tf 72 720 Td (${text}) Tj ET`
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    `<< /Length ${Buffer.byteLength(stream, 'ascii')} >>\nstream\n${stream}\nendstream`,
+  ]
+  let pdf = '%PDF-1.4\n'
+  const offsets = [0]
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.byteLength(pdf, 'ascii'))
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`
+  })
+  const xrefOffset = Buffer.byteLength(pdf, 'ascii')
+  pdf += `xref\n0 ${objects.length + 1}\n`
+  pdf += '0000000000 65535 f \n'
+  for (const offset of offsets.slice(1)) {
+    pdf += `${String(offset).padStart(10, '0')} 00000 n \n`
+  }
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`
+  return Buffer.from(pdf, 'ascii').toString('base64')
+}
+
+function desktopLaunchEnvironment(profileDirectory, port) {
+  const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) => {
+    const normalized = key.toUpperCase()
+    return !normalized.startsWith('WEBVIEW2_') && !normalized.startsWith('STORYFORGE_DEV_WEBVIEW2_')
+  }))
+  return {
+    ...inherited,
+    STORYFORGE_DEV_WEBVIEW2_USER_DATA_FOLDER: profileDirectory,
+    STORYFORGE_DEV_WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: [
+      `--remote-debugging-port=${port}`,
+      `--remote-allow-origins=http://127.0.0.1:${port}`,
+    ].join(' '),
+  }
 }
 
 function removeRunDirectory() {
@@ -331,15 +368,7 @@ async function launchDesktop(label, profileDirectory = profileDir) {
   const stdout = []
   const child = spawn(exePath, [], {
     cwd: path.dirname(exePath),
-    env: {
-      ...process.env,
-      WEBVIEW2_USER_DATA_FOLDER: profileDirectory,
-      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: [
-        process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS || '',
-        `--remote-debugging-port=${port}`,
-        `--remote-allow-origins=http://127.0.0.1:${port}`,
-      ].filter(Boolean).join(' '),
-    },
+    env: desktopLaunchEnvironment(profileDirectory, port),
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: false,
   })
@@ -770,6 +799,34 @@ async function inspectDesktopRuntime(cdp) {
   })()`)
 }
 
+async function verifyPackagedPdfWorker(cdp, telemetry) {
+  await waitForExpression(
+    cdp,
+    `window.__STORYFORGE_DESKTOP_DEV_SMOKE__?.marker === 'storyforge-m0-dev-smoke'`,
+    'desktop dev smoke hook',
+  )
+  const requestStart = telemetry.requests.length
+  const result = await evaluate(cdp, `(async () => {
+    return window.__STORYFORGE_DESKTOP_DEV_SMOKE__.extractSyntheticPdf(
+      ${JSON.stringify(createSyntheticPdfBase64())}
+    )
+  })()`)
+  assert(result.pageCount === 1, `synthetic PDF page count mismatch: ${JSON.stringify(result)}`)
+  assert(result.text.includes('StoryForge M0 PDF worker'), `synthetic PDF text mismatch: ${JSON.stringify(result)}`)
+  const workerRequest = await waitFor(
+    () => telemetry.requests
+      .slice(requestStart)
+      .find(url => /\/assets\/pdf\.worker-[^/]+\.mjs(?:\?|$)/.test(url)),
+    'packaged pdf.js worker request',
+  )
+  return {
+    request: workerRequest,
+    pageCount: result.pageCount,
+    rawChars: result.rawChars,
+    textMatched: true,
+  }
+}
+
 function assertDesktopRequests(requests) {
   const forbidden = requests.filter(url =>
     url.includes('/storyforge/') ||
@@ -814,7 +871,7 @@ async function run() {
   } else {
     state.activeArtifact = baselineEvidence
   }
-  assertDevIdentityExecutable()
+  assertDevIdentityExecutable(exePath)
   const existing = exactExecutablePids()
   assert(existing.length === 0, `refusing to reuse a running desktop executable; exact PIDs: ${existing.join(', ')}`)
   fs.mkdirSync(profileDir, { recursive: true })
@@ -825,6 +882,7 @@ async function run() {
   const firstTelemetry = await prepareCdp(first)
   const runtime = await inspectDesktopRuntime(first.cdp)
   assert(runtime.devIdentityMarker, 'CDP smoke is restricted to the dev-identity build')
+  const pdfWorker = await verifyPackagedPdfWorker(first.cdp, firstTelemetry)
   const home = await directRoute(
     first.cdp,
     '#/',
@@ -953,7 +1011,7 @@ async function run() {
         stagedUpgrade.sha256 === state.upgradeEvidence.upgrade.sha256,
         'same-path upgrade overwrite changed the upgrade executable bytes',
       )
-      assertDevIdentityExecutable()
+      assertDevIdentityExecutable(exePath)
       state.activeArtifact = stagedUpgrade
       state.runRecord.upgrade.overwrittenAt = new Date().toISOString()
       state.runRecord.upgrade.stagedUpgrade = stagedUpgrade
@@ -1010,6 +1068,7 @@ async function run() {
     } : {}),
     ...(upgradeMode ? { upgrade: state.upgradeEvidence } : {}),
     packagedFonts: runtime.fonts,
+    pdfWorker,
     desktopPwaBoundary: {
       manifestLinks: runtime.manifestLinks,
       serviceWorkerRegistrations: runtime.serviceWorkerRegistrations,

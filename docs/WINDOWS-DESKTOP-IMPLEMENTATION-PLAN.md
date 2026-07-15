@@ -12,7 +12,7 @@
 | --- | --- |
 | 规划日期 | 2026-07-14 |
 | 技术路线 | 已由用户确认 |
-| 当前状态 | M0 · 稳定开发壳 IN PROGRESS；dev identity 的项目、outline、章节正文自动保存、跨进程重启、独立空 profile、恢复原 profile 与同身份 exe 覆盖升级已通过 |
+| 当前状态 | M0 · 稳定开发壳 PASS；下一里程碑 M1 · 合成数据全功能 NOT STARTED |
 | 第一平台 | Windows 10/11 x64 |
 | 第一验证人 | 项目作者本人 |
 | 数据迁移责任 | Codex 开发迁移工具、执行首次迁移并出具验证结果 |
@@ -24,7 +24,7 @@
 
 | 里程碑 | 当前施工内容 | 状态 |
 | --- | --- | --- |
-| M0 · 稳定开发壳 | stable artifact 预启动拒绝调试；隔离外部 WebView2 参数、Cache/Service Worker/UDF；补 pdf.js worker 运行证据；修复 AI manual 漂移；保留持久化 smoke | IN PROGRESS |
+| M0 · 稳定开发壳 | stable artifact 预启动拒绝调试；隔离外部 WebView2 参数、Cache/Service Worker/UDF；补 pdf.js worker 运行证据；修复 AI manual 漂移；保留持久化 smoke | PASS |
 | M1 · 合成数据全功能 | 生成唯一动作验收清单；完成窄 IPC、流式/取消、Credential Manager、不透明 secret 引用、受限文件/备份/外链和最小诊断；全部现有功能用合成数据验收 | NOT STARTED |
 | M2 · 完整迁移演练 | 一个 `FullMigrationArchive` 纵向切片完成只读导出、空目标导入、hash/Blob/设置验证、重授权、激活、receipt 与回滚 | NOT STARTED |
 | M3 · 作者真实数据切换 | 固定 stable identity 的 portable 自用候选；明确授权后执行真实迁移、验收、观察和回滚验证 | NOT STARTED |
@@ -43,6 +43,7 @@
 - D1.1 已创建正式 Rust/Tauri 壳、受限 adapter、最小 capability/CSP、双构建和开发身份 exe；真实 WebView2 首页冒烟通过，验证进程及动态调试端口均已清理。证据见 `windows-desktop/D1.1-TAURI-SHELL-STATUS.md`。
 - D1.2 已把 Inter、Source Serif 4、JetBrains Mono 改为随产物分发的本地字体；Web 保持 `/storyforge/` + BrowserRouter + PWA，Desktop 保持相对 base + HashRouter 且不含 PWA/Service Worker；真实 WebView2 两次启动的首页/设置/项目路由、合成项目重启可见和进程清理均通过。证据见 `windows-desktop/D1.2-BUILD-ROUTING-STATUS.md`。
 - D1.3 已在新构建 dev artifacts 上通过合成项目、outline、章节正文 1.5 秒自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile、非密 localStorage 哨兵，以及 `3.7.5` → `3.7.6` 同 identifier/同临时 exe 路径覆盖升级验证；五条真实 Dexie upgrade fixtures 和“迁移检查早于 Prompt/Workflow seed”顺序门回归也已通过。自动化/CDP 仍只允许 dev identity，stable 默认 UDF 未打开或覆盖。卸载保留、stable 非 CDP 身份矩阵和失败注入仍待实测，证据见 `windows-desktop/D1.3-PERSISTENCE-STATUS.md`。
+- M0 已收口：真实 dev/stable artifacts 证明 stable 在启动前拒绝调试且未被启动；Rust 启动层清除外部 WebView2 参数，dev 调试只接受项目自有的临时 profile 与动态 localhost 端口；Web/dev/stable 构建目录、PWA/Service Worker、Cache、identity 与 UDF 边界已隔离；打包内 pdf.js worker 在真实 WebView2 中完成请求和合成 PDF 解析；AI manual 与代码重新一致，dev 持久化 smoke 保持通过。当前状态与放行口径仍只看主蓝图 §17。
 
 用户于 2026-07-15 进一步选择“1+2”：以最快形成作者可长期使用的 Windows 客户端为当前目标，同时保留全部现有功能和安全迁移。该最新授权取代原 D0～D5 对作者自用阶段的串行排期；旧任务仍保留为范围映射和未来公开发布参考，不再要求为每个 D-task 建独立分支、状态文档或审批门。
 

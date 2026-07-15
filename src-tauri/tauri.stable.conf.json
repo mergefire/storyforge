@@ -3,7 +3,8 @@
   "productName": "StoryForge",
   "identifier": "io.github.yuanbw2025.storyforge",
   "build": {
-    "beforeBuildCommand": "npm run desktop:ui:build:stable"
+    "beforeBuildCommand": "npm run desktop:ui:build:stable",
+    "frontendDist": "../dist-desktop-stable"
   },
   "app": {
     "windows": [

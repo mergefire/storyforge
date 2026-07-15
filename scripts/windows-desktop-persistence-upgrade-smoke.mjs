@@ -106,7 +106,7 @@ if (hadOriginal) copyExecutable(targetExe, originalExe)
 let exitCode = 0
 try {
   console.log(`[desktop-persistence-upgrade-smoke] building baseline dev artifact ${packageJson.version}`)
-  run(process.execPath, [tauriCli, 'build', '--no-bundle'])
+  run(process.execPath, [tauriCli, 'build', '--no-bundle', '--features', 'dev-identity'])
   copyExecutable(targetExe, baselineExe)
 
   fs.writeFileSync(upgradeConfig, `${JSON.stringify({
@@ -115,7 +115,15 @@ try {
     identifier: 'io.github.yuanbw2025.storyforge.dev',
   }, null, 2)}\n`, 'utf8')
   console.log(`[desktop-persistence-upgrade-smoke] building same-identity upgrade artifact ${upgradeVersion}`)
-  run(process.execPath, [tauriCli, 'build', '--no-bundle', '--config', upgradeConfig])
+  run(process.execPath, [
+    tauriCli,
+    'build',
+    '--no-bundle',
+    '--features',
+    'dev-identity',
+    '--config',
+    upgradeConfig,
+  ])
   copyExecutable(targetExe, upgradeExe)
 
   restoreTarget(hadOriginal)

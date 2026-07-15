@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
     throw new Error('VITE_RUNTIME_TARGET 必须是 web 或 tauri')
   }
   const isDesktop = runtimeTarget === 'tauri'
+  const isStableDesktop = isDesktop && mode === 'desktop-stable'
 
   return {
     plugins: [
@@ -146,7 +147,7 @@ export default defineConfig(({ mode }) => {
     },
     },
     build: {
-      outDir: isDesktop ? 'dist-desktop' : 'dist',
+      outDir: isStableDesktop ? 'dist-desktop-stable' : isDesktop ? 'dist-desktop' : 'dist',
       emptyOutDir: true,
       chunkSizeWarningLimit: 1200,
       rollupOptions: {
