@@ -3,9 +3,9 @@
 > 🔒 **接手者必读宪法**: [`/CLAUDE.md`](../CLAUDE.md) — 三注册表铁律 + 动手前的「四问」+ 反面教材
 > 📐 **施工权威**: [`docs/MASTER-BLUEPRINT.md`](MASTER-BLUEPRINT.md) — 重构 Phase 0/1/2/3 完整流程
 > 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
-> 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — D0～D5 详细规格；项目级授权、依赖、闸门与状态见 MASTER-BLUEPRINT §17
+> 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — M0～M3 当前施工步骤；授权、状态和闸门只看 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-15（Windows Desktop D0.1 / D0.2 / D0.3 已 PASS，D0.4 进行中，D0.5 未开始；D1.1/D1.2 受限实现已落地，D1.3 已开始但完整持久化矩阵未完成；D0 总门未闭环，仍不可使用真实数据）
+> **最后更新**: 2026-07-15（Windows Desktop 改按作者自用 M0～M3 收敛路线推进；当前 M0 IN PROGRESS，仍不可使用真实数据）
 > **说明**: 本文档是任务索引，不是施工权威。旧文档已归档至 `docs/archive/`；实施与放行以 MASTER-BLUEPRINT 为准。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
@@ -14,25 +14,21 @@
 
 # ═══ 当前执行焦点 ═══
 
-## 🟠 Windows Desktop D0 · 治理、契约与基线（进行中，未完成）
+## 🟠 Windows Desktop 作者自用路线（M0 进行中）
 
-> **目标**：Windows 10/11 x64 首版，先作者自用验证、再封闭测试与公开发布；Tauri 2 + React/Vite + WebView2，首版继续使用 Dexie/IndexedDB。
+> **目标**：先以最短路线形成作者可长期使用的 Windows 10/11 x64 客户端，同时保留全部现有功能和完整安全迁移；公开发布、受信任签名、Updater 与安装矩阵后移。技术栈保持 Tauri 2 + React/Vite + WebView2 + Dexie/IndexedDB。
 >
-> **功能红线**：冻结生产版全部可达动作必须在 Windows 客户端保持等价。生产 `web-tab` 是唯一必需参考；Tauri + WebView2 必须逐项比较功能、规范化数据 hash、性能、恢复和安全。D0.4～D1 的 installed PWA 为可选补充，不阻塞主线；G1 仍要求 100% 登记且无 UNKNOWN/BLOCKED/兼容性 PARTIAL，G2 与 stable 仍要求动作级 manifest 100% PASS。
+> **红线**：三注册表、dev/stable 隔离、stable 禁止 CDP/devtools、全部现有功能、Credential Manager、应用层完整迁移与回滚、源数据只读、禁止直接复制/修改 UDF、Web 回归均不简化。
 
-| 项目 | 当前状态 | 下一完成条件 |
+| 里程碑 | 当前状态 | 完成条件 |
 |---|---|---|
-| D0.1 纳入唯一施工权威 | ✅ PASS：2026-07-14 Claude 独立审查无阻断项 | 治理提交推送后保持唯一施工权威 |
-| D0.2 身份与支持范围 | ✅ PASS：source `dd151db`；静态身份决议完成，Codex 独立只读审查 APPROVE、无 P0/P1/P2/P3 | D1.3 补交运行矩阵；任一失败重开 D0.2。受公共信任的正式 Authenticode Subject 延后到 D5.2 |
-| D0.3 RuntimeAdapter 契约 | ✅ PASS：source `c062b19`；contract、Web/Fake、浏览器能力接管和架构守卫完成，独立审查 APPROVE | Tauri target 继续 fail closed，待 D1.1 注册最小 native adapter |
-| D0.4 功能/性能/安全基线 | 🟠 进行中：五类确定性夹具与严格 manifest 已生成并校验；嵌套引用、规范化往返业务 hash、Blob 固定 hash 和 v1～v37 legacy 升级均已 PASS | 采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
-| D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
-| D1.1 正式 Tauri 2 壳 | 🟠 IN PROGRESS：`src-tauri/`、受限 adapter、最小 capability/CSP、双构建、开发身份 exe 和真实 WebView2 离线首页 smoke 已落地 | D0.2 已 PASS；D0.4/D0.5 闭环并完成独立审查前不得标 PASS 或接真实数据 |
-| D1.2 条件化构建/路由/PWA | 🟠 IN PROGRESS：双 base、BrowserRouter/HashRouter、PWA/Service Worker、输出目录、本地字体和三路由重启 smoke 已落地 | 最终 PASS 等待 D1.1 硬依赖闭环；当前证据不得替代 D1.3 |
-| D1.3 Dexie/WebView2 持久化 | 🟠 IN PROGRESS：已核对身份/UDF/Dexie/自动保存边界；单个合成项目跨进程可见仅为前置信号 | 补章节/关联数据、dev/stable 隔离、覆盖升级、卸载保留和失败注入；未提交本地证据不得计入基线 |
-| D1.4～D5、G1、G2 | ⬜ 均未开始/未通过 | 严格按 MASTER-BLUEPRINT §17 和专项规划依赖推进 |
+| M0 · 稳定开发壳 | 🟠 IN PROGRESS；dev identity 的项目/outline/章节自动保存、重启、空 profile、恢复和同身份覆盖升级已通过 | 收口 stable 预启动拒绝调试、外部参数隔离、Cache/SW/UDF 隔离、pdf.js worker 证据和 AI manual 漂移 |
+| M1 · 合成数据全功能 | ⬜ NOT STARTED | 生成唯一动作清单；补齐窄 IPC、secret、文件、备份和最小诊断；全部现有功能与目标性能用合成数据通过 |
+| M2 · 完整迁移演练 | ⬜ NOT STARTED | `FullMigrationArchive` 只读导出、空目标导入、逐表/hash/Blob/设置验证、receipt、激活和回滚反复通过 |
+| M3 · 作者真实数据切换 | ⬜ NOT STARTED | 明确授权和 profile 确认后完成真实迁移、全功能验收、观察和回滚，达到 `SELF_USE_READY` |
+| 公开发布路线 | ⏸ DEFERRED | G2、NSIS、受信任签名、Updater、beta/stable、公开材料和完整 Windows/卸载矩阵由作者另行启动 |
 
-当前作者自用版交付准备度管理估算约 35%～40%；已有 1 个开发隔离身份的无签名验证 exe，但动作级 Desktop PASS 和真实数据迁移仍为 0。当前没有可导入真实数据或可公开分发的 Windows 客户端。不得把“离线首页可打开”或“D0.2 PASS”写成“客户端已完成”；阶段记录只追加到 MASTER-BLUEPRINT §17.7。
+当前已有 1 个开发隔离身份的无签名验证 exe，但尚未达到 `SELF_USE_READY`，没有读取、复制或改写真实浏览器数据。本文只保留这张索引；详细施工见专项规划，当前状态只看 MASTER-BLUEPRINT §17，既有 `windows-desktop/*STATUS|REPORT|REVIEW*` 文件仅为只读历史证据。
 
 ---
 

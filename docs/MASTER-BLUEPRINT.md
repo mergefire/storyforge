@@ -4,7 +4,7 @@
 > 替代 `docs/ARCHITECTURE-REFACTOR.md`（v1，已部分失效，见 §0.4）。
 > 目标读者：任何接手该项目的开发者或 AI 模型。
 > 创建：2026-06-04 ｜ v2 修订基线：仓库 `main` 分支 HEAD（commit `1d28158` 后）。
-> Windows Desktop 专项纳入：2026-07-14（见 §17；当前处于 D0 治理阶段，未完成客户端实现）。
+> Windows Desktop 专项纳入：2026-07-14（见 §17；当前按作者自用 M0～M3 收敛路线施工，尚未达到 `SELF_USE_READY`）。
 
 ---
 
@@ -49,7 +49,7 @@
 | `CODEX-REDESIGN.md` | 🟢 待实施 | Phase 35 词条化（本蓝图后续） |
 | `CONSISTENCY-CHECK-DESIGN.md` | 🟢 待实施 | Phase 38/39（本蓝图后续） |
 | `AI-COPILOT-DESIGN.md` | 🟢 远期 | Phase 27 Agent 化（不在本蓝图覆盖） |
-| `WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md` | 🟠 专项详细规格 | Windows Desktop D0–D5 的逐任务改法、功能等价矩阵与验收证据；其项目级授权、依赖、闸门和状态以本文 §17 为准 |
+| `WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md` | 🟠 专项详细规格 | Windows Desktop M0～M3 当前施工步骤，以及 D0～D5 的范围映射、功能矩阵与未来公开发布参考；授权、阶段状态和闸门以本文 §17 为准 |
 
 ### 0.4 v1 → v2 重大变更
 
@@ -2300,109 +2300,76 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 
 ---
 
-## 十七、Windows Desktop 客户端专项（D0～D5 · 2026-07-14 纳入）
+## 十七、Windows Desktop 客户端专项（作者自用 M0～M3 · 2026-07-14 纳入）
 
 ### 17.1 权威关系与当前状态
 
-本节是 Windows Desktop 专项在**唯一施工权威**中的项目级入口，登记授权边界、任务依赖、阶段闸门、停止信号和完成记录。逐任务的「位置 / 前置 / 改法 / 验证 / 完成判据」、初始功能矩阵及技术细节见 [`WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](./WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md)。
+本节是 Windows Desktop 专项在**唯一施工权威**中的项目级入口，登记最新授权、当前里程碑、不可降级红线和放行结论。具体施工步骤、范围映射、初始功能矩阵及技术细节见 [`WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](./WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md)。
 
 两份文档按以下规则协作，禁止形成双权威：
 
 1. `CLAUDE.md` 的三注册表、四问、数据红线和 DoD 永远优先。
-2. 本节决定专项是否获准施工、任务依赖是否满足、G1/G2/stable 是否放行，以及当前阶段事实。
-3. 专项规划提供本节已登记任务的详细施工规格；若与本节或 `CLAUDE.md` 冲突，立即停止并先修正文档，不得自行择一执行。
-4. 功能等价动作清单的机器可读事实源在 D0.5 建立：`docs/windows-desktop/feature-parity-baseline.json`；专项规划 §5 是其人工初始矩阵，不复制进本蓝图维护第二份 68 项清单。
-5. D0.4 `d0.4-v2` 以当前生产 `web-tab` 作为唯一必需参考基线；installed PWA 仅为可选补充，缺失不阻塞 D0.4、D0.5 或 D1。该调整不放宽夹具、功能、规范化数据 hash、性能、恢复、安全或功能零丢失硬门。
-6. 本专项当前状态为 **D0 进行中，D1.1 / D1.2 受限实现已落地，D1.3 dev-only 优先链路与同身份 exe 覆盖升级已通过**。D0.1、D0.2、D0.3 已 PASS；D0.4 进行中；D0.5 未开始；D1.1 已建立正式 `src-tauri/`、受限 Tauri adapter、双构建和可离线启动的 exe；D1.2 已完成本地字体、Web/Desktop 构建边界和真实 dev-identity WebView2 三路由启动/重启 smoke；D1.3 已在新构建的 `3.7.5/3.7.6` dev artifacts 上验证合成项目、outline、章节正文自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile 和同 identifier/同临时 exe 路径覆盖升级，并已锁定 schema/Dexie open/迁移收尾早于 Prompt/Workflow seed 的启动顺序。D1.1 最终 PASS 仍等待 D0 总门，D1.2 最终 PASS 仍等待 D1.1 硬依赖闭环；D1.3 的安装保留、stable 非 CDP 身份矩阵和失败注入仍缺证据，D1.4～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过功能等价验证”。
-7. 用户于 2026-07-15 明确授权 D0.4 剩余动态基线不阻塞开发，并允许先推进只使用合成数据和开发隔离身份的 D1.1 最小壳。该授权只调整施工顺序，不放宽完成门槛：D0.2 已闭环；D0.4、D0.5 未闭环前 D1.1 仍不得标 PASS，不得连接真实密钥、正式 profile 或真实用户数据，也不得越过 G1/G2。
+2. 本节是当前阶段、授权和放行状态的唯一事实源；`docs/ROADMAP.md` 只做一屏索引，不复制详细状态。
+3. 专项规划负责“怎么做”和“怎么验”；其中原 D0～D5 章节保留为范围与未来公开发布参考。若其旧前置顺序与本节 M0～M3 冲突，以本节最新作者授权为准。
+4. `docs/windows-desktop/` 下既有 `STATUS`、`REPORT`、`REVIEW` 文档只作为已完成工作的只读证据快照，不再承担当前状态，也不再为后续里程碑新增同类状态文档。
+5. 功能动作事实源在 M1 从当前生产代码生成；专项规划 §5 是人工初始矩阵。本蓝图不维护第二份逐动作清单。
+6. 当前生产 `web-tab` 是 Web 回归基线；installed PWA 只作可选补充。M0～M3 不因缺少 installed PWA 实测阻塞，但任何已知回归仍必须修复。
+7. 用户于 2026-07-15 选择“**1+2**”：以最快形成作者可长期使用的 Windows 客户端为当前目标，同时保留全部现有功能和安全迁移；公开发布、受信任签名、Updater、NSIS/卸载全矩阵及 beta/stable 运营后移。该决定取代旧的作者自用施工顺序，不删除其功能、安全和数据要求。
+8. 当前状态为 **M0 · 稳定开发壳（IN PROGRESS）**。已完成正式 Tauri 壳、Web/Desktop 双构建、本地字体、dev identity WebView2 路由验证，以及合成项目、outline、章节正文自动保存、跨进程重启、独立空 profile、恢复原 profile 和同身份 exe 覆盖升级。尚未达到 `SELF_USE_READY`，不得连接真实密钥、真实浏览器数据或默认正式 UDF。
 
 #### 2026-07-15 进度快照
 
 | 口径 | 当前事实 |
 |---|---|
-| 作者自用版交付准备度 | 约 **35%～40%**，仅为管理估算；已增加本地字体、三路由直接刷新和跨进程重启证据，不是闸门通过比例 |
-| 可运行客户端 | 1 个无签名 dev 验证 exe，可离线打开真实首页、设置页和合成项目页；合成项目、outline、章节正文与非密哨兵已通过正常关闭重启、独立空 profile、恢复原 profile 和同 dev identity exe 覆盖升级验证，但 D1.3 全量身份/安装/失败矩阵和功能等价尚无完整证据 |
-| 功能等价 | D0.5 未建立，68 个聚合 FP 行及其 actionId 尚无 Desktop PASS |
-| 旧数据迁移 | D2 未开始；未读取、复制或改写作者真实浏览器数据 |
-| 发布状态 | G1、G2、stable 均未通过；不能使用真实数据、封测或公开分发 |
+| 当前里程碑 | M0 · 稳定开发壳；dev identity 的核心持久化链路已验证，壳层隔离和构建确定性仍需收口 |
+| 可运行客户端 | 1 个无签名 dev 验证 exe，可离线打开真实页面并通过合成项目/outline/章节正文的自动保存、重启、空 profile、恢复和同身份覆盖升级验证 |
+| 功能等价 | M1 尚未完成；现有功能不得删减，动作清单将由生产代码生成并作为单一验收清单 |
+| 旧数据迁移 | M2 尚未开始；未读取、复制或改写作者真实浏览器数据，也未触碰默认正式 UDF |
+| 放行状态 | M3 未完成，`SELF_USE_READY` 未通过；公开 G2、beta、stable 均为未来范围 |
 
 ### 17.2 功能等价与数据迁移永久红线
 
-Windows 客户端只改变承载方式，不改变产品能力。以下条款是发布硬门，不是建议：
+Windows 客户端只改变承载方式，不改变产品能力。以下条款是作者自用和未来发布的共同硬门，不是建议：
 
-1. 以 D0.5 冻结 commit 的生产构建为基线，实际可达的路由、侧栏模块、面板动作、对话框、快捷键、文件格式、AI/Embedding 动作和后台任务必须逐一登记 `actionId + FP ID`；代码事实优先于滞后说明书。
+1. M1 必须从冻结的生产代码生成实际可达的路由、侧栏模块、面板动作、对话框、快捷键、文件格式、AI/Embedding 动作和后台任务清单，并登记 `actionId + FP ID`；代码事实优先于滞后说明书。
 2. “等价”必须同时满足入口可达、动作可完成、持久化业务语义一致、真实客户端重启后仍成立、失败/取消可恢复。页面能渲染但按钮无行为、数据不保存或只能查看，不算等价。
 3. 任何当前功能不得被隐藏、置灰、删除、弱化、改成占位、要求回浏览器完成，或用手工搬文件、改库、运行脚本、启动 Vite/Node/代理补足。桌面机制不同的能力必须登记为等价的 `DESKTOP_REPLACEMENT`，不得标 N/A。
 4. `REAUTHORIZE` 仅允许目录、AI/Embedding Key、GitHub PAT 等外部安全授权首次重新确认；项目数据、Prompt/Workflow、AI 用量、非密设置、主题、排版和草稿必须自动迁入，授权完成后不得每次启动重复询问。
 5. 旧浏览器数据迁移由 Codex 执行，源库始终只读保留。目标必须为空；未通过逐表、正文、引用和 Blob hash 验证的目标库不得激活；失败不能留下用户可见半导入数据。
 6. 桌面适配仍受三注册表约束：AI 读经 `CONTEXT_SOURCES/assembleContext`，AI 写经 `FIELD_REGISTRY + AdoptionSchema/adopt`，表生命周期和迁移分类经 `PROJECT_TABLES` 派生；Rust 不直接读写 StoryForge 业务表。
-7. 共享前端改造必须通过当前生产 `web-tab` 回归。D0.4～D1 的 installed PWA 实测为可选补充，缺失不阻塞主线；一旦发现 PWA 回归仍必须记录和修复，不能用“可选”隐瞒已知问题。
-8. Tauri + WebView2 候选必须用同一冻结夹具和操作脚本与生产 `web-tab` 比较功能结果、规范化数据 hash、性能、真实重启/失败恢复与安全证据。一个动作或任一必需维度失败就使所属 FP 行/闸门失败；通过比例、健康分或“作者暂时不用”不能抵消功能丢失。
+7. 共享前端改造必须通过当前生产 `web-tab` 回归。installed PWA 实测为可选补充；一旦发现回归仍必须记录和修复。
+8. 每个现有动作都必须有 Windows 客户端完成证据；编辑、AI 流式、文件、备份、导入导出和大数据等高风险代表链路还必须用冻结夹具对比规范化数据 hash、性能、真实重启/失败恢复与安全结果。通过比例或“作者暂时不用”不能抵消功能丢失。
+9. dev/stable identity、UDF 和缓存必须隔离；stable 构建禁止 CDP、devtools 和外部注入的调试参数。不得直接复制、修改或复用浏览器/WebView2 UDF 文件。
 
-### 17.3 任务登记、依赖与并行边界
+### 17.3 作者自用里程碑、依赖与范围映射
 
-状态词固定为：`NOT STARTED`、`IN PROGRESS`、`PASS`、`BLOCKED`。只有完成专项规划规定的全部验证并有证据，任务才能记为 `PASS`。
+状态词固定为：`NOT STARTED`、`IN PROGRESS`、`PASS`、`BLOCKED`。当前只维护下表一个状态面；原 D0～D5 任务号继续用于追溯代码和验收范围，不再作为作者自用路线的串行审批队列。
 
-| ID | 任务 | 硬依赖 / 接口依赖 | 当前状态 |
+| 里程碑 | 目标与必交付 | 主要映射 | 当前状态 |
 |---|---|---|---|
-| D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | PASS（2026-07-14；Claude 独立审查无阻断项） |
-| D0.2 | 冻结应用身份与支持范围 | D0.1；作者自用候选签名边界已确认；正式 Authenticode publisher/受公共信任证书 Subject 延后到 D5.2 | PASS（2026-07-15；静态身份决议完成，Codex 独立只读审查 APPROVE、无 P0/P1/P2/P3；D1.3 运行矩阵仍为延后门槛） |
-| D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | PASS（source `c062b19`；RuntimeAdapter contract、Web/Fake、浏览器能力接管和架构守卫完成；独立审查 APPROVE） |
-| D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议已落地；`empty-v1`、`small-v1`、`large-synthetic-v1`、`blob-ladder-v1`、`legacy-matrix-v1` 确定性夹具和严格 manifest 已生成并校验；生产 `web-tab` 的功能、数据 hash、性能、恢复和安全实测仍未齐全；installed PWA 可选） |
-| D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
-| D1.1 | 建立正式 Tauri 2 壳 | 最终 PASS 仍依赖 D0.1～D0.5；2026-07-15 特别授权仅允许开发隔离身份 + 合成数据的前置施工 | IN PROGRESS（正式 `src-tauri/`、最小 capability/CSP、受限 adapter、可重复 Desktop build、无服务离线首页和真实 WebView2 smoke 已落地；D0.2 已 PASS，D0.4/D0.5 未闭环，仍不得标 PASS） |
-| D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | IN PROGRESS（受限实现已完成：Web/Desktop 独立 base、BrowserRouter/HashRouter、PWA/Service Worker 和输出目录条件化，本地字体、双产物契约及三路由两次真实启动 smoke 均通过；最终 PASS 等待 D1.1 硬依赖闭环） |
-| D1.3 | 验证 Dexie/WebView2 数据持久化 | D1.2；仅合成夹具 | IN PROGRESS（dev-only 合成项目、outline、章节正文自动保存、正常关闭重启、独立空 profile、恢复原 profile、非密 localStorage 哨兵、同 identifier/同路径 exe 覆盖升级、schema fixtures 和 seed 顺序门已通过；卸载保留、stable 非 CDP 身份矩阵和失败注入尚未完成） |
-| D1.4 | 验证 IPC、流式和文件最短闭环 | D0.3、D1.1；不得接真实密钥/数据 | NOT STARTED |
-| D1.5 / G1 | WebView2 Go/No-Go | D0.5、D1.1～D1.4 | NOT STARTED |
-| D2.1 | 冻结迁移数据分类 | G1=Go；现有项目 JSON 继续只作项目级协议 | NOT STARTED |
-| D2.2 | 定义迁移包和类型保真协议 | D2.1 | NOT STARTED |
-| D2.3 | 实现旧网页全量导出器 | D2.2；生产旧 origin 仍可访问 | NOT STARTED |
-| D2.4 | 实现客户端首次导入状态机 | D2.3；客户端沿用当前 Dexie schema | NOT STARTED |
-| D2.5 | 实现源—目标验证器与 MigrationReceipt | D2.4 | NOT STARTED |
-| D2.6 | 迁移失败注入和旧版本矩阵 | D2.1～D2.5 | NOT STARTED |
-| D2.7 | 文件主路径与后续一键增强 | D2.2～D2.6 全绿 | NOT STARTED |
-| D3.1 | Rust 流式 AI/Embedding Transport | G1=Go、D1.4；现有 TS 流/取消语义有回归 | NOT STARTED |
-| D3.2 | Windows Credential Manager | D3.1 网络 broker 接口稳定 | NOT STARTED |
-| D3.3 | 原生文件与自动备份 | G1=Go、D0.3、D1.4；PROJECT_TABLES 生命周期 API 保持权威 | NOT STARTED |
-| D3.4 | CSP、Capability 与导航封锁 | D1.2、D3.1、D3.3；本地 UI/网络/文件 broker 可用 | NOT STARTED |
-| D3.5 | 隐私安全日志与诊断包 | D3.1～D3.4；与 D2.4 迁移事件契约并行协调，D5.3 再接更新事件 | NOT STARTED |
-| D4.1 | 自用候选构建 | D2、D3 全部 PASS；正式 identifier 冻结；manifest 无 UNKNOWN/BLOCKED/PARTIAL | NOT STARTED |
-| D4.2 | Codex 执行作者真实数据迁移 | D4.1；复制的真实库夹具演练通过；作者确认正确浏览器 profile | NOT STARTED |
-| D4.3 | 观察期与回滚 | D4.2 verified | NOT STARTED |
-| D4.4 / G2 | 进入公开发布判定 | D4.1～D4.3；receipt、观察、恢复、性能及逐项证据齐全 | NOT STARTED |
-| D5.1 | Windows CI 与可重复 NSIS | G2=Go | NOT STARTED |
-| D5.2 | 双签名与发布通道 | D5.1；代码签名证书、更新源及 updater 私钥恢复演练就绪 | NOT STARTED |
-| D5.3 | 更新、恢复点与启动健康标记 | D5.2 | NOT STARTED |
-| D5.4 | 系统化 QA 与发布矩阵 | 功能冻结；D5.1～D5.3 形成待测候选 | NOT STARTED |
-| D5.5 | 公开稳定版准入 | D5.1～D5.4；beta 观察完成；同一 artifact hash 冻结 | NOT STARTED |
+| M0 · 稳定开发壳 | stable artifact 预启动拒绝调试；不继承外部 WebView2 调试参数；Web/Desktop 的 Cache、Service Worker、UDF 与 identity 隔离；pdf.js worker 有真实运行证据；修复 AI manual 漂移；保留现有 dev identity 持久化 smoke | D0.2、D1.1～D1.3 | IN PROGRESS |
+| M1 · 合成数据全功能 | 从生产代码生成一份动作验收清单；补齐窄 Tauri IPC（AI/Embedding/Gist 流式与取消、Credential Manager 不透明引用、按用途约束的文件/备份/外链、最小脱敏诊断）；全部现有功能在 dev identity + 合成数据下可完成并重启保持；验证大合成项目、100 MiB Blob、AI 流式和 30 分钟核心使用 | D0.3～D0.5、D1.4/G1、D3.1～D3.5 的自用必需部分 | NOT STARTED |
+| M2 · 完整迁移演练 | 以一个 `FullMigrationArchive` 纵向切片完成只读导出、空目标导入、逐表/计数/hash/Blob/设置验证、secret 重授权、preflight/import/verify/activate/rollback 和 `MigrationReceipt`；只用合成或明确复制的夹具反复演练 | D2.1～D2.6；D2.7 增强后移 | NOT STARTED |
+| M3 · 作者真实数据切换 | 固定 stable identity 的 portable 自用候选；作者明确授权并确认正确 profile 后，由 Codex 执行导出/导入/验证/激活；完成一份自用验收、观察和回滚验证 | D4.1～D4.3 | NOT STARTED |
+| 未来公开发布 | G2/D4.4、D5 全部；NSIS/卸载矩阵、受信任 Authenticode、Updater、beta/stable、公开材料、完整 Windows 矩阵、installed PWA 补充及常规 500 MiB/1 GiB 压测 | D4.4、D5.1～D5.5 | DEFERRED |
 
-常规允许并行的边界只有两处：
+依赖只保留四条：M0 → M1 → M2 → M3；M2 未完成前禁止读取真实浏览器数据，M3 未通过前禁止把客户端称为作者可用。M1 内部可以在共享 IPC/事件契约冻结后并行实现 transport、credential、文件和验收清单，但合入仍必须串行验证。公开发布工作不得反向阻塞 M0～M3。
 
-- D0.2、D0.3、D0.4 可在 D0.1 PASS 后由独立 checkout 并行；D0.5 等三者全部完成后统一冻结。
-- G1=Go 后，D2 与 D3 可按上表并行；共享类型/事件契约先定接口，D4 必须等待两条线全部 PASS。
-
-另有一次已登记的专项授权：2026-07-15 起，D1.1 可与 D0.2 / D0.4 / D0.5 的剩余闭环并行，但仅限开发隔离身份、合成数据和最小 capability 的前置实现。D0.2 现已闭环，D0.4 / D0.5 仍未闭环；D1.1 的 PASS、正式 profile、真实密钥、真实数据、G1 及后续任务仍严格等待原硬依赖。
-
-除上表明确允许外不得越过硬依赖。并行任务必须各占独立 checkout、各自分支和 PR；合入 `main` 仍按 `COLLAB-WORKFLOW.md` 串行 rebase、验证、审查。
-
-### 17.4 G1、G2 与 stable 三道硬门
+### 17.4 `SELF_USE_READY` 与未来发布闸门
 
 | 闸门 | 证明什么 | 必须满足 | 失败后的动作 |
 |---|---|---|---|
-| G1 · D1.5 | WebView2 能承载**全部**现有功能 | 动作 manifest 覆盖率 100%；每个 FP 行已分类并有可执行 Desktop 路径；全部生产面板完成真实 WebView2 smoke；与冻结生产 `web-tab` 的功能、规范化数据 hash、性能、恢复、安全对比齐全；无 UNKNOWN、BLOCKED、兼容性 PARTIAL；编辑器、Worker、流式、文件、画布和性能门槛通过。installed PWA 缺失不阻塞 G1 | 停止 Tauri 主线，另开 Electron 单独评估；不得双栈并行或删功能求通过 |
-| G2 · D4.4 | 作者真实数据下客户端已实现功能等价 | 第 5 节聚合 FP 与 D0.5 全部 actionId 在 production client、正式 profile、真实数据上 100% PASS；仅 PASS 可放行，BASELINED/IMPLEMENTED/PARTIAL/UNKNOWN/BLOCKED/未经作者修改目标的范围变更均为零；迁移、恢复、AI、文件、备份、Web/PWA 回归和观察期全部通过 | 继续停留作者自用，不得封测或公开分发 |
-| stable · D5.5 | 同一已签名 artifact 可公开发布 | Full/Regression QA 100% PASS；Windows 10/11 安装升级恢复矩阵、Web/PWA 回归、双签名、更新恢复点、安全与隐私材料全部有可追溯证据；S1/S2 为零 | 不发布；修复后重过受影响闸门，不得用健康分或人工豁免掩盖功能缺失 |
+| `SELF_USE_READY` · M3 | 作者可用完整功能安全替代网页日常创作 | M0～M3 全部 PASS；所有现有动作在 Windows 客户端有完成证据；AI/Embedding、文件、备份、导入导出、重启和恢复可用；真实迁移 receipt 验证通过；旧源只读保留；stable 无 CDP/devtools；作者完成观察与回滚确认 | 保持旧网页为主，不激活或继续使用失败的客户端目标 profile |
+| G2 · D4.4 | 是否值得进入封闭测试/公开发布 | 仅在作者另行启动公开发布路线后评估；不得用 `SELF_USE_READY` 自动推导 | 继续作者自用，不公开分发 |
+| stable · D5.5 | 同一受信任签名 artifact 可公开发布 | 完整安装/升级/卸载/恢复、Windows 10/11、双签名、Updater、安全隐私和回归证据 | 不发布；修复后重过受影响闸门 |
 
-G1 只证明“全部功能可实现”，不等于客户端已经完成。任何公开“完成”声明必须至少引用 G2；任何公开 stable 声明必须引用 D5.5 的同一 artifact 证据。
-
-G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量要求，不把 installed PWA 重新定义为 D0.4、D0.5 或 D1 的必需参考，也不允许用其结果替代生产 `web-tab` 对照。
+旧 G1 的“WebView2 能承载全部功能”证据已并入 M1，不再作为独立审批文档或停工门。`SELF_USE_READY` 只表示作者自用放行，不等于 beta、G2 或 stable。
 
 ### 17.5 分支、PR 与交付证据
 
-- 每个 D-task 单独分支，命名使用 `refactor/phase-desktop-task-N`；任务间共享接口先通过最小独立 PR 落定。
+- 作者自用收敛阶段只维护一个当前 Windows Desktop 工作分支；已完成旧工作树和本地任务分支及时清理。只有作者明确要求并行时才创建额外 checkout。
 - Codex 负责开发，Claude 负责独立审查；Claude 未给出审查结论前，不得在阶段记录中写“已审查”。
-- 每个 PR 必须列出任务 ID、四问、触达的 FP/actionId、验证命令、Windows smoke、生产 `web-tab` 回归、按阶段要求或补充采集的 installed PWA 结果、失败注入、风险和回滚；跨栈任务必须同时验证 TypeScript 与 Rust。
+- 每个里程碑提交必须列出四问、触达的 FP/actionId、验证命令、Windows smoke、生产 `web-tab` 回归、失败注入、风险和回滚；跨栈任务必须同时验证 TypeScript 与 Rust。证据优先进入测试产物和提交说明，不新增状态报告文档。
 - `main` 一推即生产；仍执行 `COLLAB-WORKFLOW.md` 的串行合并、合前 rebase 和全闸门规则。桌面专项不得借“独立客户端”绕过 Web 生产安全。
 
 ### 17.6 Desktop 专项停止信号
@@ -2414,13 +2381,13 @@ G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量�
 - 需要给 renderer 任意 HTTP、全盘文件、shell 权限或返回明文 secret。
 - 正式 identifier/UDF 未冻结却准备导入真实数据，或迁移验证未完成却准备激活目标库。
 - 任一现有功能只能隐藏、置灰、回浏览器、依赖 Vite/Node/代理、用脚本/手工改库完成，或承诺“后续补齐”。
-- 任一生产入口没有 actionId/FP ID，功能报告含 UNKNOWN/BLOCKED/PARTIAL/IMPLEMENTED/缺失证据却准备过 G2、beta 或 stable。
+- 任一生产入口没有 actionId/FP ID，功能报告含 UNKNOWN/BLOCKED/PARTIAL/IMPLEMENTED/缺失证据却准备过 `SELF_USE_READY`、G2、beta 或 stable。
 - Web 与 Desktop 开始形成两套业务实现，或共享前端改动造成 Web/PWA 回归。
 - 迁移、更新或备份失败后无法自动回到最后健康状态，或测试只能看到成功提示、不能核对正文/引用/Blob/hash。
 
-### 17.7 阶段完成记录（唯一追加位置）
+### 17.7 旧 D-task 历史记录（只读证据）
 
-每个 D-task、G1、G2 和 D5.5 完成后，只在本节追加一次记录，格式固定为：日期、任务/闸门、source commit、实现摘要、功能等价覆盖、数据/失败注入、TypeScript/Rust/Windows/Web 验证、未决风险、Codex 交付状态、Claude 审查状态。未满足完成判据时只能写“进行中/失败记录”，不得标 PASS。
+以下内容保留 2026-07-14～15 已完成工作的来源、验证和风险，仅用于追溯，不再表示当前排期，也不继续按 D-task 追加。当前状态只看 §17.1 与 §17.3；后续 M0～M3 的完成事实直接更新对应里程碑行并由提交和自动化证据支撑。
 
 #### ✅ D0.1 · 纳入唯一施工权威（2026-07-14）
 
