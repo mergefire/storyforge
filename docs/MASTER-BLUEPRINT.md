@@ -2313,7 +2313,7 @@ Codex 当前结论：Claude 分支不是“方向错”，主链路有效，测�
 3. 专项规划提供本节已登记任务的详细施工规格；若与本节或 `CLAUDE.md` 冲突，立即停止并先修正文档，不得自行择一执行。
 4. 功能等价动作清单的机器可读事实源在 D0.5 建立：`docs/windows-desktop/feature-parity-baseline.json`；专项规划 §5 是其人工初始矩阵，不复制进本蓝图维护第二份 68 项清单。
 5. D0.4 `d0.4-v2` 以当前生产 `web-tab` 作为唯一必需参考基线；installed PWA 仅为可选补充，缺失不阻塞 D0.4、D0.5 或 D1。该调整不放宽夹具、功能、规范化数据 hash、性能、恢复、安全或功能零丢失硬门。
-6. 本专项当前状态为 **D0 进行中，D1.1 / D1.2 受限实现已落地**。D0.1、D0.3 已 PASS；D0.2、D0.4 进行中；D0.5 未开始；D1.1 已建立正式 `src-tauri/`、受限 Tauri adapter、双构建和可离线启动的 exe；D1.2 已完成本地字体、Web/Desktop 构建边界和真实 WebView2 三路由启动/重启 smoke。D1.1 最终 PASS 仍等待 D0 总门，D1.2 最终 PASS 仍等待 D1.1 硬依赖闭环；D1.3～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过功能等价验证”。
+6. 本专项当前状态为 **D0 进行中，D1.1 / D1.2 受限实现已落地，D1.3 已开始**。D0.1、D0.3 已 PASS；D0.2、D0.4 进行中；D0.5 未开始；D1.1 已建立正式 `src-tauri/`、受限 Tauri adapter、双构建和可离线启动的 exe；D1.2 已完成本地字体、Web/Desktop 构建边界和真实 dev-identity WebView2 三路由启动/重启 smoke；D1.3 已完成 identity/UDF/Dexie/自动保存施工边界核对。D1.1 最终 PASS 仍等待 D0 总门，D1.2 最终 PASS 仍等待 D1.1 硬依赖闭环；D1.3 尚无完整持久化矩阵，D1.4～D5.5、G1、G2 均未完成，不得表述为“客户端已可用”或“已通过功能等价验证”。
 7. 用户于 2026-07-15 明确授权 D0.4 剩余动态基线不阻塞开发，并允许先推进只使用合成数据和开发隔离身份的 D1.1 最小壳。该授权只调整施工顺序，不放宽完成门槛：D0.2、D0.4、D0.5 未闭环前 D1.1 不得标 PASS，不得连接真实密钥、正式 profile 或真实用户数据，也不得越过 G1/G2。
 
 #### 2026-07-15 进度快照
@@ -2352,7 +2352,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
 | D1.1 | 建立正式 Tauri 2 壳 | 最终 PASS 仍依赖 D0.1～D0.5；2026-07-15 特别授权仅允许开发隔离身份 + 合成数据的前置施工 | IN PROGRESS（正式 `src-tauri/`、最小 capability/CSP、受限 adapter、可重复 Desktop build、无服务离线首页和真实 WebView2 smoke 已落地；D0.2/D0.4/D0.5 未闭环，不得标 PASS） |
 | D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | IN PROGRESS（受限实现已完成：Web/Desktop 独立 base、BrowserRouter/HashRouter、PWA/Service Worker 和输出目录条件化，本地字体、双产物契约及三路由两次真实启动 smoke 均通过；最终 PASS 等待 D1.1 硬依赖闭环） |
-| D1.3 | 验证 Dexie/WebView2 数据持久化 | D1.2；仅合成夹具 | NOT STARTED |
+| D1.3 | 验证 Dexie/WebView2 数据持久化 | D1.2；仅合成夹具 | IN PROGRESS（已核对 dev/stable identity、`dataDirectory`、Dexie store 与章节自动保存路径；项目/章节/关联数据重启、profile 隔离、覆盖升级、卸载保留和失败注入尚未完成） |
 | D1.4 | 验证 IPC、流式和文件最短闭环 | D0.3、D1.1；不得接真实密钥/数据 | NOT STARTED |
 | D1.5 / G1 | WebView2 Go/No-Go | D0.5、D1.1～D1.4 | NOT STARTED |
 | D2.1 | 冻结迁移数据分类 | G1=Go；现有项目 JSON 继续只作项目级协议 | NOT STARTED |
@@ -2474,13 +2474,23 @@ G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量�
 
 #### 🟠 D1.2 · 条件化 base、router、PWA 与 Service Worker（2026-07-15 进行中）
 
-- **source commit**：当前实现位于 `refactor/phase-desktop-task-d1-1`，本记录所在 D1.2 本地检查点；
+- **source commit**：`79778f8`；当前实现位于 `refactor/phase-desktop-task-d1-1`；
 - **实现摘要**：Web 保留 `/storyforge/`、BrowserRouter、manifest/Service Worker；Desktop 使用相对 base、HashRouter、独立 `dist-desktop/` 且不生成 PWA/Workbox。Inter、Source Serif 4、JetBrains Mono 四个 variable TTF 字体面与 OFL 许可证已本地打包；新增双产物契约和可重复 Windows 路由/重启 smoke；
 - **功能等价 / 数据红线**：只测试首页、设置页和项目页承载，不隐藏或替换任何功能；合成项目只写入一次性隔离 WebView2 profile，未读取真实浏览器 profile、密钥或用户数据；没有修改 Dexie schema、表生命周期和三个注册表；
 - **验证**：Web build 113 files、PWA 110 precache entries；Desktop build 110 files，禁止远程 Google Fonts、`/storyforge/`、manifest、Service Worker 和 Workbox；真实 dev-identity WebView2 两次启动分别使用动态端口 57095/57131，首页/设置/`#/workspace/1` 直接刷新和重启均通过，合成项目跨进程可见，四个字体面 loaded，manifest/SW/Cache/禁止请求/JS exception/console error 均为 0；烟测会检查 bundle 内 dev identifier，拒绝把 CDP 用于 stable 构建；根 PID 树、端口和隔离 profile 已清理；Rust fmt/clippy/test、Tauri release build、required tables、architecture 和 lint 0 errors 通过；全量 Vitest 513/514，唯一失败仍为既有 AI manual 漂移；详见 `docs/windows-desktop/D1.2-BUILD-ROUTING-STATUS.md`；
 - **Codex 交付状态**：IN PROGRESS（受限实现完成；因 D1.1/D0 硬依赖未闭环，不标 PASS）；
 - **Claude 审查状态**：待独立审查；
 - **未决风险**：D0.4 生产 `web-tab` 动态基线和 D0.5 动作级功能基线未完成；D1.3 尚需覆盖章节自动保存、全部合成夹具、dev/stable UDF 隔离、覆盖升级、卸载保留及失败注入。当前单个项目跨重启证据不得冒充 D1.3 PASS。
+
+#### 🟠 D1.3 · 验证 Dexie/WebView2 数据持久化（2026-07-15 进行中）
+
+- **source commit**：施工基线 `79778f8`；D1.3 实现尚未形成独立完成提交；
+- **实现摘要**：已核对 dev/stable identifier、主窗口 `dataDirectory=webview-data`、Dexie 数据库名 `storyforge`、`projects` / `outlineNodes` / `chapters` 写入路径，以及正文 `useAutoSave` 的 1.5 秒 debounce 与卸载 flush 语义；正在扩展仅 dev identity 可运行的合成持久化 smoke；
+- **功能等价 / 数据红线**：只允许开发 identity、一次性隔离 profile 和合成项目/章节；stable 自动化/CDP 被明确禁止，默认正式 UDF、真实浏览器 profile、正文和密钥均未读取或写入；没有修改 Dexie schema、表生命周期或三个注册表；
+- **当前证据**：D1.2 已证明单个合成项目在同一隔离 profile 的两个进程间可见；该证据只作为 D1.3 前置信号。D1.3 的章节正文自动保存、关联数据、独立空 profile、恢复原 profile、升级/卸载和失败注入均尚未完成；
+- **Codex 交付状态**：IN PROGRESS；
+- **Claude 审查状态**：待形成可复现验证和本地提交后再送独立审查；
+- **未决风险**：正式 stable profile 不能通过 CDP 调试，后续身份/UDF 运行矩阵必须使用不覆盖正式 UDF 的受控测试 identity 或 D1.4 诊断接口；任何需要打开默认正式 UDF 的步骤必须先停下复核，不得以调试便利越过 D0.2 红线。详见 `docs/windows-desktop/D1.3-PERSISTENCE-STATUS.md`。
 
 ---
 
