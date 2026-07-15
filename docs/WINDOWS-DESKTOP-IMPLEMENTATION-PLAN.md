@@ -35,7 +35,7 @@
 - D0.1 已把 31 个桌面任务、功能零丢失、迁移和发布闸门纳入主蓝图，并通过独立治理审查；
 - D0.2 已冻结正式/开发 identity、UDF、Windows 支持边界和 `CN=StoryForge Self-Use` 作者本机自签名边界；作者指定 Codex 独立只读审查 APPROVE，P0/P1/P2/P3 均无 finding，任务已 PASS；
 - D0.3 已完成 `RuntimeAdapter` 契约、Web/Fake 实现、浏览器专属能力接管和架构守卫，并通过独立审查；Tauri target 在原生 adapter 注册前继续 fail closed；
-- D0.4 已落地 `d0.4-v2` 协议、静态采集器、`empty-v1` / `small-v1` 可重建夹具和严格 manifest；全量 Vitest 最近一次为 105 files / 414 tests PASS，其中 410 个为项目原有用例、4 个为本次桌面夹具与 manifest 新增用例；
+- D0.4 已落地 `d0.4-v2` 协议、静态采集器、`empty-v1` / `small-v1` / `large-synthetic-v1` 可重建夹具、Blob 阶梯配方、v1～v37 legacy 升级矩阵和严格 manifest；夹具专项 2 files / 12 tests PASS，生产 `web-tab` 动态基线仍未采集；
 - D1.1 已创建正式 Rust/Tauri 壳、受限 adapter、最小 capability/CSP、双构建和开发身份 exe；真实 WebView2 首页冒烟通过，验证进程及动态调试端口均已清理。证据见 `windows-desktop/D1.1-TAURI-SHELL-STATUS.md`。
 - D1.2 已把 Inter、Source Serif 4、JetBrains Mono 改为随产物分发的本地字体；Web 保持 `/storyforge/` + BrowserRouter + PWA，Desktop 保持相对 base + HashRouter 且不含 PWA/Service Worker；真实 WebView2 两次启动的首页/设置/项目路由、合成项目重启可见和进程清理均通过。证据见 `windows-desktop/D1.2-BUILD-ROUTING-STATUS.md`。
 - D1.3 已在新构建 dev artifacts 上通过合成项目、outline、章节正文 1.5 秒自动保存、正常关闭后的跨进程重启、独立空 profile、恢复原 profile、非密 localStorage 哨兵，以及 `3.7.5` → `3.7.6` 同 identifier/同临时 exe 路径覆盖升级验证；五条真实 Dexie upgrade fixtures 和“迁移检查早于 Prompt/Workflow seed”顺序门回归也已通过。自动化/CDP 仍只允许 dev identity，stable 默认 UDF 未打开或覆盖。卸载保留、stable 非 CDP 身份矩阵和失败注入仍待实测，证据见 `windows-desktop/D1.3-PERSISTENCE-STATUS.md`。
@@ -623,14 +623,14 @@ interface RuntimeAdapter {
 **验证**
 
 - `npm.cmd run check:desktop-baseline` 校验协议、Schema、样例与裁决边界。
-- `npm.cmd run check:desktop-fixtures` 先从真实 Dexie schema 重建并逐字节核对已提交的 `empty-v1` / `small-v1` 与严格 manifest，再校验确定性 ID/正文、canonicalizer 边界、42 表注册表覆盖、主键重映射、导出导入语义引用与规范化 source/re-export 业务 hash 等值；该命令不替代真实浏览器证据。
+- `npm.cmd run check:desktop-fixtures` 先从真实 Dexie schema 重建并逐字节核对已提交的 `empty-v1` / `small-v1` / `large-synthetic-v1`、Blob 配方、legacy 矩阵与严格 manifest，再校验确定性 ID/正文、canonicalizer 边界、42 表注册表覆盖、主键重映射、导出导入语义引用、规范化 source/re-export 业务 hash 等值、Blob 固定 hash 和逐版本升级；默认 Blob 校验只覆盖 10/100/500 MiB，1 GiB 必须显式 opt-in。该命令不替代真实浏览器证据。
 - 同一项目、章节和操作脚本至少运行三轮。
 - 记录环境、PID/进程树和原始指标。
 - 不使用“感觉更轻”作为结果。
 
 **完成判据**
 
-D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前 `empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验，`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS；large/blob/legacy 完整夹具与动态实测仍未齐，不得标 PASS。
+D0.4 协议规定的夹具、生产 `web-tab` 功能/规范化数据 hash/性能/恢复/安全与报告证据完整；D1/D4 的 Tauri + WebView2 候选能与该固定基线逐项比较，并有明确 Go/No-Go 数据。当前五类确定性夹具与严格 manifest 已生成并校验，嵌套引用、规范化往返业务 hash、Blob 固定 hash 和 legacy 逐版本升级均已 PASS；生产 `web-tab` 动态实测仍未齐，不得标 PASS。
 
 ---
 

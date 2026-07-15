@@ -25,7 +25,7 @@
 | D0.1 纳入唯一施工权威 | ✅ PASS：2026-07-14 Claude 独立审查无阻断项 | 治理提交推送后保持唯一施工权威 |
 | D0.2 身份与支持范围 | ✅ PASS：source `dd151db`；静态身份决议完成，Codex 独立只读审查 APPROVE、无 P0/P1/P2/P3 | D1.3 补交运行矩阵；任一失败重开 D0.2。受公共信任的正式 Authenticode Subject 延后到 D5.2 |
 | D0.3 RuntimeAdapter 契约 | ✅ PASS：source `c062b19`；contract、Web/Fake、浏览器能力接管和架构守卫完成，独立审查 APPROVE | Tauri target 继续 fail closed，待 D1.1 注册最小 native adapter |
-| D0.4 功能/性能/安全基线 | 🟠 进行中：`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验；`small-v1` 嵌套引用与规范化往返业务 hash 均已 PASS | 补 large/blob/legacy 冻结夹具；采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
+| D0.4 功能/性能/安全基线 | 🟠 进行中：五类确定性夹具与严格 manifest 已生成并校验；嵌套引用、规范化往返业务 hash、Blob 固定 hash 和 v1～v37 legacy 升级均已 PASS | 采集生产 `web-tab` 的功能/数据 hash/性能/恢复/安全完整实测；installed PWA 可选且不阻塞主线 |
 | D0.5 动作级功能基线 | ⬜ 未开始 | D0.1～D0.4 PASS；冻结生产 commit 并建立自动覆盖检查 |
 | D1.1 正式 Tauri 2 壳 | 🟠 IN PROGRESS：`src-tauri/`、受限 adapter、最小 capability/CSP、双构建、开发身份 exe 和真实 WebView2 离线首页 smoke 已落地 | D0.2 已 PASS；D0.4/D0.5 闭环并完成独立审查前不得标 PASS 或接真实数据 |
 | D1.2 条件化构建/路由/PWA | 🟠 IN PROGRESS：双 base、BrowserRouter/HashRouter、PWA/Service Worker、输出目录、本地字体和三路由重启 smoke 已落地 | 最终 PASS 等待 D1.1 硬依赖闭环；当前证据不得替代 D1.3 |
@@ -1299,7 +1299,7 @@ for each character:
 - **实现**：`PROJECT_TABLES.refs` 的 `kind: 'array' | 'json'` 可登记 portable 规则；项目 JSON 升级为 `version: 4`，并以 `nestedRefEncoding: "export-index-v1"` 显式声明嵌套引用使用目标表导出序号。导入在所有目标表映射建立后统一回填，覆盖 `detailedOutlines.appearingCharacterIds`、`scenes[].characterIds`、`foreshadowIds`、JSON-string `creativeRules.citedReferenceIds` 与 `codexEntries.refs` 自引用。
 - **数据边界**：v4 marker 缺失或错误时 fail closed，非法序号使整个导入事务回滚且不留下半数据。旧 v1/v2/v3 仍可导入，但其嵌套数字缺乏可移植映射元数据，只按历史 raw database ID 原样保留，绝不猜测为 v4 export index。
 - **验证证据**：`tests/regression/R-export-nested-reference-remap.test.ts` 覆盖高位非连续源主键、export index 0、重复值、多场景、JSON-string、非法序号原子回滚、legacy v3 与 marker fail-closed；`tests/desktop-contract/D0.4-fixtures.test.ts` 的固定 `small-v1` 导出→清库→导入得到 `dangling=[]`，`referenceRemapStatus=PASS`。
-- **D0.4 后续闭环（2026-07-15）**：树表导出已改为稳定父先顺序，精确项目名成对变换与路径级运行时字段排除后，`small-v1` 的 source/re-export 业务 hash 等值且嵌套业务字段仍保持敏感。`empty-v1` / `small-v1` 文件与严格 manifest 已实际生成、哈希并通过可重建校验，二者 `artifactStatus=GENERATED_VALID`；其余 large/blob/legacy 夹具及生产 `web-tab` 实测仍未完成。
+- **D0.4 后续闭环（2026-07-15）**：树表导出已改为稳定父先顺序，精确项目名成对变换与路径级运行时字段排除后，`small-v1` 的 source/re-export 业务 hash 等值且嵌套业务字段仍保持敏感。`empty-v1`、`small-v1`、`large-synthetic-v1`、`blob-ladder-v1`、`legacy-matrix-v1` 与严格 manifest 已实际生成、哈希并通过可重建校验；生产 `web-tab` 动态功能、数据 hash、性能、恢复和安全实测仍未完成，D0.4 继续保持 `NOT_ELIGIBLE`。
 
 ### ✅ AUDIT-2（已完成 2026-06-16 · 核实收尾）— 原生 alert/confirm/prompt 全面替换为 Dialog
 - **现状核实（2026-06-16）**：UI 层（`src/components` / `hooks` / `pages`）原生弹窗**已全部替换**——`Dialog` 组件已被 **22 个文件**使用，`check:architecture` ⑥号守卫（禁 UI 层 `alert/confirm/prompt`）持续绿。审查报告时的"约 23 文件"已在商业审查 P0/P1 批次及后续逐步替换完毕。

@@ -2348,7 +2348,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 | D0.1 | 纳入唯一施工权威 | 用户已确认专项规划；Claude 审查是完成条件 | PASS（2026-07-14；Claude 独立审查无阻断项） |
 | D0.2 | 冻结应用身份与支持范围 | D0.1；作者自用候选签名边界已确认；正式 Authenticode publisher/受公共信任证书 Subject 延后到 D5.2 | PASS（2026-07-15；静态身份决议完成，Codex 独立只读审查 APPROVE、无 P0/P1/P2/P3；D1.3 运行矩阵仍为延后门槛） |
 | D0.3 | 定义 RuntimeAdapter 契约 | D0.1；完成浏览器专属能力盘点与四问 | PASS（source `c062b19`；RuntimeAdapter contract、Web/Fake、浏览器能力接管和架构守卫完成；独立审查 APPROVE） |
-| D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议已落地；`empty-v1` / `small-v1` 可重建文件与严格 manifest 已生成并校验，`small-v1` 嵌套引用及规范化往返业务 hash 均为 PASS；large/blob/legacy 完整夹具与生产 `web-tab` 实测尚未齐全；installed PWA 可选） |
+| D0.4 | 建立功能、性能和安全基线 | D0.1；冻结参考 Windows 环境与夹具 | IN PROGRESS（`d0.4-v2` 协议已落地；`empty-v1`、`small-v1`、`large-synthetic-v1`、`blob-ladder-v1`、`legacy-matrix-v1` 确定性夹具和严格 manifest 已生成并校验；生产 `web-tab` 的功能、数据 hash、性能、恢复和安全实测仍未齐全；installed PWA 可选） |
 | D0.5 | 冻结动作级功能基线与自动覆盖检查 | D0.1～D0.4；冻结生产 commit | NOT STARTED |
 | D1.1 | 建立正式 Tauri 2 壳 | 最终 PASS 仍依赖 D0.1～D0.5；2026-07-15 特别授权仅允许开发隔离身份 + 合成数据的前置施工 | IN PROGRESS（正式 `src-tauri/`、最小 capability/CSP、受限 adapter、可重复 Desktop build、无服务离线首页和真实 WebView2 smoke 已落地；D0.2 已 PASS，D0.4/D0.5 未闭环，仍不得标 PASS） |
 | D1.2 | 条件化 base、router、PWA 与 Service Worker | D1.1 | IN PROGRESS（受限实现已完成：Web/Desktop 独立 base、BrowserRouter/HashRouter、PWA/Service Worker 和输出目录条件化，本地字体、双产物契约及三路由两次真实启动 smoke 均通过；最终 PASS 等待 D1.1 硬依赖闭环） |
@@ -2455,13 +2455,13 @@ G2/stable 表中的 PWA 回归属于后续自用转发布阶段的独立质量�
 
 #### 🟠 D0.4 · 建立功能、性能和安全基线（2026-07-15 进行中）
 
-- **source commit**：`e62ae88`；分支 `refactor/phase-desktop-task-d0-4-fixtures` 已推送；
-- **实现摘要**：`d0.4-v2` 协议、schema、静态采集器、`empty-v1` / `small-v1` 可重建夹具、严格 manifest、嵌套引用 remap 和规范化往返业务 hash 已落地；
+- **source commit**：初始夹具 `e62ae88`；确定性夹具补齐 `cea6231`，已作为 `54ff7a9` 集成到当前 D1 施工分支；均未据此推送当前分支；
+- **实现摘要**：`d0.4-v2` 协议、schema、静态采集器、`empty-v1` / `small-v1` / `large-synthetic-v1` 可重建夹具、严格 manifest、嵌套引用 remap、规范化往返业务 hash、Blob 阶梯配方及 v1～v37 legacy 升级矩阵已落地；
 - **功能等价 / 数据红线**：夹具表集合从 `PROJECT_TABLES` 派生；源数据未被修改，未采集指标保持 `NOT_MEASURED/NOT_ELIGIBLE`，不会用估算值冒充结果；
-- **验证**：105 test files / 414 tests PASS（410 个项目原有用例 + 4 个本次新增用例）；fixture 重建、baseline contract、42 required tables、AI manual、architecture、TypeScript、production build 和 lint 0 errors 全部通过；
-- **Codex 交付状态**：IN PROGRESS；empty/small 静态资产完成，未标 D0.4 PASS；
+- **验证**：集成复验中 `check:desktop-fixtures` 2 files / 12 tests PASS，fixture 重建、baseline contract、42 required tables、architecture、TypeScript 和 lint 0 errors 通过；全量 Vitest 518/519，唯一失败为既有 AI manual 内容漂移，不影响本次夹具专项通过，但不得表述为全量绿灯；
+- **Codex 交付状态**：IN PROGRESS；五类确定性夹具资产完成，未标 D0.4 PASS；
 - **Claude 审查状态**：待完整 D0.4 闭环后独立审查；
-- **未决风险**：large/blob/legacy 夹具与生产 `web-tab` 功能、性能、恢复、安全实测未齐；installed PWA 仅为可选补充。
+- **未决风险**：生产 `web-tab` 功能、规范化数据 hash、性能、恢复和安全实测未齐；1 GiB Blob 仍只允许显式 opt-in，未提交大二进制；installed PWA 仅为可选补充。
 
 #### 🟠 D1.1 · 建立正式 Tauri 2 壳（2026-07-15 进行中）
 
