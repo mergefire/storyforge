@@ -28,7 +28,7 @@ interface RunnerProps {
   onClose: () => void
 }
 
-interface StepResult {
+export interface StepResult {
   stepId: string
   output: string
   status: 'pending' | 'running' | 'done' | 'skipped' | 'failed'
@@ -249,12 +249,8 @@ export default function WorkflowRunner({ workflow, project, onClose }: RunnerPro
       genres: project?.genre,
       assembledContext: assembledText,
       worldRulesContext: worldRulesText,
+      userInput: userInputsRef.current.get(step.stepId),
     })
-    // FB-7:把用户为本步输入的内容并入 userHint(在用户已写的基础上生成/扩展)
-    const userInput = userInputsRef.current.get(step.stepId)?.trim()
-    if (userInput) {
-      ctx.userHint = [ctx.userHint, userInput].filter(Boolean).join('\n')
-    }
     return ctx
   }
 
@@ -390,6 +386,10 @@ export default function WorkflowRunner({ workflow, project, onClose }: RunnerPro
             onRetry={() => handleRetryStep(idx)}
             onSave={(output, target) => handleSaveTarget(step.stepId, output, target)}
             onUserInputChange={(v) => userInputsRef.current.set(step.stepId, v)}
+            onOutputChange={(output) => {
+              stepOutputsRef.current.set(step.stepId, output)
+              updateResult(step.stepId, { output })
+            }}
             saved={savedSteps.has(step.stepId)}
             hasProject={!!project?.id}
           />
@@ -409,9 +409,9 @@ export default function WorkflowRunner({ workflow, project, onClose }: RunnerPro
   )
 }
 
-function StepCard({
+export function StepCard({
   step, index, result, isCurrent, onSkip, onRetry,
-  onSave, onUserInputChange, saved, hasProject,
+  onSave, onUserInputChange, onOutputChange, saved, hasProject,
 }: {
   step: PromptWorkflowStep
   index: number
@@ -421,6 +421,7 @@ function StepCard({
   onRetry: () => void
   onSave: (output: string, target: SaveTarget) => void
   onUserInputChange: (v: string) => void
+  onOutputChange: (v: string) => void
   saved: boolean
   hasProject: boolean
 }) {
@@ -504,7 +505,10 @@ function StepCard({
             <>
               <textarea
                 value={editedOutput}
-                onChange={e => setEditedOutput(e.target.value)}
+                onChange={e => {
+                  setEditedOutput(e.target.value)
+                  onOutputChange(e.target.value)
+                }}
                 rows={8}
                 className="w-full text-xs text-text-primary font-sans max-h-72 p-2 bg-bg-surface border border-border rounded resize-y focus:outline-none focus:border-accent"
               />

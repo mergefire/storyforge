@@ -1,14 +1,26 @@
-import { useState, useEffect, useSyncExternalStore } from 'react'
-import { Wifi, WifiOff, Eye, EyeOff, CheckCircle, Trash2, ScrollText } from 'lucide-react'
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
+import { Wifi, WifiOff, Eye, EyeOff, CheckCircle, Trash2, ScrollText, RotateCcw, RefreshCw, Pencil, X } from 'lucide-react'
 import { useAIConfigStore, type TestResult } from '../../stores/ai-config'
 import EmbeddingConfigCard from './EmbeddingConfigCard'
 import type { AIConfig, AIProvider } from '../../lib/types'
 import { PROVIDER_MODELS } from '../../lib/types'
+import { isAIConfigReady } from '../../lib/ai/config-readiness'
 import { getLogs, subscribeLogs, clearLogs, formatLog } from '../../lib/ai/logger'
 import { applyStoryForgeTheme, resolveStoryForgeTheme, THEME_OPTIONS, type StoryForgeTheme } from '../../lib/theme'
 import { useDialog } from '../shared/Dialog'
+import { parseContextWindowInput } from '../../lib/ai/context-window-input'
+import { fetchOpenAIModels } from '../../lib/ai/model-list'
+import { normalizeOpenAIBaseUrl } from '../../lib/ai/openai-endpoint'
+import { AI_TASK_KINDS, type AITaskKind } from '../../lib/ai/task-routing'
 
-const PROVIDER_OPTIONS: { value: AIProvider; label: string; cors: boolean; hint: string }[] = [
+const TASK_ROUTE_META: Record<AITaskKind, { label: string; description: string }> = {
+  creation: { label: '创作生成', description: '正文、大纲、细纲、世界观与角色生成' },
+  extraction: { label: '结构提取', description: '状态、事实、物品、关系、词条与导入解析' },
+  analysis: { label: '分析总结', description: '参考资料、摘要、文风学习与检索分析' },
+  review: { label: '审查校验', description: '章节审校、一致性检查、场景与历史考证' },
+}
+
+export const PROVIDER_OPTIONS: { value: AIProvider; label: string; cors: boolean; hint: string }[] = [
   { value: 'deepseek', label: 'DeepSeek', cors: false, hint: '获取 Key: platform.deepseek.com → API Keys（需点击下方「切换到本地代理」）' },
   { value: 'qwen', label: '通义千问', cors: true, hint: '获取 Key: dashscope.console.aliyun.com → API-KEY 管理' },
   { value: 'doubao', label: '豆包', cors: false, hint: '获取 Key: console.volcengine.com → 模型推理 → API Key（火山引擎不支持浏览器直连，需点击下方「切换到本地代理」）' },
@@ -24,14 +36,15 @@ const PROVIDER_OPTIONS: { value: AIProvider; label: string; cors: boolean; hint:
   { value: 'modelscope', label: '魔搭社区', cors: true, hint: '获取 Key: modelscope.cn → 我的 → Access Token' },
   { value: 'agnes', label: 'Agnes AI（免费）', cors: true, hint: '清华系免费全模态 · 获取 Key: platform.agnes-ai.com（若连不上可点下方「切换到本地代理」）' },
   { value: 'longcat', label: 'LongCat（美团）', cors: false, hint: '获取 Key: longcat.chat 平台控制台；OpenAI 兼容接口（若浏览器直连 CORS 失败可切换本地代理）' },
-  { value: 'ollama', label: 'Ollama (本地)', cors: true, hint: '本地运行 Ollama，无需 API Key' },
+  { value: 'opencode', label: 'OpenCode Go（月付）', cors: false, hint: '获取 Key: opencode.ai → Zen → Go API Key（需点击下方「切换到本地代理」）' },
+  { value: 'ollama', label: '本地模型 (Ollama / LM Studio 等)', cors: true, hint: '本地 OpenAI-compatible /v1 接口；Ollama 常用 http://localhost:11434/v1，LM Studio 常用 http://localhost:1234/v1；通常无需 API Key。' },
   { value: 'custom', label: '自定义', cors: true, hint: '填写任何兼容 OpenAI 格式的 API' },
 ]
 
 export default function AIConfigPanel() {
   const { config, setConfig, switchProvider, testConnection,
     rememberApiKey, setRememberApiKey,
-    presets, activePresetId, saveAsPreset, applyPreset, updatePresetFromCurrent, renamePreset, deletePreset } = useAIConfigStore()
+    presets, taskRoutes, setTaskRoute, activePresetId, editingPresetId, saveAsPreset, applyPreset, updatePresetFromCurrent, renamePreset, deletePreset } = useAIConfigStore()
   const dialog = useDialog()
   const [showKey, setShowKey] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -39,6 +52,12 @@ export default function AIConfigPanel() {
   const [showLogs, setShowLogs] = useState(false)
   const [savingPreset, setSavingPreset] = useState(false)
   const [presetName, setPresetName] = useState('')
+  const [contextWindowDraft, setContextWindowDraft] = useState(() => config.contextWindow ? String(config.contextWindow) : '')
+  const [contextWindowError, setContextWindowError] = useState('')
+  const [fetchedModels, setFetchedModels] = useState<string[]>([])
+  const [refreshingModels, setRefreshingModels] = useState(false)
+  const [modelListError, setModelListError] = useState('')
+  const submittedContextWindowRef = useRef(config.contextWindow)
   const [currentTheme, setCurrentTheme] = useState<StoryForgeTheme>(() =>
     resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')),
   )
@@ -66,6 +85,48 @@ export default function AIConfigPanel() {
   const logs = useSyncExternalStore(subscribeLogs, getLogs)
 
   const currentProviderInfo = PROVIDER_OPTIONS.find((p) => p.value === config.provider)
+  const editingPreset = editingPresetId ? presets.find(p => p.id === editingPresetId) : null
+
+  useEffect(() => {
+    if (config.contextWindow === submittedContextWindowRef.current) return
+    submittedContextWindowRef.current = config.contextWindow
+    setContextWindowDraft(config.contextWindow ? String(config.contextWindow) : '')
+    setContextWindowError('')
+  }, [config.contextWindow])
+
+  const handleContextWindowChange = (raw: string) => {
+    setContextWindowDraft(raw)
+    const parsed = parseContextWindowInput(raw)
+    if (parsed.kind === 'invalid') {
+      setContextWindowError(parsed.message)
+      return
+    }
+
+    const next = parsed.kind === 'valid' ? parsed.value : undefined
+    setContextWindowError('')
+    submittedContextWindowRef.current = next
+    setConfig({ contextWindow: next })
+  }
+
+  const handleRefreshModels = async () => {
+    setRefreshingModels(true)
+    setModelListError('')
+    try {
+      const normalized = normalizeOpenAIBaseUrl(config.baseUrl)
+      if (normalized.changed) setConfig({ baseUrl: normalized.baseUrl })
+      const models = await fetchOpenAIModels({
+        baseUrl: normalized.baseUrl,
+        apiKey: config.apiKey,
+      })
+      setFetchedModels(models)
+      if (models.length === 0) setModelListError('服务返回了空模型列表；仍可手动填写模型名')
+    } catch (error) {
+      setFetchedModels([])
+      setModelListError(error instanceof Error ? error.message : '刷新模型列表失败')
+    } finally {
+      setRefreshingModels(false)
+    }
+  }
 
   const handleTest = async () => {
     setTesting(true)
@@ -113,6 +174,11 @@ export default function AIConfigPanel() {
     setTestResult(null)
   }, [config.provider])
 
+  useEffect(() => {
+    setFetchedModels([])
+    setModelListError('')
+  }, [config.baseUrl, config.provider])
+
   return (
     <div className="max-w-2xl">
       <h2 className="text-xl font-bold text-text-primary mb-6">设置</h2>
@@ -128,7 +194,23 @@ export default function AIConfigPanel() {
         <div className="mb-4 pb-4 border-b border-border/50">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm text-text-secondary">配置预设</label>
-            {savingPreset ? (
+            {editingPreset && !savingPreset ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => updatePresetFromCurrent(editingPreset.id)}
+                  title={`用当前表单内容覆盖「${editingPreset.name}」`}
+                  className="text-xs px-2.5 py-1 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors"
+                >
+                  保存修改到「{editingPreset.name}」
+                </button>
+                <button
+                  onClick={() => setSavingPreset(true)}
+                  className="text-xs px-2.5 py-1 rounded-lg bg-bg-elevated text-text-secondary border border-border hover:text-accent hover:border-accent/50 transition-colors"
+                >
+                  另存为新预设
+                </button>
+              </div>
+            ) : savingPreset ? (
               <div className="flex items-center gap-1.5">
                 <input
                   autoFocus
@@ -172,21 +254,63 @@ export default function AIConfigPanel() {
                       onClick={() => updatePresetFromCurrent(p.id)}
                       title="用当前配置覆盖此预设"
                       className="opacity-70 hover:opacity-100"
-                    >💾</button>
+                    >保存</button>
                   )}
                   <button
                     onClick={() => { void handleRenamePreset(p.id, p.name) }}
                     title="重命名"
                     className="opacity-0 group-hover:opacity-70 hover:opacity-100"
-                  >✎</button>
+                    aria-label={`重命名预设 ${p.name}`}
+                  ><Pencil className="h-3 w-3" /></button>
                   <button
                     onClick={() => { void handleDeletePreset(p.id, p.name) }}
                     title="删除"
                     className="opacity-0 group-hover:opacity-70 hover:opacity-100 hover:text-red-400"
-                  >✕</button>
+                    aria-label={`删除预设 ${p.name}`}
+                  ><X className="h-3 w-3" /></button>
                 </div>
               ))}
             </div>
+          )}
+          {presets.length > 0 && (
+            <p className="mt-2 text-[11px] text-text-muted">点击预设会应用整套配置，包括上下文窗口；修改表单后需点击上方按钮才会写回该预设。</p>
+          )}
+        </div>
+
+        <div className="mb-4 border-b border-border/50 pb-4">
+          <div className="mb-2">
+            <h4 className="text-sm font-medium text-text-secondary">任务模型路由</h4>
+            <p className="mt-1 text-[11px] text-text-muted">
+              按任务自动使用已保存预设；未绑定、预设被删除或专用预设缺少 API Key 时，回退到当前全局模型。云端预设会接收对应任务的提示词与上下文。
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {AI_TASK_KINDS.map(taskKind => {
+              const selectedPreset = presets.find(preset => preset.id === taskRoutes[taskKind])
+              const routeMeta = TASK_ROUTE_META[taskKind]
+              return (
+                <label key={taskKind} className="block rounded border border-border bg-bg-base p-2.5">
+                  <span className="block text-xs font-medium text-text-primary">{routeMeta.label}</span>
+                  <span className="mb-2 block min-h-8 text-[11px] leading-4 text-text-muted">{routeMeta.description}</span>
+                  <select
+                    value={selectedPreset?.id ?? ''}
+                    onChange={event => setTaskRoute(taskKind, event.target.value || null)}
+                    aria-label={`${routeMeta.label}模型预设`}
+                    className="w-full rounded border border-border bg-bg-surface px-2 py-1.5 text-xs text-text-primary focus:border-accent focus:outline-none"
+                  >
+                    <option value="">使用当前全局模型</option>
+                    {presets.map(preset => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.name} · {preset.config.provider}/{preset.config.model}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )
+            })}
+          </div>
+          {presets.length === 0 && (
+            <p className="mt-2 text-[11px] text-amber-400">先保存至少一个配置预设，才能给任务绑定专用模型。</p>
           )}
         </div>
 
@@ -263,13 +387,13 @@ export default function AIConfigPanel() {
                     onClick={() => updateConfig({ provider: 'ollama', baseUrl: 'http://localhost:11434/v1', apiKey: '', model: 'qwen2.5:7b' })}
                     className="text-xs px-2 py-1 rounded bg-bg-elevated text-text-secondary border border-border hover:text-accent hover:border-accent/50 transition-colors"
                   >
-                    Ollama
+                    本地 Ollama
                   </button>
                 </div>
               )}
               {['custom', 'ollama'].includes(config.provider) && (
                 <p className="mt-1 text-[11px] text-text-muted">
-                  LM Studio / Ollama 请选择 OpenAI 兼容接口，Base URL 填到 /v1；不要填 /v1/models 或 /chat/completions，测试时会自动修正常见误填。
+                  本地模型请选择 OpenAI 兼容接口，Base URL 填到 /v1；Ollama 常用 :11434/v1，LM Studio 常用 :1234/v1。不要填 /v1/models 或 /chat/completions，测试时会自动修正常见误填。
                 </p>
               )}
               {(() => {
@@ -283,6 +407,7 @@ export default function AIConfigPanel() {
                   doubao:   { proxy: '/doubao-proxy/api/v3', direct: 'https://ark.cn-beijing.volces.com/api/v3' },
                   agnes:    { proxy: '/agnes-proxy/v1',    direct: 'https://apihub.agnes-ai.com/v1' },
                   longcat:  { proxy: '/longcat-proxy/openai/v1', direct: 'https://api.longcat.chat/openai/v1' },
+                  opencode: { proxy: '/opencode-proxy/v1',  direct: 'https://opencode.ai/zen/go/v1' },
                 }
                 const pm = PROXY_MAP[config.provider]
                 if (!pm) return null
@@ -309,7 +434,32 @@ export default function AIConfigPanel() {
               })()}
             </div>
             <div>
-              <label className="block text-sm text-text-secondary mb-1.5">模型</label>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <label className="block text-sm text-text-secondary">模型</label>
+                {['custom', 'ollama'].includes(config.provider) && (
+                  <button
+                    type="button"
+                    onClick={() => { void handleRefreshModels() }}
+                    disabled={refreshingModels || !config.baseUrl.trim()}
+                    title="从当前服务刷新模型列表"
+                    className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-accent hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${refreshingModels ? 'animate-spin' : ''}`} />
+                    {refreshingModels ? '刷新中' : '刷新模型'}
+                  </button>
+                )}
+              </div>
+              {['custom', 'ollama'].includes(config.provider) && fetchedModels.length > 0 && (
+                <select
+                  value={fetchedModels.includes(config.model) ? config.model : ''}
+                  onChange={(e) => { if (e.target.value) setConfig({ model: e.target.value }) }}
+                  aria-label="服务返回的模型列表"
+                  className="mb-1.5 w-full rounded-lg border border-border bg-bg-base px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
+                >
+                  <option value="">选择服务返回的模型（{fetchedModels.length}）</option>
+                  {fetchedModels.map(model => <option key={model} value={model}>{model}</option>)}
+                </select>
+              )}
               {PROVIDER_MODELS[config.provider] ? (
                 <>
                   <select
@@ -342,9 +492,14 @@ export default function AIConfigPanel() {
                 <input
                   type="text"
                   value={config.model}
-                  onChange={(e) => updateConfig({ model: e.target.value })}
+                  onChange={(e) => setConfig({ model: e.target.value })}
+                  placeholder="手动输入模型名"
                   className="w-full px-3 py-2 bg-bg-base border border-border rounded-lg text-text-primary text-sm focus:outline-none focus:border-accent transition-colors"
                 />
+              )}
+              {modelListError && <p className="mt-1 text-[11px] text-amber-400">{modelListError}</p>}
+              {config.provider === 'ollama' && (
+                <p className="mt-1 text-[11px] text-text-muted">未安装的模型请先在 Ollama 中拉取，完成后回到这里刷新。</p>
               )}
             </div>
           </div>
@@ -410,14 +565,37 @@ export default function AIConfigPanel() {
                 ? <span className="text-accent ml-1">{config.contextWindow.toLocaleString()} token</span>
                 : <span className="text-text-muted ml-1">按模型预设</span>}
             </label>
-            <input
-              type="number"
-              min={0}
-              value={config.contextWindow || ''}
-              onChange={(e) => updateConfig({ contextWindow: Number(e.target.value) || undefined })}
-              placeholder="本地/自定义模型请按实际填写，如 131072；留空 = 用内置预设"
-              className="w-full px-3 py-2 bg-bg-base border border-border rounded text-sm text-text-primary focus:outline-none focus:border-accent"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={contextWindowDraft}
+                onChange={(e) => handleContextWindowChange(e.target.value)}
+                aria-invalid={Boolean(contextWindowError)}
+                placeholder="本地/自定义模型请按实际填写，如 131072；留空 = 用内置预设"
+                className={`min-w-0 flex-1 px-3 py-2 bg-bg-base border rounded text-sm text-text-primary focus:outline-none ${contextWindowError ? 'border-red-400 focus:border-red-400' : 'border-border focus:border-accent'}`}
+              />
+              <button
+                type="button"
+                onClick={() => handleContextWindowChange('')}
+                disabled={!contextWindowDraft && !contextWindowError}
+                title="重置为模型预设"
+                aria-label="重置上下文窗口为模型预设"
+                className="p-2 rounded border border-border text-text-muted hover:text-accent hover:border-accent/50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
+            {contextWindowError ? (
+              <p className="mt-1 text-[11px] text-red-400">{contextWindowError}；已保存值未改变。</p>
+            ) : (
+              <p className="mt-1 flex items-center gap-1 text-[11px] text-green-400/80">
+                <CheckCircle className="w-3 h-3" />
+                {editingPreset && activePresetId === null
+                  ? `已自动保存到当前配置，尚未写回「${editingPreset.name}」`
+                  : '已自动保存到当前配置'}
+              </p>
+            )}
             <p className="text-[11px] text-text-muted mt-1">
               识别不到的模型默认按 8K 计算,会误报「上下文超出窗口」。本地模型(LM Studio / Ollama)请在此填真实窗口,如 128000 / 262144。
             </p>
@@ -428,7 +606,7 @@ export default function AIConfigPanel() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleTest}
-                disabled={testing || (!config.apiKey && !['custom', 'ollama'].includes(config.provider))}
+                disabled={testing || !isAIConfigReady(config)}
                 className="flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-lg hover:bg-accent/20 disabled:opacity-40 transition-colors text-sm"
               >
                 {testing ? (

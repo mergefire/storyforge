@@ -4,7 +4,8 @@ import { useChapterStore } from '../../stores/chapter'
 import { useUserStyleStore } from '../../stores/user-style'
 import { useAIConfigStore } from '../../stores/ai-config'
 import { buildStyleLearnPrompt } from '../../lib/ai/adapters/style-adapter'
-import { chat } from '../../lib/ai/client'
+import { chat, resolveRequestConfig } from '../../lib/ai/client'
+import { getAIConfigRequiredMessage, isAIConfigReady } from '../../lib/ai/config-readiness'
 import type { Project, Chapter, ChapterStatus } from '../../lib/types'
 
 interface Props {
@@ -50,7 +51,8 @@ export default function StyleLearningPanel({ project }: Props) {
   const toggle = (id: number) => {
     setSelectedIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -64,8 +66,9 @@ export default function StyleLearningPanel({ project }: Props) {
 
   const handleLearn = async () => {
     if (selected.length === 0) return
-    if (!aiConfig.apiKey && !['ollama', 'custom'].includes(aiConfig.provider)) {
-      setError('未配置 API Key,请先到「设置」填好模型与密钥。')
+    const effectiveConfig = resolveRequestConfig(aiConfig, { category: 'style.learn' }).config
+    if (!isAIConfigReady(effectiveConfig)) {
+      setError(getAIConfigRequiredMessage(effectiveConfig))
       return
     }
     setRunning(true)

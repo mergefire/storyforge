@@ -1,16 +1,9 @@
 import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import type { Character } from '../../lib/types'
-import { dimensionsByGroup, type CharacterDimensionKey } from '../../lib/character/character-dimensions'
+import { dimensionsByGroup, type CharacterDimensionKey, type CharacterDimensionSpec } from '../../lib/character/character-dimensions'
 import { CTextarea } from '../shared/CompositionInput'
-import { useAIStream } from '../../hooks/useAIStream'
-import { createAISessionKey } from '../../stores/ai-generation-session'
-import { buildCharacterDimensionPrompt } from '../../lib/ai/adapters/character-adapter'
-import { assembleContext } from '../../lib/registry/assemble-context'
-import { useAIConfigStore } from '../../stores/ai-config'
-import AIStreamOutput from '../shared/AIStreamOutput'
-import AIFieldModeTabs from '../shared/AIFieldModeTabs'
-import type { FieldGenerationMode } from '../../lib/ai/field-generation-context'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface Props {
   character: Character
@@ -22,6 +15,71 @@ interface Props {
   worldGroupId?: number | null
 }
 
+interface DimensionFieldProps {
+  dimension: CharacterDimensionSpec
+  value: string
+  onCommit: (value: string) => void
+}
+
+function CharacterDimensionField({ dimension, value, onCommit }: DimensionFieldProps) {
+  const [draft, setDraft] = useState(value)
+  const draftRef = useRef(value)
+  const dirtyRef = useRef(false)
+  const lastSentRef = useRef(value)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onCommitRef = useRef(onCommit)
+
+  useEffect(() => {
+    onCommitRef.current = onCommit
+  }, [onCommit])
+
+  const flushDraft = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    const next = draftRef.current
+    if (!dirtyRef.current || next === lastSentRef.current) return
+    lastSentRef.current = next
+    onCommitRef.current(next)
+  }, [])
+
+  useEffect(() => {
+    const external = String(value ?? '')
+    if (dirtyRef.current && external !== draftRef.current) return
+    dirtyRef.current = false
+    lastSentRef.current = external
+    draftRef.current = external
+    setDraft(external)
+  }, [value])
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    const next = draftRef.current
+    if (dirtyRef.current && next !== lastSentRef.current) {
+      onCommitRef.current(next)
+    }
+  }, [])
+
+  return (
+    <CTextarea
+      value={draft}
+      onChange={e => {
+        const next = e.target.value
+        draftRef.current = next
+        dirtyRef.current = true
+        setDraft(next)
+        if (timerRef.current) clearTimeout(timerRef.current)
+        timerRef.current = setTimeout(flushDraft, 400)
+      }}
+      onBlur={flushDraft}
+      placeholder={`${dimension.label}…`}
+      rows={dimension.rows}
+      className="flex-1 px-2 py-1 bg-bg-base border border-border rounded text-xs text-text-primary resize-y focus:outline-none focus:border-accent"
+    />
+  )
+}
+
 /**
  * 角色完整维度的展示/编辑区(共享)——按 CHARACTER_DIMENSIONS 分组渲染。
  * NPC / 次要 / 路人 / 主要面板复用,让 AI 生成的完整内容在各自页面都能看到、能改。
@@ -30,6 +88,7 @@ interface Props {
  */
 export default function CharacterDimensionFields({ character, onChange, exclude = [], projectId, worldGroupId = null }: Props) {
   const skip = new Set<CharacterDimensionKey>(exclude)
+
   return (
     <div className="space-y-3">
       {dimensionsByGroup().map(({ group, dims }) => {
@@ -40,14 +99,15 @@ export default function CharacterDimensionFields({ character, onChange, exclude 
             <div className="mb-1 text-[10px] uppercase tracking-wider text-text-muted/70">{group}</div>
             <div className="space-y-1.5">
               {shown.map(d => (
-                <DimensionRow
-                  key={d.key}
-                  dim={d}
-                  character={character}
-                  onChange={onChange}
-                  projectId={projectId}
-                  worldGroupId={worldGroupId}
-                />
+                <div key={d.key} className="flex gap-2">
+                  <span className="w-20 flex-shrink-0 pt-1.5 text-xs text-text-muted">{d.label}</span>
+                  <CharacterDimensionField
+                    key={`${character.id ?? 'draft'}:${d.key}`}
+                    dimension={d}
+                    value={String(character[d.key] ?? '')}
+                    onCommit={value => onChange({ [d.key]: value } as Partial<Character>)}
+                  />
+                </div>
               ))}
             </div>
           </div>

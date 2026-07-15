@@ -20,7 +20,8 @@ import type { Project } from '../../lib/types'
 import { useDialog } from '../shared/Dialog'
 import { useAIConfigStore } from '../../stores/ai-config'
 import { useWorldGroupStore } from '../../stores/world-group'
-import { chat } from '../../lib/ai/client'
+import { chat, resolveRequestConfig } from '../../lib/ai/client'
+import { getAIConfigRequiredMessage, isAIConfigReady } from '../../lib/ai/config-readiness'
 import {
   buildCodexExtractPrompt, parseCodexEntries, splitExtractionText,
 } from '../../lib/ai/adapters/structured-extract-adapter'
@@ -190,7 +191,8 @@ export default function CodexPanel({ project, fixedDomain, fixedCategoryKeys, em
 
   const handleExtractEntries = async () => {
     if (!activeCat || !extractText.trim()) return
-    if (!aiConfig.apiKey) { toast.error('请先在设置中配置 API Key。'); return }
+    const effectiveConfig = resolveRequestConfig(aiConfig, { category: 'codex.extract' }).config
+    if (!isAIConfigReady(effectiveConfig)) { toast.error(getAIConfigRequiredMessage(effectiveConfig)); return }
     setExtracting(true)
     try {
       const schema = parseFieldSchema(activeCat.fieldSchema)

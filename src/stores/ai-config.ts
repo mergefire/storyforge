@@ -5,15 +5,10 @@ import { createLog, updateLog } from '../lib/ai/logger'
 import { nanoid } from '../lib/utils/id'
 import { buildOpenAIEndpoint, normalizeOpenAIBaseUrl } from '../lib/ai/openai-endpoint'
 import {
-  bindAiCredential,
-  deleteAiCredential,
-  executeAiRequest,
-  isAiAbortError,
-  isAiNetworkError,
-  isSuccessfulAiResponse,
-  readAiResponseText,
-} from '../lib/ai/runtime-transport'
-import { getRuntime } from '../runtime'
+  sanitizeAITaskRoutes,
+  type AITaskKind,
+  type AITaskRoutes,
+} from '../lib/ai/task-routing'
 
 const STORAGE_KEY = 'storyforge-ai-config'
 const PRESETS_KEY = 'storyforge-ai-presets'
@@ -21,11 +16,7 @@ const SESSION_API_KEY = 'storyforge-ai-api-key-session'
 const REMEMBER_API_KEY = 'storyforge-ai-api-key-remember'
 const EMBEDDING_KEY = 'storyforge-embedding-config'
 const EMBEDDING_SESSION_KEY = 'storyforge-embedding-key-session'
-const ACTIVE_PRESET_KEY = 'storyforge-ai-active-preset'
-
-function storesPlaintextConfiguration(): boolean {
-  return getRuntime().secrets.policy.storesPlaintextConfiguration
-}
+export const TASK_ROUTES_KEY = 'storyforge-ai-task-routes'
 
 const DEFAULT_CONFIG: AIConfig = {
   provider: 'deepseek',
@@ -78,6 +69,19 @@ function savePresets(presets: AIConfigPreset[]) {
     ? presets.map(preset => ({ ...preset, config: { ...preset.config, apiKey: '' } }))
     : presets
   localStorage.setItem(PRESETS_KEY, JSON.stringify(safePresets))
+}
+
+function loadTaskRoutes(): AITaskRoutes {
+  try {
+    const saved = localStorage.getItem(TASK_ROUTES_KEY)
+    return saved ? sanitizeAITaskRoutes(JSON.parse(saved)) : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveTaskRoutes(routes: AITaskRoutes): void {
+  localStorage.setItem(TASK_ROUTES_KEY, JSON.stringify(routes))
 }
 
 /** 根据 HTTP 状态码和英文错误信息，返回中文解释 */
@@ -193,8 +197,11 @@ interface AIConfigStore {
   config: AIConfig
   rememberApiKey: boolean
   presets: AIConfigPreset[]
+  taskRoutes: AITaskRoutes
   /** 当前生效的预设 id（null = 未对应任何预设/已改动） */
   activePresetId: string | null
+  /** 最近一次应用/保存的预设 id；表单改动后仍保留,用于显式覆盖当前预设。 */
+  editingPresetId: string | null
   /** NS-5 语义检索（embedding）配置 */
   embedding: EmbeddingConfig
   setEmbeddingConfig: (partial: Partial<EmbeddingConfig>) => Promise<void>
@@ -207,7 +214,8 @@ interface AIConfigStore {
   applyPreset: (id: string) => Promise<void>
   updatePresetFromCurrent: (id: string) => void
   renamePreset: (id: string, name: string) => void
-  deletePreset: (id: string) => Promise<void>
+  deletePreset: (id: string) => void
+  setTaskRoute: (taskKind: AITaskKind, presetId: string | null) => void
 }
 
 const initial = loadInitialConfig()
@@ -222,8 +230,10 @@ if (!initialActivePresetId) setActivePreset(null)
 export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   config: initial.config,
   rememberApiKey: initial.rememberApiKey,
-  presets: initialPresets,
-  activePresetId: initialActivePresetId,
+  presets: loadPresets(),
+  taskRoutes: loadTaskRoutes(),
+  activePresetId: null,
+  editingPresetId: null,
   embedding: loadEmbeddingConfig(initial.rememberApiKey),
 
   setEmbeddingConfig: async (partial: Partial<EmbeddingConfig>) => {
@@ -323,19 +333,7 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     }
     const presets = [...get().presets, preset]
     savePresets(presets)
-    setActivePreset(id)
-    if (get().config.apiKey) {
-      void bindAiCredential({
-        key: 'storyforge.ai.primary',
-        apiKey: get().config.apiKey,
-        provider: get().config.provider,
-        profileId: 'primary',
-        operation: 'chat-completions',
-        configuredBaseUrl: get().config.baseUrl,
-        persistence: get().rememberApiKey ? 'device' : 'session',
-      })
-    }
-    set({ presets, activePresetId: id })
+    set({ presets, activePresetId: id, editingPresetId: id })
     return id
   },
 
@@ -352,7 +350,7 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     }
     setActivePreset(id)
     persistConfig(newConfig, get().rememberApiKey)
-    set({ config: newConfig, activePresetId: id })
+    set({ config: newConfig, activePresetId: id, editingPresetId: id })
   },
 
   updatePresetFromCurrent: (id: string) => {
@@ -361,8 +359,7 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
       config: presetConfig(get().config, get().rememberApiKey),
     } : p)
     savePresets(presets)
-    setActivePreset(id)
-    set({ presets, activePresetId: id })
+    set({ presets, activePresetId: id, editingPresetId: id })
   },
 
   renamePreset: (id: string, name: string) => {
@@ -374,9 +371,28 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   deletePreset: async (id: string) => {
     await deleteAiCredential(`storyforge.ai.preset.${id}`)
     const presets = get().presets.filter(p => p.id !== id)
+    const taskRoutes = Object.fromEntries(
+      Object.entries(get().taskRoutes).filter(([, presetId]) => presetId !== id),
+    ) as AITaskRoutes
     savePresets(presets)
-    if (get().activePresetId === id) setActivePreset(null)
-    set({ presets, activePresetId: get().activePresetId === id ? null : get().activePresetId })
+    saveTaskRoutes(taskRoutes)
+    set({
+      presets,
+      taskRoutes,
+      activePresetId: get().activePresetId === id ? null : get().activePresetId,
+      editingPresetId: get().editingPresetId === id ? null : get().editingPresetId,
+    })
+  },
+
+  setTaskRoute: (taskKind, presetId) => {
+    const taskRoutes = { ...get().taskRoutes }
+    if (presetId && get().presets.some(preset => preset.id === presetId)) {
+      taskRoutes[taskKind] = presetId
+    } else {
+      delete taskRoutes[taskKind]
+    }
+    saveTaskRoutes(taskRoutes)
+    set({ taskRoutes })
   },
 
   switchProvider: async (provider: AIProvider) => {
@@ -390,7 +406,7 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     }
     setActivePreset(null)
     persistConfig(newConfig, get().rememberApiKey)
-    set({ config: newConfig, activePresetId: null })
+    set({ config: newConfig, activePresetId: null, editingPresetId: null })
   },
 
   testConnection: async (): Promise<TestResult> => {
@@ -432,7 +448,11 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
         configuredBaseUrl: normalized.baseUrl,
         credentialId,
         signal: controller.signal,
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+        },
+        body: JSON.stringify({
           model: config.model,
           messages: [{ role: 'user', content: '请回复"连接成功"' }],
         },

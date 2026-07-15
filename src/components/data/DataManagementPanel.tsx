@@ -3,7 +3,7 @@ import {
   Download, Upload, FileJson, FileText, FileType,
   Loader2, CheckCircle, AlertCircle, FolderOpen, X,
   History, Plus, Trash2, RotateCcw, HardDrive,
-  ShieldAlert,
+  ShieldAlert, Stethoscope,
 } from 'lucide-react'
 import { exportProjectJSON, downloadJSON, importProjectJSON, type ProjectExportData } from '../../lib/export/json-export'
 import { exportProjectMarkdown, exportProjectTXT, downloadTextFile } from '../../lib/export/text-export'
@@ -15,8 +15,7 @@ import CloudBackupCard from './CloudBackupCard'
 import { useToast } from '../shared/Toast'
 import { useDialog } from '../shared/Dialog'
 import type { Project, Snapshot } from '../../lib/types'
-import { decodeRuntimeFileText, openRuntimeFile } from '../../lib/runtime-file'
-import { getRuntime, type BackupBinding } from '../../runtime'
+import { buildLocalDiagnosticReport } from '../../lib/diagnostics/local-diagnostic-report'
 
 type Tab = 'export' | 'backup'
 type ExportStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -143,7 +142,22 @@ function ExportTab({ project, onImported }: Props) {
     } catch (e) { show('error', `导出失败：${(e as Error).message}`) }
   }
 
-  // Bind a directory capability, request permission in this user gesture, then write once.
+  const handleDownloadDiagnostics = async () => {
+    try {
+      show('loading', '正在整理本地诊断信息...')
+      const report = await buildLocalDiagnosticReport()
+      downloadTextFile(
+        JSON.stringify(report, null, 2),
+        `storyforge-diagnostics-${new Date().toISOString().slice(0, 10)}.json`,
+        'application/json',
+      )
+      show('success', '诊断信息已下载，不含作品内容与 API Key。')
+    } catch (e) {
+      show('error', `诊断信息生成失败：${(e as Error).message}`)
+    }
+  }
+
+  // 绑定文件夹：选目录 → 请求授权 → 持久化句柄 → 立刻写一次
   const handleBindFolder = async () => {
     setFolderBusy(true)
     try {
@@ -290,6 +304,16 @@ function ExportTab({ project, onImported }: Props) {
             {folderBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderOpen className="w-4 h-4" />} 选择本地文件夹
           </ActionButton>
         )}
+      </SectionCard>
+
+      <SectionCard
+        icon={<Stethoscope className="w-5 h-5 text-teal-400" />}
+        title="本地诊断信息"
+        desc="仅包含应用/浏览器版本、数据库表记录数量和本次页面会话的错误位置；不包含作品正文、设定、API Key 或 localStorage 内容，也不会自动上传。"
+      >
+        <ActionButton onClick={handleDownloadDiagnostics} disabled={status === 'loading'} variant="default">
+          <Download className="w-4 h-4" /> 下载诊断信息
+        </ActionButton>
       </SectionCard>
     </div>
   )

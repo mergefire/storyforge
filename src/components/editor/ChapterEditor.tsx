@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { Save, FileText, Eye, ClipboardList, CheckSquare, Square, BookOpenCheck, ShieldCheck, StickyNote } from 'lucide-react'
+import { FileText, ClipboardList, BookOpenCheck, ShieldCheck, StickyNote } from 'lucide-react'
 import { useChapterStore } from '../../stores/chapter'
 import { useOutlineStore } from '../../stores/outline'
 import { useStateCardStore } from '../../stores/state-card'
@@ -20,11 +20,14 @@ import { propagateChapterEditStale, analyzeEditImpact } from '../../lib/consiste
 import { runChapterMemoryTask } from '../../lib/ai/chapter-memory/run-chapter-memory'
 import { prepareContinuityContext } from '../../lib/ai/chapter-memory/continuity-context'
 import { isPlanReconciliationCurrent } from '../../lib/ai/chapter-memory/plan-reconciliation'
+import { findNextCanonicalChapter, findPreviousCanonicalChapter } from '../../lib/ai/chapter-memory/canonical-chapter-sequence'
 import { chat } from '../../lib/ai/client'
 import { db } from '../../lib/db/schema'
 import { buildGenreConstraintContext } from '../../lib/ai/genre-metadata'
 import { buildStylePromptInjection } from '../../lib/ai/writing-styles'
 import { assembleContext } from '../../lib/registry/assemble-context'
+import { resolveChapterDisplayMeta } from '../../lib/outline/chapter-display'
+import { pickBestChapterForOutline } from '../../lib/chapters/selectors'
 import { useCreativeRulesStore } from '../../stores/project-singletons'
 import { useStoryArcStore } from '../../stores/story-arc'
 import { useForeshadowStore } from '../../stores/foreshadow'
@@ -42,26 +45,18 @@ import OutlinePreview from '../outline/OutlinePreview'
 import ReviewPanel from './ReviewPanel'
 import NotePanel from './NotePanel'
 import FloatingToolbar from './FloatingToolbar'
-import type { ChapterStatus, Project, StateDiffItem } from '../../lib/types'
+import ComparePolishPanel from './ComparePolishPanel'
+import ChapterEditorHeader from './ChapterEditorHeader'
+import ChapterMemoryPanel from './ChapterMemoryPanel'
+import ChapterContextPreview from './ChapterContextPreview'
+import { useItemLedgerStore } from '../../stores/item-ledger'
+import { useLocationStore } from '../../stores/location'
+import { useCodexStore } from '../../stores/codex'
+import { buildEditorEntityReferences } from '../../lib/editor/entity-reference'
+import type { Project, StateDiffItem } from '../../lib/types'
 
 /** 生成任务类型(原 memory-builder 三层记忆已被 assembleContext 取代,此类型仅用于调试日志标签) */
 type MemoryTaskType = 'write' | 'plan' | 'review'
-
-const CHAPTER_STATUS_OPTIONS: { value: ChapterStatus; label: string }[] = [
-  { value: 'outline', label: '仅大纲' },
-  { value: 'draft', label: '初稿' },
-  { value: 'revised', label: '已修改' },
-  { value: 'polished', label: '已润色' },
-  { value: 'final', label: '定稿' },
-]
-
-const CHAPTER_STATUS_STYLE: Record<ChapterStatus, string> = {
-  outline: 'bg-bg-elevated text-text-muted',
-  draft: 'bg-warning/10 text-warning',
-  revised: 'bg-info/10 text-info',
-  polished: 'bg-accent/10 text-accent',
-  final: 'bg-success/10 text-success',
-}
 
 interface Props {
   project: Project
@@ -73,7 +68,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     chapters,
     currentChapter,
     selectChapter,
-    addChapter,
+    getOrCreateByOutlineNode,
     updateChapter,
     refreshChapter,
     loadAll: loadChapters,
@@ -84,11 +79,16 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
   const { creativeRules } = useCreativeRulesStore()
   const { loadAll: loadArcs } = useStoryArcStore()
   const { buildForeshadowContext, loadAll: loadForeshadows } = useForeshadowStore()
+  const { entries: itemEntries, loadAll: loadItemLedger } = useItemLedgerStore()
+  const { locations, loadAll: loadLocations } = useLocationStore()
+  const { categories: codexCategories, entries: codexEntries, loadExisting: loadCodex } = useCodexStore()
 
   // content 为 HTML 字符串；旧数据是纯文本，RichEditor 内部会自动包装
   const [content, setContent] = useState('')
   const [plainText, setPlainText] = useState('')
   const [savedContent, setSavedContent] = useState('')
+  const [manualSaving, setManualSaving] = useState(false)
+  const [manualSaveError, setManualSaveError] = useState('')
   const [showContext, setShowContext] = useState(false)
   const [customInstruction, setCustomInstruction] = useState('')
   const [extracting, setExtracting] = useState(false)
@@ -109,12 +109,14 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
   const factAI = useAIStream()
   const editorRef = useRef<RichEditorHandle>(null)
   const memoryRebuildInFlightRef = useRef(new Set<number>())
+  const creatingChapterForOutlineRef = useRef(new Set<number>())
   const reviseReportRef = useRef<ReviewResult | null>(null)  // G8：记住上次"按报告修改"的报告，供重试
   // Phase A1: 自动流程标记
   const [autoProcessing, setAutoProcessing] = useState<'idle' | 'extracting' | 'memory'>('idle')
   const [showOutlinePreview, setShowOutlinePreview] = useState(false)
   const [showReviewPanel, setShowReviewPanel] = useState(false)
   const [showNotePanel, setShowNotePanel] = useState(false)
+  const [compareSourceHtml, setCompareSourceHtml] = useState<string | null>(null)
   const [contextBudget, setContextBudget] = useState<ContextBudget | null>(null)
   const [planReconciliationCurrent, setPlanReconciliationCurrent] = useState(false)
   const aiConfig = useAIConfigStore(s => s.config)
@@ -131,24 +133,59 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
   useEffect(() => { loadCharacters(project.id!) }, [project.id, loadCharacters])
   useEffect(() => { loadArcs(project.id!) }, [project.id, loadArcs])
   useEffect(() => { loadForeshadows(project.id!) }, [project.id, loadForeshadows])
+  useEffect(() => { loadItemLedger(project.id!) }, [project.id, loadItemLedger])
+  useEffect(() => { loadLocations(project.id!) }, [project.id, loadLocations])
+  useEffect(() => { loadCodex(project.id!) }, [project.id, loadCodex])
 
   // 如果从大纲进入，选择/创建对应章节（自动创建）
   useEffect(() => {
     if (!outlineNodeId) return
-    const existing = chapters.find(c => c.outlineNodeId === outlineNodeId)
+    const existing = pickBestChapterForOutline(chapters.filter(c => c.outlineNodeId === outlineNodeId))
     if (existing?.id) {
       selectChapter(existing.id)
-    } else {
-      // 自动创建 chapter 记录
-      const node = nodes.find(n => n.id === outlineNodeId)
-      if (node) {
-        addChapter({
-          projectId: project.id!, outlineNodeId, title: node.title,
-          content: '', wordCount: 0, status: 'outline', order: chapters.length, notes: '',
-        })
-      }
+      return
     }
-  }, [outlineNodeId, chapters, selectChapter, nodes, addChapter, project.id])
+
+    const node = nodes.find(n => n.id === outlineNodeId)
+    if (!node || creatingChapterForOutlineRef.current.has(outlineNodeId)) return
+
+    creatingChapterForOutlineRef.current.add(outlineNodeId)
+    void getOrCreateByOutlineNode(project.id!, outlineNodeId, {
+      title: node.title,
+      content: '', wordCount: 0, status: 'outline', order: chapters.length, notes: '',
+    })
+      .then(chapter => {
+        if (chapter.id) selectChapter(chapter.id)
+      })
+      .finally(() => {
+        creatingChapterForOutlineRef.current.delete(outlineNodeId)
+      })
+  }, [outlineNodeId, chapters, selectChapter, nodes, getOrCreateByOutlineNode, project.id])
+
+  const persistCurrentEditorContent = useCallback(async (): Promise<{ html: string; plain: string; wordCount: number } | null> => {
+    if (!currentChapter?.id) return null
+    const html = editorRef.current?.getHTML() ?? content
+    const plain = editorRef.current?.getPlainText() ?? htmlToPlainText(html)
+    const wc = countWords(plain)
+    await updateChapter(currentChapter.id, { content: html, wordCount: wc })
+    setContent(html)
+    setPlainText(plain)
+    setSavedContent(html)
+    return { html, plain, wordCount: wc }
+  }, [content, currentChapter?.id, updateChapter])
+
+  const handleManualSave = useCallback(async () => {
+    if (manualSaving) return
+    setManualSaving(true)
+    setManualSaveError('')
+    try {
+      await persistCurrentEditorContent()
+    } catch (error) {
+      setManualSaveError(error instanceof Error ? error.message : String(error))
+    } finally {
+      setManualSaving(false)
+    }
+  }, [manualSaving, persistCurrentEditorContent])
 
   // 切换章节：同步到本地 state（RichEditor 会基于 value 重建内容）
   useEffect(() => {
@@ -160,6 +197,11 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
   // 切换章节时同步 savedContent（只在章节 id 变化时）
   useEffect(() => {
     setSavedContent(currentChapter?.content || '')
+    setManualSaveError('')
+  }, [currentChapter?.id]) // eslint-disable-line react-hooks/exhaustive-deps -- 保存基线只在切章时重置，自动保存不能重置脏状态
+
+  useEffect(() => {
+    setCompareSourceHtml(null)
   }, [currentChapter?.id])
 
   useEffect(() => {
@@ -184,6 +226,9 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
   }, [currentChapter?.id, updateChapter]))
 
   const outlineNode = currentChapter ? nodes.find(n => n.id === currentChapter.outlineNodeId) : null
+  const chapterDisplay = useMemo(() => {
+    return currentChapter ? resolveChapterDisplayMeta(currentChapter, nodes) : null
+  }, [currentChapter, nodes])
   // 多世界：沿父链找到所属卷的 worldGroupId
   const chapterWorldGroupId = useMemo(() => {
     if (!project.enableMultiWorld || !outlineNode) return null
@@ -196,6 +241,14 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     }
     return null
   }, [project.enableMultiWorld, outlineNode, nodes])
+  const entityReferences = useMemo(() => buildEditorEntityReferences({
+    characters,
+    itemEntries,
+    locations,
+    codexCategories,
+    codexEntries,
+    worldGroupId: project.enableMultiWorld ? chapterWorldGroupId : undefined,
+  }), [characters, itemEntries, locations, codexCategories, codexEntries, project.enableMultiWorld, chapterWorldGroupId])
 
   const [worldCtx, setWorldCtx] = useState('')
   const [charCtx, setCharCtx] = useState('')
@@ -235,10 +288,20 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     if (!outlineNodeId) return
     const node = nodes.find(n => n.id === outlineNodeId)
     if (!node) return
-    await addChapter({
-      projectId: project.id!, outlineNodeId, title: node.title,
+    const chapter = await getOrCreateByOutlineNode(project.id!, outlineNodeId, {
+      title: node.title,
       content: '', wordCount: 0, status: 'outline', order: chapters.length, notes: '',
     })
+    if (chapter.id) selectChapter(chapter.id)
+  }
+
+  const handleOpenComparePolish = async () => {
+    const saved = await persistCurrentEditorContent()
+    if (!saved?.plain.trim()) {
+      await dialog.alert({ title: '暂无正文可供对照', message: '请先写入或生成本章正文，再打开对照润色。' })
+      return
+    }
+    setCompareSourceHtml(saved.html)
   }
 
   // AI 操作 —— 所有 AI 交互都基于纯文本
@@ -342,6 +405,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
         'emotionBeats',
         'stateCards',
         'currentFacts', // NS-4:当前章生效的已确认事实，回注生成防止前后矛盾
+        'heldItems', // CONSISTENCY-1:当前已持有物品，避免新章重复写首次获得
         'retrievedPassages', // NS-5:相关前文召回，防远距离细节/伏笔矛盾
         'references',
         'userStyleProfile',
@@ -549,8 +613,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     setAnalyzingImpact(true)
     try {
       // 先把当前正文真正落盘，再据落盘正文判断证据是否失效
-      const wc = countWords(htmlToPlainText(content))
-      await updateChapter(currentChapter.id, { content, wordCount: wc })
+      await persistCurrentEditorContent()
       const { demotedFacts } = await propagateChapterEditStale(project.id, currentChapter.id)
       const { factsFromChapter, downstreamChapterIds } = await analyzeEditImpact(project.id, currentChapter.id)
       const parts = [
@@ -615,11 +678,9 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     if (!currentChapter?.id || !plainText.trim() || autoProcessing === 'memory') return
     const chapterId = currentChapter.id
     const chapterTitle = outlineNode?.title || currentChapter.title || '未知章节'
-    const sourceHtml = editorRef.current?.getHTML() ?? content
-    const sourceText = editorRef.current?.getPlainText() ?? plainText
-    await updateChapter(chapterId, { content: sourceHtml, wordCount: countWords(sourceText) })
-    setSavedContent(sourceHtml)
-    await handleChapterMemory({ chapterId, chapterTitle, chapterContent: sourceHtml })
+    const persisted = await persistCurrentEditorContent()
+    if (!persisted) return
+    await handleChapterMemory({ chapterId, chapterTitle, chapterContent: persisted.html })
   }
 
   const handleConfirmActualProgress = async () => {
@@ -754,6 +815,8 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
         content: fullHtml,
         wordCount: countWords(fullText),
       })
+      setContent(fullHtml)
+      setPlainText(fullText)
       setSavedContent(fullHtml)
       void handleAutoPostGenerate({
         chapterId: acceptedChapterId,
@@ -801,111 +864,49 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     <div className="min-h-full bg-bg-base/40">
       {/* 标题栏 —— sticky 固定在顶部，必须不透光，否则正文下滑时会从底下透出来 */}
       <div className="sticky top-0 z-20 border-b border-border bg-bg-base">
-      <div className="flex items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-              创作区 · 正文
-            </p>
-            <h2 className="font-serif text-xl font-semibold text-text-primary">{currentChapter.title}</h2>
-          </div>
-          <span className="rounded-full border border-border bg-bg-elevated px-2.5 py-1 text-xs text-text-muted">
-            {wordCount.toLocaleString()} 字
-          </span>
-          <select
-            aria-label="章节状态"
-            value={currentChapter.status}
-            onChange={e => currentChapter.id && updateChapter(currentChapter.id, {
-              status: e.target.value as ChapterStatus,
-            })}
-            title="章节状态会决定该章是否可用于文风学习"
-            className={`text-xs px-2 py-1 rounded border border-transparent focus:outline-none focus:border-accent cursor-pointer ${CHAPTER_STATUS_STYLE[currentChapter.status]}`}
-          >
-            {CHAPTER_STATUS_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowContext(!showContext)}
-            className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs text-text-muted hover:bg-bg-hover hover:text-text-primary">
-            <Eye className="w-3.5 h-3.5" /> 上下文
-          </button>
-          <button onClick={() => currentChapter.id && updateChapter(currentChapter.id, { content, wordCount })}
-            className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs text-text-muted hover:bg-bg-hover hover:text-accent">
-            <Save className="w-3.5 h-3.5" /> 保存
-          </button>
-        </div>
-      </div>
+        <ChapterEditorHeader
+          title={chapterDisplay?.title ?? currentChapter.title}
+          wordCount={wordCount}
+          status={currentChapter.status}
+          showContext={showContext}
+          canCompare={!!plainText && compareSourceHtml == null}
+          saveDisabled={compareSourceHtml != null}
+          saving={manualSaving}
+          saveError={manualSaveError}
+          isSaved={content === savedContent}
+          onStatusChange={status => {
+            if (currentChapter.id) void updateChapter(currentChapter.id, { status })
+          }}
+          onToggleContext={() => setShowContext(!showContext)}
+          onOpenCompare={() => { void handleOpenComparePolish() }}
+          onSave={() => { void handleManualSave() }}
+        />
 
-      {/* 上下文查看器 */}
       {showContext && (
-        <div className="mx-6 mb-3 max-h-64 overflow-y-auto rounded-xl border border-border bg-bg-elevated p-3 text-xs text-text-muted shadow-theme-sm">
-          <p className="font-medium text-text-secondary mb-1">📋 发送给 AI 的上下文：</p>
-          <div className="whitespace-pre-wrap">
-            {worldCtx && <p>【世界观】{worldCtx.slice(0, 500)}...</p>}
-            {charCtx && <p>【角色】{charCtx.slice(0, 300)}...</p>}
-            {outlineNode && <p>【章节大纲】{outlineNode.title}：{outlineNode.summary}</p>}
-          </div>
-
-          {/* A2: 状态卡注入预览 */}
-          {stateCards.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-border">
-              <div className="flex items-center justify-between mb-1">
-                <p className="font-medium text-text-secondary">
-                  📋 状态卡注入（{selectiveState.matchedIds.length}/{selectiveState.allIds.length}）
-                </p>
-                <button onClick={() => setShowStatePreview(!showStatePreview)}
-                  className="text-accent hover:text-accent-hover text-xs">
-                  {showStatePreview ? '收起' : '展开调整'}
-                </button>
-              </div>
-              {showStatePreview && (
-                <div className="space-y-1 mt-1">
-                  {stateCards.map(card => {
-                    const isMatched = selectiveState.matchedIds.includes(card.id!)
-                    const isExtra = extraStateIds.includes(card.id!)
-                    return (
-                      <label key={card.id} className="flex items-center gap-1.5 cursor-pointer hover:bg-bg-hover rounded px-1 py-0.5">
-                        <button
-                          onClick={() => {
-                            if (isExtra) {
-                              setExtraStateIds(extraStateIds.filter(id => id !== card.id))
-                            } else if (!isMatched) {
-                              setExtraStateIds([...extraStateIds, card.id!])
-                            } else {
-                              // 已自动匹配的，不允许取消（用户可通过不勾选来忽略）
-                            }
-                          }}
-                          className="flex-shrink-0"
-                        >
-                          {isMatched || isExtra
-                            ? <CheckSquare className="w-3.5 h-3.5 text-accent" />
-                            : <Square className="w-3.5 h-3.5 text-text-muted" />
-                          }
-                        </button>
-                        <span className={`px-1 py-0.5 rounded text-[10px] ${
-                          card.category === 'character' ? 'bg-blue-500/10 text-blue-400' :
-                          card.category === 'location' ? 'bg-green-500/10 text-green-400' :
-                          card.category === 'item' ? 'bg-yellow-500/10 text-yellow-400' :
-                          card.category === 'faction' ? 'bg-purple-500/10 text-purple-400' :
-                          'bg-red-500/10 text-red-400'
-                        }`}>{card.category === 'character' ? '角色' : card.category === 'location' ? '地点' : card.category === 'item' ? '物品' : card.category === 'faction' ? '势力' : '事件'}</span>
-                        <span className={isMatched || isExtra ? 'text-text-primary' : 'text-text-muted'}>{card.entityName}</span>
-                        {isMatched && !isExtra && <span className="text-[10px] text-accent/60">自动匹配</span>}
-                        {isExtra && <span className="text-[10px] text-warning">手动添加</span>}
-                      </label>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <ChapterContextPreview
+          worldContext={worldCtx}
+          characterContext={charCtx}
+          outlineNode={outlineNode ?? undefined}
+          stateCards={stateCards}
+          matchedIds={selectiveState.matchedIds}
+          allIds={selectiveState.allIds}
+          extraIds={extraStateIds}
+          stateListExpanded={showStatePreview}
+          onToggleStateList={() => setShowStatePreview(!showStatePreview)}
+          onToggleStateCard={cardId => {
+            const isExtra = extraStateIds.includes(cardId)
+            const isMatched = selectiveState.matchedIds.includes(cardId)
+            if (isExtra) {
+              setExtraStateIds(extraStateIds.filter(id => id !== cardId))
+            } else if (!isMatched) {
+              setExtraStateIds([...extraStateIds, cardId])
+            }
+          }}
+        />
       )}
 
       {/* AI 工具栏 */}
-      <div className="flex flex-wrap gap-2 border-t border-border/60 bg-bg-surface/35 px-6 py-3">
+      {compareSourceHtml == null && <div className="flex flex-wrap gap-2 border-t border-border/60 bg-bg-surface/35 px-6 py-3">
         <button onClick={handleGenerate} disabled={ai.isStreaming}
           className="rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 disabled:opacity-50 transition-colors">
           ✨ 生成正文
@@ -986,7 +987,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
         <CInput value={customInstruction} onChange={e => setCustomInstruction(e.target.value)}
           placeholder="自定义指令..."
           className="min-w-[220px] flex-1 rounded-md border border-border bg-bg-elevated px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent" />
-      </div>
+      </div>}
       </div>
 
       <div className="mx-auto max-w-6xl space-y-4 px-6 py-6">
@@ -1024,11 +1025,11 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
             worldContext={worldCtx}
             characterContext={charCtx}
             prevChapterSummary={(() => {
-              const prev = chapters.filter(c => c.order < (currentChapter?.order || 0)).pop()
+              const prev = findPreviousCanonicalChapter(nodes, chapters, currentChapter)
               return prev?.summary || ''
             })()}
             nextChapterSummary={(() => {
-              const next = chapters.filter(c => c.order > (currentChapter?.order || 0)).shift()
+              const next = findNextCanonicalChapter(nodes, chapters, currentChapter)
               return next?.summary || ''
             })()}
             foreshadowContext={currentChapter?.id ? buildForeshadowContext(currentChapter.id, chapters, nodes) : ''}
@@ -1057,7 +1058,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
           worldContext={worldCtx}
           characterContext={charCtx}
           prevChapterEnding={(() => {
-            const prev = chapters.filter(c => c.order < (currentChapter?.order || 0)).pop()
+            const prev = findPreviousCanonicalChapter(nodes, chapters, currentChapter)
             return htmlToPlainText(prev?.content || '').slice(-500)
           })()}
         />
@@ -1103,84 +1104,35 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
         </div>
       )}
 
-      {/* Phase A3: 章节摘要显示 + 手动重新生成（改完终稿可基于当前正文刷新） */}
-      {(currentChapter?.summary || plainText) && (
-        <div className="mb-3 p-3 bg-bg-elevated border border-border rounded-lg">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-xs text-text-muted">📝 章节摘要</p>
-            <button
-              onClick={handleManualMemory}
-              disabled={!plainText || autoProcessing === 'memory' || memoryAI.isStreaming}
-              title="基于当前正文一次刷新摘要与连续性交接记忆"
-              className="flex items-center gap-1 text-xs text-text-muted hover:text-accent disabled:opacity-50 transition-colors"
-            >
-              <FileText className="w-3 h-3" />
-              {autoProcessing === 'memory'
-                ? '生成中...'
-                : currentChapter?.summary ? '刷新章节记忆' : '生成章节记忆'}
-            </button>
-          </div>
-          {currentChapter?.summary
-            ? <p className="text-sm text-text-secondary">{currentChapter.summary}</p>
-            : <p className="text-xs text-text-muted/60">改完正文后生成章节记忆，让后续章节获得可校验的前情与交接约束。</p>}
-        </div>
-      )}
+      <ChapterMemoryPanel
+        summary={currentChapter.summary}
+        hasText={!!plainText}
+        memoryBusy={autoProcessing === 'memory' || memoryAI.isStreaming}
+        reconciliation={currentChapter.planReconciliation}
+        reconciliationCurrent={planReconciliationCurrent}
+        onGenerateMemory={() => { void handleManualMemory() }}
+        onConfirmActualProgress={() => { void handleConfirmActualProgress() }}
+        onApplyOutlineCandidate={() => { void handleApplyOutlineCandidate() }}
+      />
 
-      {currentChapter.planReconciliation
-        && !planReconciliationCurrent
-        && (currentChapter.planReconciliation.reviewStatus === 'pending'
-          || currentChapter.planReconciliation.reviewStatus === 'confirmed-constraint') && (
-        <div className="mb-3 px-3 py-2 text-xs text-text-muted bg-bg-elevated border border-border rounded-lg">
-          计划对账已因正文或章纲变化而失效；刷新章节记忆后再处理。
-        </div>
-      )}
-
-      {currentChapter.planReconciliation && planReconciliationCurrent && (
-        <div className="mb-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-medium text-amber-300">计划—正文对账</p>
-            <span className="text-[10px] text-text-muted">
-              {currentChapter.planReconciliation.reviewStatus === 'pending' ? '待确认' : '已处理'}
-            </span>
-          </div>
-          <div className="mt-2 space-y-1 text-xs text-text-secondary">
-            {([
-              ['已完成', currentChapter.planReconciliation.completedGoals],
-              ['未完成', currentChapter.planReconciliation.unfinishedGoals],
-              ['实际偏移', currentChapter.planReconciliation.deviations],
-              ['新增约束', currentChapter.planReconciliation.newConstraints],
-              ['下一章影响', currentChapter.planReconciliation.nextChapterImpacts],
-            ] as const).flatMap(([label, items]) => items.map((item, index) => (
-              <div key={`${label}:${index}`}>
-                <p><span className="text-amber-300/80">{label}：</span>{item.text}</p>
-                {item.evidenceQuotes[0] && (
-                  <p className="pl-3 text-[11px] text-text-muted">证据：“{item.evidenceQuotes[0].quote}”</p>
-                )}
-              </div>
-            )))}
-          </div>
-          {currentChapter.planReconciliation.reviewStatus === 'pending' && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                onClick={() => { void handleConfirmActualProgress() }}
-                className="px-2 py-1 text-xs rounded bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
-              >
-                确认并附加实际进展约束
-              </button>
-              {currentChapter.planReconciliation.proposedOutlineSummary && (
-                <button
-                  onClick={() => { void handleApplyOutlineCandidate() }}
-                  className="px-2 py-1 text-xs rounded bg-accent/10 text-accent hover:bg-accent/20"
-                >
-                  用候选更新本章章纲
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TipTap 富文本编辑器 */}
+      {/* TipTap 富文本编辑器 / 对照润色模式 */}
+      {compareSourceHtml != null ? (
+        <ComparePolishPanel
+          key={currentChapter.id}
+          projectId={project.id!}
+          chapterId={currentChapter.id!}
+          chapterTitle={chapterDisplay?.title ?? currentChapter.title}
+          worldGroupId={chapterWorldGroupId}
+          sourceHtml={compareSourceHtml}
+          entityReferences={entityReferences}
+          onSaved={result => {
+            setContent(result.html)
+            setPlainText(result.plainText)
+            setSavedContent(result.html)
+          }}
+          onClose={() => setCompareSourceHtml(null)}
+        />
+      ) : (
       <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-bg-elevated px-8 py-8 shadow-theme-md">
         <RichEditor
           ref={editorRef}
@@ -1188,26 +1140,29 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
           onChange={(html, plain) => {
             setContent(html)
             setPlainText(plain)
+            setManualSaveError('')
           }}
           placeholder="开始写作..."
           minHeight={560}
           className="sf-manuscript-editor border-0 bg-transparent shadow-none"
+          entityReferences={entityReferences}
           contentHeader={
             <div className="mb-8 mt-8 text-center">
               <p className="text-[11px] uppercase tracking-[0.28em] text-text-muted">
-                {typeof currentChapter.order === 'number' ? `第 ${currentChapter.order + 1} 章` : '正文'}
+                {chapterDisplay?.ordinal != null ? `第 ${chapterDisplay.ordinal} 章` : '正文'}
               </p>
               <h1 className="mt-4 font-serif text-3xl font-semibold tracking-wide text-text-primary">
-                {currentChapter.title}
+                {chapterDisplay?.title ?? currentChapter.title}
               </h1>
               <div className="mx-auto mt-5 h-px w-24 bg-border" />
             </div>
           }
         />
       </div>
+      )}
 
       {/* Phase 24.3: 选中文本浮动工具栏 */}
-      <FloatingToolbar
+      {compareSourceHtml == null && <FloatingToolbar
         getSelectedText={() => editorRef.current?.getSelectedText() || ''}
         getSelectionRect={() => {
           const sel = window.getSelection()
@@ -1218,7 +1173,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
           editorRef.current?.replaceSelection(text)
         }}
         disabled={ai.isStreaming}
-      />
+      />}
 
       {/* 作者笔记 */}
       <div className="mt-3">

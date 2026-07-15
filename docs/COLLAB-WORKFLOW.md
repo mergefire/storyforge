@@ -1,7 +1,7 @@
 # 双 Agent 协作契约（Codex 开发 · Claude 审查）
 
 > **目的**：把 Codex（开发）+ Claude（审查）的分工、分支纪律、工作区隔离、合并流程定死，避免"挤一个工作目录打架"。
-> **状态**：Claude 草拟（2026-07-01），Codex 已逐项确认（2026-07-14），本契约生效。Windows Desktop D0.1 已于 2026-07-14 完成 Claude 独立治理审查；后续每个具体任务仍须分别审查。
+> **状态**：Claude 草拟（2026-07-01），Codex 已确认（2026-07-06）。
 > **前置**：本契约不覆盖 `CLAUDE.md`（项目宪法·三注册表铁律）与数据红线；两者冲突以 `CLAUDE.md` 为准。
 
 ---
@@ -44,6 +44,7 @@
 - Claude 审查：`git fetch` → 读 diff → 跑测试 → 结论。发现问题：① 在 PR 留评论让 Codex 改；或 ② 直接把修复 commit 押到该分支（commit message 注明「审查修复」）。
 - **文档（ROADMAP 等）只承载"要做什么"（backlog / bug 清单）**——这部分文档配合是高效的，保留。**不要用文档传"这段代码是什么"。**
 - **人话对话走 `docs/COLLAB-LOG.md`**（沟通频道）：Codex 交付报告、Claude 审查答复在此来回追加，替代作者人工转达。**它只承载对话（做了什么 / 哪个分支 / 审查结论 / 待决策），不贴代码（走 Git）、不写 backlog（进 ROADMAP）。** 规则见该文件头部。
+- **⚠️ 交接前工作树必须干净（2026-07-09 澄清，纠正之前"COLLAB-LOG 只在 main"的误读）**：活干完，代码 + 你碰过的文档（含 `COLLAB-LOG` / `ROADMAP`）**全部提交到你自己的分支**，交接时 `git status` 必须干净。**从来没有"不许在 feature 分支提交文档"这回事——不提交才是错的**：共享单树里留未提交改动 = 把脏树甩给对方 = 堵死对方往 `main` 落任何东西。`COLLAB-LOG` / `ROADMAP` 提交到当前分支即可，**合并到 `main` 时把两边拼一起**（见 §5.2）。"提交前核对分支" 只为**防误提交到对方分支**（随手写的 main 级笔记别落错），**不是禁止在分支提交**。审查天然只读（`git fetch` 看 diff/PR，不切共享树），不产生脏树。
 
 ---
 
@@ -52,7 +53,7 @@
 `main` 一推即 Vercel 部署给全部用户，**没有 staging**。合并前**逐条过**：
 
 1. **串行合并**：一次只合一条分支；**永远不要两条分支同时抢 `main`**。
-2. **合前 rebase**：把待合分支 rebase 到最新 `origin/main`，本地解冲突（生成文件如 `AI-FUNCTIONS-MANUAL.generated.md` 冲突 → 重跑 `npm run gen:ai-manual` 解决，不手动改）。
+2. **合前 rebase**：把待合分支 rebase 到最新 `origin/main`，本地解冲突（生成文件如 `AI-FUNCTIONS-MANUAL.generated.md` 冲突 → 重跑 `npm run gen:ai-manual` 解决，不手动改）。**`COLLAB-LOG` / `ROADMAP` 两边都追加过 → 冲突时两边都保留（ours+theirs 拼接），不丢任何一方的条目。**
 3. **验证闸门（全绿才推）**：`npx tsc --noEmit`、`npm run build`、`npx vitest run`、`npm run check:architecture`、`npm run check:required-tables`、`node scripts/generate-ai-manual.mjs --check`。
 4. **改了 DB schema** → 必写迁移测试 + 跑导出/导入往返（数据红线）。
 5. 合并后：删掉已合并的本地/远程分支，保持分支列表干净。
@@ -72,10 +73,10 @@
 
 > Claude 起草了上面 §1–§6。Codex 已逐项过目并确认；确认的是协作规则本身，不替代 Claude 对任何具体 PR、任务或 Windows Desktop 专项的独立审查。
 
-- [x] §2 分工与车道 —— 认可。Codex 开发、Claude 独立审查；未收到 Claude 审查结论时明确标 pending。
-- [x] §3 工作区隔离（各用各的 checkout） —— 认可。本次 Windows Desktop D0.1 已在独立 checkout `storyforge-desktop-d0` 执行，未占用主工作树。
-- [x] §4 交接走 Git（分支 + PR） —— 认可。文档只记任务与状态，代码交接仍以分支、PR、commit 和验证证据为准。
-- [x] §5 合并串行 + rebase + 验证闸门 —— 认可。即使多个 Agent 开发互不依赖任务，进入 `main` 仍须串行。
-- [x] 补充：多 Agent 只并行无硬依赖任务，每个任务使用独立 checkout；Windows Desktop 任务还必须满足 MASTER-BLUEPRINT §17 的功能等价和 G1/G2/stable 闸门。
+- [x] §2 分工与车道 —— 认可 / 修改：认可。
+- [x] §3 工作区隔离（各用各的 checkout） —— 认可 / 修改：认可。
+- [x] §4 交接走 Git（分支 + PR） —— 认可 / 修改：认可。
+- [x] §5 合并串行 + rebase + 验证闸门 —— 认可 / 修改：认可。
+- [x] 其它想补充的：人话沟通继续走 `docs/COLLAB-LOG.md`，功能规格/bug backlog 仍进 `docs/ROADMAP.md`；`COLLAB-LOG.md` 提交前确认当前分支，避免再次污染 feature 分支。
 
 本确认记录生效后双方按此协作；后续若修改 §1～§6，需再次记录双方确认。

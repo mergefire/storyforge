@@ -28,14 +28,13 @@ function normalizeNonPortablePayload(data: any) {
   for (const t of ['outlineNodes', 'worldNodes']) {
     for (const row of normalized[t] ?? []) delete row.parentId
   }
-  for (const row of normalized.detailedOutlines ?? []) {
-    delete row.appearingCharacterIds
-    delete row.foreshadowIds
-    for (const scene of row.scenes ?? []) delete scene.characterIds
+  for (const row of data.detailedOutlines ?? []) {
+    delete row._appearingCharacterIndexes
+    delete row._foreshadowIndexes
+    delete row._sceneCharacterIndexes
   }
-  for (const row of normalized.creativeRules ?? []) delete row.citedReferenceIds
-  for (const row of normalized.codexEntries ?? []) delete row.refs
-  return normalized
+  for (const row of data.creativeRules ?? []) delete row._citedReferenceIndexes
+  return data
 }
 
 describe('R-export-derive-equivalence · 派生导出 ≡ 真实旧格式 fixture', () => {

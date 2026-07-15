@@ -115,6 +115,11 @@ export const PROJECT_TABLES: TableSpec[] = [
       { kind: 'array', field: 'foreshadowIds', itemTarget: 'foreshadows', onDelete: 'removeItem', portable: { onUnmapped: 'require' } },
       { kind: 'json', field: 'scenes', jsonPath: '$[].characterIds[]', target: 'characters[id]', onDelete: 'remap', portable: { onUnmapped: 'require' } },
     ],
+    exportRefRemap: [
+      { field: 'appearingCharacterIds', remapVia: 'characters', kind: 'id-array', exportAs: '_appearingCharacterIndexes' },
+      { field: 'foreshadowIds', remapVia: 'foreshadows', kind: 'id-array', exportAs: '_foreshadowIndexes' },
+      { field: 'scenes', remapVia: 'characters', kind: 'scene-character-ids', exportAs: '_sceneCharacterIndexes' },
+    ],
     exportRemap: [{ field: 'outlineNodeId', remapVia: 'outlineNodes', exportAs: '_outlineExportId', onUnmapped: 'require' }] },
 
   { table: db.emotionBeatCards, name: 'emotionBeatCards', owner: 'project', exportable: true, migration: { policy: 'required' },
@@ -139,7 +144,10 @@ export const PROJECT_TABLES: TableSpec[] = [
 
   { table: db.creativeRules, name: 'creativeRules', owner: 'project', exportable: true, migration: { policy: 'required' },
     refs: [
-      { kind: 'array', field: 'citedReferenceIds', itemTarget: 'references', onDelete: 'removeItem', portable: { onUnmapped: 'require' } },
+      { kind: 'array', field: 'citedReferenceIds', itemTarget: 'references', onDelete: 'removeItem' },
+    ],
+    exportRefRemap: [
+      { field: 'citedReferenceIds', remapVia: 'references', kind: 'id-array', exportAs: '_citedReferenceIndexes', storage: 'json-string' },
     ] },
 
   // (itemSystems 表已于 DB v29 并入 codex.artifact 词条并删除)

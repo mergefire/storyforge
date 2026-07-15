@@ -5,30 +5,577 @@
 > 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
 > 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — M0～M3 当前施工步骤；授权、状态和闸门只看 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-15（Windows Desktop M0～M2 已 PASS，下一里程碑 M3 尚未启动；真实数据仍需单独授权）
-> **说明**: 本文档是任务索引，不是施工权威。旧文档已归档至 `docs/archive/`；实施与放行以 MASTER-BLUEPRINT 为准。
+> **最后更新**: 2026-07-13（v3.8.0 收口 QUICKWIN-4 已写正文参与卷纲/章纲生成、QUICKWIN-6 跨卷拖拽、EDITOR-1 全书查找替换与版本号单一事实源；此前追加透明生成管线 PIPELINE-1~3、认知账本 CONSISTENCY-2/3、一致性覆盖地图 CONSISTENCY-0；施工权威见 MASTER-BLUEPRINT）
+> **说明**: 本文档是唯一的功能规划文档。旧文档已迁移到 WPS 云文档 `storyforge故事熔炉 / 仓库文档迁移_20260708`，仓库内只保留当前施工所需文档。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
 
 ---
 
-# ═══ 当前执行焦点 ═══
+# ═══ 施工顺序 · 优先级(按"待开发项之间的联系"定 · 2026-07-10 作者拍板)═══
 
-## 🟢 Windows Desktop 作者自用路线（M0～M2 已完成，M3 待启动）
+> **定优先级的原则(不是扁平排名,是看联系)**:
+> 1. **功能做好能有效避免一类 bug → 先做功能**(修根;别去 band-aid 会被这个功能取代的症状)。
+> 2. **修 bug 不影响以后功能(孤立、不会被重写)→ 先修 bug**(便宜、无返工风险)。
+> 3. **同一子系统 / 同一根因的项要一起看**;别把"会被后续功能重写"的 bug 先做了再返工。
+> **先把握联系,再定优先级。**
 
-> **目标**：先以最短路线形成作者可长期使用的 Windows 10/11 x64 客户端，同时保留全部现有功能和完整安全迁移；公开发布、受信任签名、Updater 与安装矩阵后移。技术栈保持 Tauri 2 + React/Vite + WebView2 + Dexie/IndexedDB。
->
-> **红线**：三注册表、dev/stable 隔离、stable 禁止 CDP/devtools、全部现有功能、Credential Manager、应用层完整迁移与回滚、源数据只读、禁止直接复制/修改 UDF、Web 回归均不简化。
+## 联系图(哪些功能治哪些 bug · 哪些 bug 孤立 · 哪些已作废)
 
-| 里程碑 | 当前状态 | 完成条件 |
+| 类别 | 相关待开发项 | 联系结论 |
 |---|---|---|
-| M0 · 稳定开发壳 | ✅ PASS | stable 预启动拒绝调试、外部参数隔离、Cache/SW/UDF/identity 隔离、真实 pdf.js worker、AI manual 一致性及 dev 持久化 smoke 均已通过 |
-| M1 · 合成数据全功能 | ✅ PASS | 1,351 个唯一动作登记；窄 IPC、secret、文件/备份和脱敏诊断落地；合成重启、AI 流/取消、100 MiB Blob 与实机核心使用通过（剩余 soak 时长由作者明确豁免） |
-| M2 · 完整迁移演练 | ✅ PASS | `.storyforge-migrate` 只读导出、空目标导入、逐表/hash/Blob/设置验证、receipt、失败/中断恢复、激活和回滚均用合成资料通过 |
-| M3 · 作者真实数据切换 | ⬜ NOT STARTED | 明确授权和 profile 确认后完成真实迁移、全功能验收、观察和回滚，达到 `SELF_USE_READY` |
-| 公开发布路线 | ⏸ DEFERRED | G2、NSIS、受信任签名、Updater、beta/stable、公开材料和完整 Windows/卸载矩阵由作者另行启动 |
+| **设定互斥** | `CF-20260703-8`(世界起源↔力量体系不贯通)、`CF-20260702-3`(卷纲依据脱节)、`CF-20260630-3`(大纲与故事设计不一致) | **根治 = `CONSISTENCY-3` 世界宪法**。别逐个 band-aid;这些 bug 就是 CONSISTENCY-3 的反例(见覆盖地图)。 |
+| **大纲透明/质量** | `CF-20260702-3/7`(依据不可见 / 质量闸门) | **根治 = `PIPELINE-1`(提示词可见可改)+ `PIPELINE-2`(分阶段+gate)**。别单独band-aid。 |
+| ↑ 但其中孤立回归 | `CF-20260703-2`(卷纲参数区消失) | **这个是孤立 UI 回归,先修**(与 PIPELINE 无关)。 |
+| **物品/状态子系统** | `QUICKWIN-2`(编辑名/量)、`QUICKWIN-3`(提取范围)、状态卡↔物品栏同步(旧 QUICKWIN-5) | 都被 `INVENTORY-1` 触及/重写。**`QUICKWIN-3` 会被 INVENTORY-1 的 per-character 抽取重写 → 并入 INVENTORY-1 一起做,别先做再返工**;`QUICKWIN-2`(UI 编辑)较孤立,可先做但须知 INVENTORY-1 会加字段。 |
+| **启动器类** | `CF-20260630-1`、`CF-20260702-13`(.bat/.exe 疯狂重定向) | **已因删启动器(改 npm-only)而作废 → 直接关闭**。这就是"功能(去启动器)消灭了 bug"。**先核实后关。** |
+| **孤立 bug(先修,无返工)** | `CF-20260630-2`(细纲采纳崩溃)、`CF-20260703-3`(JSON 导入卡)、`CF-20260703-6`(角色维度重复)、`CF-20260703-1`(版本号)、`CF-20260703-4/5`(角色关系,Codex 在做) | 不碰后续功能 → 立刻清。 |
 
-当前已有 1 个开发隔离身份的无签名验证 exe，但尚未达到 `SELF_USE_READY`，没有读取、复制或改写真实浏览器数据。本文只保留这张索引；详细施工见专项规划，当前状态只看 MASTER-BLUEPRINT §17，既有 `windows-desktop/*STATUS|REPORT|REVIEW*` 文件仅为只读历史证据。
+## 由联系推出的施工顺序
+
+**① 现在就做(不等 GPT · Codex 接续)**
+- **孤立 bug 止血**(收敛路线第0步):`CF-20260630-2` 崩溃 → `CF-20260703-3` 卡死 → `CF-20260703-2` 参数消失 → `CF-20260703-6` 维度重复 → `CF-20260703-1` 版本号;`CF-20260703-4/5` 角色关系(Codex 在做)。
+- **核实并关闭**作废的启动器类(`CF-20260630-1`、`CF-20260702-13`)。
+- **`EDITOR-1` 全书查找替换**(孤立、高价值、作者点名,不碰待审设计)。
+
+**② 作者确认后启(数据红线 · ready)**
+- **`INVENTORY-1`**(**连同 `QUICKWIN-3` 提取、`QUICKWIN-2` 编辑一起收口**,避免返工;一箭三雕:修同步 bug + 配角背包 + 一致性升级)。
+- **`CONSISTENCY-0`** 覆盖地图 + `tests/canon` 反例(便宜、防过度承诺的制度基线,可先于 GPT)。
+
+**③ GPT 设计审放行后(深水 · 根治 bug 类)**
+- **`CONSISTENCY-2/3`**(`CONSISTENCY-3` 根治 `CF-8` 设定互斥)、**`PIPELINE-1/2/3`**(根治大纲透明/质量类 `CF-3/7`)、**`EDITOR-2`** 内联一致性(依赖一致性砖)。
+
+**④ 穿插(空档做)**:`EDITOR-3/4/5`、`HEALTH-2/4/5`、多模型路由(`CF-20260702-10`)、`ENH-*`、`FB-*`、`CM-*`。
+
+> **一句话**:能被功能根治的 bug 别 band-aid(等功能),孤立的 bug 立刻清,同子系统的项一起收口。**不头疼医头。**
+
+# ═══ 待开发 · 当前优先:一致性工程化 ═══
+
+> 北极星:**把一致性工程化 —— 一件事,三头受益(bug 变少 / 长期一致性变好 / 游戏基座地基)**。完整路线见文档库《StoryForge_收敛路线_一页纸》与 VISION v3。一致性目前靠「抽取→拼进 prompt→劝模型→LLM 事后审→给作者看」的概率链,**没有代码级确定性判决**——本轨道逐块补上。
+
+## ✅ CONSISTENCY-1 · 物品/状态账本硬校验（确定性校验器·第一块砖）· 已审并合入 main `ddff907`
+
+> **定位**:一致性工程化第 1 步。把一致性从「劝」升到「判」的第一块最小砖——治一个真实用户 bug,同时是「环 2 canon 校验器」原型、游戏运行时原样可用。
+
+**现状(WPS bug 文档用户反馈)**
+- 「前 2 章刚获得的物品已在物品栏/状态栏出现、获得渠道可查,但**新章节总是重新给该物品赋予获得途径**」。
+- 「明显的状态追踪问题,道具应作为事实细节被提出、记忆…道具丢失明显不应该」。
+
+**根因定位(已核代码)**
+- `itemLedger`(`db.itemLedger`)记 gain/consume 流水,经 `CONTEXT_SOURCES` 的 `itemLedger` 源作为「物品流水证据」注入生成上下文。
+- 但它只是**建议性注入**("勿矛盾"),**没有任何确定性代码**在生成后核对「本章是否把角色已持有物品又写成首次获得」。一致性靠劝不靠判(全项目通病)。
+
+**解决方案(四问已过;三部分,纯读、不改 schema)**
+- **A. 物品持有投影(确定性,新纯函数)** `projectHeldItems(projectId, chapterId, worldGroupId) → Map<itemName, qty>`
+  - = 截止「当前章」(按 `resolveCanonicalChapterSequence` 规范章序,**绝不缓存 order**)所有 gain 减 consume;按世界隔离(worldGroupId ∪ null)。镜像 `readCurrentFacts`(context-sources.ts),复用现有章序解析。
+- **B. 新增 `CONTEXT_SOURCE` `heldItems`(读,走注册表)**
+  - `CONTEXT_SOURCES` 加一行 `heldItems`(scope:'chapter',requiresChapterId),把 A 的投影渲染成「【当前已持有物品(勿再写首次获得)】…」注入正文生成,比原始「物品流水」更聚焦。**四问①:读走 assembleContext ✓。**
+- **C. 确定性硬校验(判决环第一块,纯函数)** `checkHeldItemAcquisition(generatedText, heldItems, knownItemNames) → finding[]`
+  - 扫描正文中「获得/得到/拿到/捡到/首次…」等获得动词邻近、且**已在 heldItems 中**的物品名 → 产出 finding「声称首次获得已持有物品 X」。
+  - 严重度默认 `risk`(低误报优先,与 `consistency-audit` 同哲学);引文逐字回查正文(复用 `content.includes(quote)`)。
+  - 接入 `ReviewPanel`(与 consistency-audit findings 同渠道展示),**先做「生成后确定性提示」**,不阻断(后续可升级为生成前拦截/重生成)。
+
+**四问 checklist**
+- ① 读:新 `heldItems` 源走 `CONTEXT_SOURCES + assembleContext`(不在面板手拼)。
+- ② 写:本任务**只读不写**,校验器不落库,不碰 `adopt`。
+- ③ 表生命周期:只读既有 `itemLedger`(已在 `PROJECT_TABLES`),**无新表、无 schema 变更**。
+- ④ 注册表登记:`heldItems` 加进 `CONTEXT_SOURCES` 一行;投影/校验为纯函数。
+
+**数据红线**:无 DB schema 变更、无迁移、纯读 —— 不触发数据红线(低风险,适合第一块砖)。
+
+**验证判据(新增 `R-CONSISTENCY1` 测试)**
+- 投影:gain−consume 按规范章序正确;未来章不计入;世界隔离;不缓存 order。
+- 校验:已持有物品被写成「首次获得」→ 命中 finding;物品**真正首次获得**(不在 heldItems)→ 不误报;引文逐字回查。
+- `heldItems` 源被正文生成上下文包含。
+- `tsc` / `check:architecture` / `check:required-tables` / `check:ai-manual` / `build` 全绿。
+
+**DoD**
+- 主路径端到端:写含「重复获得已持有物」的正文 → 校验命中并在 ReviewPanel 提示。
+- 无裸 `db.xxx` 散写;读经注册表。
+- 若一次做不完:A+B(注入强化)先上,C(校验)标 Labs 隐藏——但**优先把 C 做出来**(它才是「判」的第一块)。
+
+---
+
+## 🔴 CONSISTENCY-2 · 认知/知识账本(开天眼确定性检测 · 收敛路线第4步第一块)
+
+> 软硬结合收敛路线见 `docs/CONSISTENCY-ENGINEERING-ROUTE.md`。本条 = held-items(CONSISTENCY-1)之后的下一块确定性砖,**同时喂 canon 校验器(开天眼硬检测)和 PIPELINE-2 章纲工坊的认知边界节点/gate**——改一处,一致性 + agent 双受益。
+
+**用户故事**:作为作者,我想在角色"表现出知道他还没获知的信息"时被**当场标出**(开天眼 / 认知 OOC),而不是等我肉眼发现或指望 LLM 审校碰运气。
+
+**现状(已核代码)**:`temporalFacts` 记世界事实真/假,但**没有"每角色知道什么"这一维**;"开天眼"检测目前只能靠 LLM 审校(软、会漏)。`held-items` 已验证"事件流水 → 投影 → 确定性硬校验"模式可行。
+
+**方案(和 held-items 完全同模式)**
+- **知识获取事件流水**:`{ characterId, 获知内容(关联 fact / codexEntry), 来源(亲眼/告知/推理), sourceChapterId }`。优先复用 `temporalFacts` 的 `characterId` 维度扩展;不够则新表 `knowledgeLedger`(进 `PROJECT_TABLES`)。
+- **投影**:`readCharacterKnowledge(characterId, chapterN)` → 该角色第 N 章 **知道{} / 不知道{} / 误以为{}**。
+- **硬校验**:`checkCognitionBoundary` —— 正文/章纲里角色引用了"只有知道 X 才能引用"的信息,但投影显示他不知道 → 标"开天眼";引文逐字回查。
+- **"误以为"维度**:记录角色错误认知(剧情引擎 + 校验用);现有真/假事实缺这一维。
+
+**四问 checklist**
+- ① 读:走 `assembleContext`(新增 `characterKnowledge` 源)。
+- ② 写:知识事件经 `adopt()` + `FIELD_REGISTRY` / `ADOPTION_SCHEMAS`,不裸写。
+- ③ 表:若新增 `knowledgeLedger` → 先进 `PROJECT_TABLES`(owner / worldScoped / refs / exportable),生命周期自动覆盖。
+- ④ 未登记先停,补注册表再写功能。
+
+**数据红线**:新表 = 迁移测试 + 导出/导入往返;生产不自动清库;角色删除按 `PROJECT_TABLES` refs 处理,不静默丢知识流水。
+
+**验证判据**:`R-CONSISTENCY2` —— ① "开天眼"能标(角色引用未获知信息);② 正常认知不误报(已获知的正常引用不标);③ "误以为"维度可记录;④ 若加表:迁移 + 往返;⑤ `tsc` / `check:architecture` / `check:required-tables` / `build` 全绿。
+
+**依赖 / 关系**:收敛路线第 4 步的一块;`PIPELINE-2` 章纲工坊的 gate 复用它。建议在 INVENTORY-1 之后做(同为账本模式,可复用其结构经验)。
+
+## 🔴 CONSISTENCY-0 · 一致性覆盖地图 + 反例基线(度量基线 · 一致性轨道先做这一步)
+
+> 权威文档:`docs/CONSISTENCY-COVERAGE-MAP.md`。这是**制度防线**,防"把'代码跑通'冒充'内容一致'"的过度承诺(实例:曾声称上下文一致,实则世界起源↔力量体系互斥)。
+
+**现状(已核代码,残酷但真实)**:整个项目确定性"矛盾判决"函数**只有一个**(`held-items` 的 `checkHeldItemAcquisition`);其余是检索过滤 / 结构写回 / 状态覆盖(不判语义)或 LLM 软审(会漏、不阻断);**设定互斥类零代码覆盖**。且所有检测**一律 advisory,无一 blocking**。
+
+**做什么**:
+1. 把覆盖地图落成代码库里的活文档(已起草),逐类标 🟢硬检测 / 🟡软检测 / 🔴无检测 + advisory/blocking。
+2. 建**反例测试目录** `tests/canon/`:把地图第 2 节的反例场景写成可跑测试(如 `R-CANON-setting-clash-1`、`R-CANON-omniscient-1`),现在大多是"预期失败/skip",作为基线。
+3. 立**方法论铁律**(写进本条 + CLAUDE.md 候选):任何一致性声明必须"🟢N类硬(附反例)+🟡M类软+🔴K类没覆盖",不许只说"一致了";每块 CONSISTENCY 砖落地后回来更新地图 + 反例。
+
+**为什么先做**:没有度量基线,后面所有一致性排期都是拍脑袋;这一步便宜(主要是文档 + 测试脚手架),且是防止再次过度承诺的制度。
+
+**验证判据**:覆盖地图与代码逐条对得上(可被 GPT/审查逐条查);`tests/canon/` 反例目录建成、held-items 类反例绿、未覆盖类明确标 skip/todo。
+
+## 🔴 CONSISTENCY-3 · 世界宪法 + 设定一致性校验(针对"设定互斥"类 · 收敛路线第4步)
+
+> 详细设计见 `docs/CONSISTENCY-COVERAGE-MAP.md` §4。针对烧过我们的 🔴 类:世界起源↔力量体系等**设定之间语义冲突**。
+
+**用户故事**:作为作者,我不想再遇到"世界观里两段设定自相矛盾却没人告诉我"。
+
+**现状**:设定互斥**零代码覆盖**,仅提示词"请保持一致"(已证明失败)。
+
+**方案(软→硬)**:
+- **抽取(软·LLM+作者确认)**:关键设定断言从散文抽成结构化 `canonical assertion`(`{主题,值,来源}`),作者确认 → **世界宪法(canon 断言库)**。
+- **比对(硬·代码)**:新设定/正文落库或生成前,涉及断言与世界宪法比对;**同主题不同值 = 冲突,硬标**。
+- **诚实边界**:只有**已抽取+已确认**的断言进 🟢;未抽散文仍 🟡/🔴;**覆盖随抽取增长,永不 100%**。
+
+**四问**:读走 `assembleContext`(新增 `canonAssertions` 源);断言库新表进 `PROJECT_TABLES`;写走 `adopt()`。**数据红线**:新表 = 迁移测试 + 导出/导入往返。
+
+**验证判据**:`R-CANON-setting-clash-1/2` 反例被抓;未抽取的设定明确标"未覆盖"(不误报为"已一致");闸门全绿。
+
+**依赖/受益**:收敛路线第4步一块;canon 校验器完全体的核心;PIPELINE-2 章纲工坊 gate、agent 检测环都复用它。建议在 CONSISTENCY-2(认知账本)之后做。
+
+# ═══ 待开发 · 物品系统(中大型 · 数据红线) ═══
+
+## 🔴 INVENTORY-1 · 物品栏按角色归属(配角背包 + 角色切换)
+
+> 来源:作者拍板(2026-07-09)。把物品子系统从「项目级主角流水(owner-less)」升级为「**按角色归属**的流水」,支持主角/次要角色各自背包,物品栏按角色类型切换查看。同时**取代** QUICKWIN-5 的 `resolveInventoryOwner` band-aid(避免新旧并存 / 白干)。
+> **定位:数据红线级中大型任务。** 必须走完整「前置/改法/验证/完成判据」+ DB 迁移测试 + 导出导入往返。
+
+### 用户故事
+- 作为作者,我写的物品应该**属于具体角色**(主角或配角),而不是笼统进一个"主角流水"。
+- 我想在物品栏**按角色(或角色类型:主角/次要/npc)切换**,看每个角色各自的背包。
+- 角色状态卡里显示的持有物,应该就是**该角色自己**的物品,和物品栏一致,不再出现"状态卡持有物和物品栏对不上"。
+
+### 现状(已核代码)
+- `ItemLedgerEntry` = `{ itemName, action(获得/消耗), quantity, chapterId, chapterTitle, note }` —— **无任何持有人字段**。
+- 抽取 `inventory-extract-adapter.ts` 注释明写"提取**主角的**物品事件";"只主角"这个约束**只活在提示词里**,schema 层是 owner-less 项目级流水。
+- `StatePanel` 仅在 `role === 'protagonist'` 时把 `aggregateInventory(itemLedger)` 投影给角色卡 → 新 `roleWeight` 体系/导入数据下 `role` 不规范时回退显示 `stateCards.fields` 旧持有物 → 同步 bug。
+- `itemLedger` **已在三注册表登记齐全**(field-registry:323-328 / adoption-schema:89 / context-sources:175,555 / project-tables) → 加字段是"往注册表各加一行"的标准套路,不是散写。
+
+### 设计要点
+1. **归属存双份(软→硬)**:
+   - `heldByName: string`(**必填**,AI 抽取的持有人原文,软)
+   - `characterId?: number | null`(能匹配到已知角色就解析,硬;匹配不到就只留名字)
+   - 有名角色 → 链到角色卡(扛改名);无名/次要持有者("宝箱""路人甲")→ 保留名字、不强绑。符合项目"软→硬、作者确认为闸门"模式。
+2. **抽取两条硬规则**(作者定,2026-07-09):
+   - **无归属 → 不收录**:判不出谁持有的物品,直接丢。
+   - **只提及/当目标/传闻/假设 → 不收录**:只收"**真的发生持有变化 + 有明确持有人**"的。角色说"早晚要弄到那把神剑"= 目标,不记;哪章真拿到才记。
+   - **转移要判方向**:"A 把剑给了 B" = A 消耗 + B 获得,不能凭空复制。
+   - 抽取每条产出 `{ itemName, heldByName, action, quantity, 证据原文 }`,带**逐字证据**便于回查(接一致性逐字原则)。抽取不能只靠 GAIN_TRIGGERS 关键词,要 AI 判**实获 vs 空想**。
+3. **UI 切换**:物品栏按 `roleWeight` 分组(主角/次要/npc)选角色 → 看其背包。状态卡持有物区改成"该角色的物品(来自物品栏)"。
+4. **边界(写进规格,防混淆)**:**目标物品 ≠ 持有物**,角色"想要/图谋但未到手"的东西属剧情/目标线,**不进物品栏**。本期不做目标追踪。
+
+### 全链路改法(~13 处,照三注册表走)
+| 层 | 文件 | 改动 |
+|---|---|---|
+| Schema(红线) | `types/item-ledger.ts`、`db/schema.ts`、`ensure-schema.ts` | 加 `heldByName`(必填)+ `characterId?`;`db.version(n+1)` 迁移 |
+| FIELD_REGISTRY | `field-registry.ts` | 加 `heldByName`/`characterId` 两行(别名 `持有人/归属/持有者`) |
+| AdoptionSchema | `adoption-schema.ts` | 写回携带持有人;`adopt()` 解析 heldByName→characterId |
+| 抽取 | `inventory-extract-adapter.ts` | 提示词从"主角的物品"改为"谁获得/消耗了什么 + 两条硬规则";产出加 heldByName + 证据 |
+| CONTEXT_SOURCES | `context-sources.ts` | itemLedger 源改为**按角色**装配(assembleContext 支持传 characterId) |
+| PROJECT_TABLES | `project-tables.ts` | itemLedger 的 `refs` 加 characterId(角色删除时:其物品归 NULL 化 heldByName 保名 / 不级联删,**保数据**) |
+| 一致性 | `held-items.ts` | `projectHeldItems` → `characterHeldItems(characterId)`;`checkHeldItemAcquisition` 按角色判 → **CONSISTENCY-1 升级为按角色** |
+| UI | `InventoryPanel.tsx`、`StatePanel.tsx`、`ReviewPanel.tsx` | 角色切换器 + 各角色背包;删掉 protagonist-only 投影;删 `resolveInventoryOwner` band-aid |
+| Store | `stores/item-ledger.ts` | CRUD 带持有人;`aggregateInventory` 支持按角色过滤 |
+| 导出/导入 | `export/json-export.ts` | itemLedger 的 characterId 随角色 id **remap**(往返测试) |
+
+### 存量数据迁移(红线)
+- 老的 owner-less 条目 = 旧抽取本就是"主角的物品" → **整体归给该项目主角**(`heldByName = 主角名, characterId = 主角id`)。语义正确,**不需要"未归属"桶**。
+- 判不出唯一主角的历史项目(多 main/无 protagonist):这些条目 `characterId = null`,`heldByName` 填 `未知(历史数据)`,UI 归到一个"历史/未归属"只读区,提示作者手动认领。**不丢数据、不静默改值**。
+- 迁移必须:迁移测试 + 在测试项目跑导出/导入往返 + 迁移前不自动清库。
+
+### QUICKWIN-5 缩减(避免白干 / DoD 不新旧并存)
+- **删除** QUICKWIN-5 的 `resolveInventoryOwner` owner 判定 band-aid —— 被本条真方案取代。
+- **保留** QUICKWIN-5 里便宜且不浪费的部分:命名统一(归属势力→所属势力,已改)+ 状态卡"物品来源提示 + 去物品栏跳转"。
+- QUICKWIN-5 在 ROADMAP 中改为"并入 INVENTORY-1(见下),仅保留命名/来源提示"。
+
+### 验证判据(完成判据)
+- 抽取:有持有人+真获得才记;目标/提及/无主一律不记;转移不复制(新增 `R-INV1-extract-rules`)。
+- 归属:heldByName 必填,characterId 能匹配则解析、不匹配保名(`R-INV1-owner-resolve`)。
+- 一致性:`checkHeldItemAcquisition` 按角色判——角色 A 首次获得 A 已持有物才标,B 持有不影响 A(`R-INV1-per-character-consistency`,CONSISTENCY-1 升级)。
+- 迁移:老 owner-less → 主角;多 main → 未归属只读;导出/导入往返 characterId 正确 remap(`R-INV1-migration`)。
+- UI:物品栏按角色切换、状态卡显示各角色自己的物品、与物品栏一致。
+- 闸门全绿:`tsc` / `build` / `vitest` / `check:architecture` / `check:required-tables` / gen:ai-manual --check。
+
+### 数据红线复述
+- DB schema 变更 = 必迁移测试 + 往返验证;生产不自动清库。
+- 角色删除**不级联删其物品数据**(NULL 化归属、保 heldByName 名),防丢用户数据。
+- 扩字段 = 改全链路:上表 13 处一处不漏(展示/抽取/上下文/adopt/导出导入/迁移)。
+
+---
+
+# ═══ 待开发 · 快赢 ═══
+
+## ✅ QUICKWIN-1 · 「Ollama(本地)」选项改为「本地模型」+ 兼容 LM Studio 等 · 已审并合入 main `ddff907`
+
+> 来源:WPS bug 文档(P3,Codex 标"待修·体验优化")。可顺手做,不打断 CONSISTENCY-1。
+
+**现状**
+- 设置页本地模型入口只暴露「Ollama (本地)」,`PROVIDER_PRESETS.ollama.baseUrl` 固定 `http://localhost:11434/v1`。
+- 用户也用 LM Studio 等 OpenAI-compatible 本地 `/v1`(LM Studio 默认 `http://localhost:1234/v1`),现在只能走「自定义」,体验差。
+
+**方案(轻改,不新增 provider,不碰三注册表数据)**
+- `AIConfigPanel` 的 `PROVIDER_OPTIONS`:`ollama` 的 label 从「Ollama (本地)」改为「**本地模型 (Ollama / LM Studio 等)**」;hint 说明「填本地 `/v1` 地址,如 Ollama `:11434` / LM Studio `:1234`」,并确认该 provider 下 baseUrl 可编辑。
+- 可选(与用户另一条「自动拉取模型」需求合并):本地模型加「拉取模型」按钮走 `GET /v1/models`——**本条先只做文案 + 可编辑 baseUrl,拉取按钮单独排期**。
+- 四问:纯 provider 配置 UI,不涉 `CONTEXT_SOURCES/adopt/PROJECT_TABLES`,不改 DB/schema、不触发数据红线。
+
+**验证判据**
+- 设置页本地模型选项显示「本地模型」,hint 含 Ollama/LM Studio 端口示例;LM Studio `:1234/v1` 能配上并「测试连接」通过。
+- `tsc` / `check:architecture` / `build` 全绿。
+
+**DoD**:用户不用走「自定义」就能配 LM Studio 等本地模型;本条不涉数据层。
+
+---
+
+## ✅ QUICKWIN-2 · 物品栏支持编辑物品名/数量（已合入 main `9f87308`）
+
+> 来源:WPS bug 文档 row1(P1,物品栏/道具管理,**剩余部分**)。CONSISTENCY-1 已修「物品重复获得/状态追踪」;本条修 row1 的「编辑/修正」部分。**纯 UI 缺口,不需复现。**
+
+**完成状态（2026-07-13）**：`InventoryPanel` 已提供物品名、数量、动作和备注编辑入口，统一复用 `useItemLedgerStore.updateEntry()` 落库；`R-QUICKWIN2-inventory-edit.test.ts` 已覆盖内存状态与 IndexedDB 持久化。后续提取范围优化仍归 `QUICKWIN-3 / INVENTORY-1`，不混入本条。
+
+**现状(已核代码)**
+- `useItemLedgerStore.updateEntry(id, patch: Partial<ItemLedgerEntry>)` 支持更新**任意字段**(itemName / quantity / action / note),数据层没问题。
+- 但 `InventoryPanel.tsx` 编辑区**只给了 `action`(获得/消耗)下拉**,没有 itemName / quantity 的可编辑输入 → 用户「物品名改不了、数量改不了、AI 识别错了修不了、添加后无法更改」。
+
+**根因**:UI 缺口(数据层已支持),不是数据/抽取问题。
+
+**方案(纯 UI,复用现有 `updateEntry`)**
+- `InventoryPanel` 编辑区补 itemName 文本输入 + quantity 数字输入;onChange/onBlur 调 `updateEntry(e.id, { itemName })` / `updateEntry(e.id, { quantity })`。(可选 note 也可编辑。)
+- 四问:写走既有 store → `db.itemLedger.update`(itemLedger 已在 `PROJECT_TABLES`);**无新表 / schema / 字段变更**;纯 UI + 既有写路径。
+- 注:row1 **另半部分**(新章节增量识别、AI 识别范围过大浪费 token)更复杂,单独排期,本条不含。
+
+**验证判据**
+- 改物品名/数量后刷新持久;新增 `R-QUICKWIN2` 测试(`updateEntry` 改 itemName/quantity 落库)。
+- `tsc` / `check:architecture` / `build` 全绿。
+
+**DoD**:用户能在物品栏直接改物品名和数量,AI 识别错了能手动修正。
+
+---
+
+## 🟢 QUICKWIN-3 · 物品栏提取范围优化：全部已写章节 / 自定义起止章
+
+> 来源:社区用户反馈(2026-07-08)。用户希望「从正文提取物品栏」不要每次从第一章扫到当前全部章节；长篇写到几十/上百章后,全量提取 token 与等待成本过高。作者拍板:第一版只做两个模式——**全部已写章节**与**自定义起止章**,不单独做「最近 N 章」第三模式,因为最近 N 章可由自定义起止章覆盖。
+
+**现状(已核代码)**
+- `InventoryPanel.tsx` 中 `writtenChapters = chapters.filter(c => c.content && htmlToPlainText(c.content).trim().length > 50)` 会收集所有已写正文。
+- `handleExtract()` 固定遍历全部 `writtenChapters`,对每章执行 `assembleContext({ sourceKeys:['chapterContent'] })` → 分块 → `inventory.extract` → `adopt({ target:'itemLedger' })`。
+- 每章提取成功前会 `deleteByChapter(project.id, ch.id)` 清理该章旧物品流水；这是合理的单章替换逻辑,但当前无法限制扫描范围。
+
+**用户问题**
+- 写到 30/100/200 章后,用户只想补提取最近几章或某段章节,却必须重新扫描全部已写章节。
+- 全量扫描会浪费 token、增加等待时间,也扩大 AI 提取失败/误识别的暴露面。
+- 用户实际诉求不是必须有「最近 N 章」按钮,而是能自定义从哪里开始扫到哪里结束；例如写到 100 章时填 `95-100` 即可覆盖“最近 5 章”。
+
+**方案(只做两种范围模式)**
+1. **全部已写章节**
+   - 默认保持现有行为,扫描所有有正文的章节。
+   - 作为向后兼容模式,不改变老用户习惯。
+2. **自定义起止章**
+   - UI 增加范围模式选择 + 起止输入/下拉。
+   - 起止建议基于规范章序 `resolveCanonicalChapterSequence(outlineNodes, chapters)` 生成,而不是直接信 `chapter.order` 或章节 id。
+   - 用户可选择第 X 章到第 Y 章；系统只扫描范围内且有正文的章节。
+   - 这同时覆盖「只扫最后 N 章」:用户写到 100 章、想扫最近 5 章,选择 96-100 即可。
+
+**实现要点**
+- 抽出纯函数,例如 `selectInventoryExtractionChapters({ chapters, outlineNodes, mode, startOrdinal, endOrdinal })`:
+  - `all`:返回全部已写章节,按规范章序排序。
+  - `range`:返回规范章序中 `ordinal ∈ [startOrdinal, endOrdinal]` 且有正文的章节。
+  - 若起止反了,UI 阻止执行或自动提示「起始章不能大于结束章」。
+  - 若范围内没有可提取正文,显示明确错误,不发起 AI 请求。
+- `handleExtract()` 只接收 `selectedChapters`,后续单章提取、分块、去重、`deleteByChapter`、`adopt(itemLedger)` 逻辑保持不变。
+- 进度条总数改为 `selectedChapters.length`,文案显示「正在提取第 X-Y 章」或「正在提取全部已写章节」。
+- 不新增「最近 N 章」模式,避免 UI 复杂化;如后续用户高频需要,可在自定义起止章上加快捷按钮,但本任务不做。
+
+**四问 checklist**
+- ① 读:仍由 `assembleContext({ sourceKeys:['chapterContent'] })` 读取章节正文;范围选择只决定调用哪些章节。
+- ② 写:仍走既有 `adopt({ target:'itemLedger' })` 写物品流水;不新增写回路径。
+- ③ 表生命周期:只使用既有 `chapters / outlineNodes / itemLedger`;无新表、无 schema、无迁移。
+- ④ 注册表:不新增 AI 上下文源/字段/表;若抽出纯函数,只作为 UI 前的范围选择工具。
+
+**数据红线**
+- 不批量删除未选章节的 `itemLedger`。
+- 只对本次扫描到且提取成功的章节执行该章 `deleteByChapter + adopt`,保持现有“单章替换”语义。
+- 若某章 AI 提取失败,不得清空该章旧记录;继续沿用当前“单章失败不中断整体”的保护。
+
+**验证判据**
+- 自定义范围 27-29 时,只对第 27/28/29 章发起提取,不触碰其他章的旧物品流水。
+- 全部已写章节模式行为与现有全量提取一致。
+- 起止章反向、范围为空、范围内无正文时有明确提示,不发起 AI 请求。
+- 规范章序测试覆盖拖动/删除后的大纲顺序,不得依赖 `chapter.order` 或 `chapter.id`。
+- `tsc` / `check:architecture` / 对应回归测试全绿。
+
+**DoD**
+- 用户能在物品栏选择「全部已写章节」或「自定义起止章」后再点击提取。
+- 长篇项目可只补提取某段章节,避免每次全书重扫。
+- 未选范围外的物品流水保持原样。
+
+---
+
+## ✅ QUICKWIN-4 · 已写正文参与卷纲 / 章纲生成：补大纲时尊重既有正文事实（v3.8.0）
+
+> 来源:社区用户反馈(2026-07-08)。用户问:「当前卷纲/章纲就是我写了正文之后再生成的,AI 会考虑我已经写好的文章吗?」当前答案是:**大概率不会完整考虑**。现有卷纲/章纲生成主要读世界观、故事核心、已有卷纲等规划数据,不读取本卷已写正文进度;如果正文事实尚未被抽成故事核心/状态/事实/大纲摘要,AI 不会天然知道。
+
+**现状(已核代码)**
+- `OutlinePanel.buildOutlineAssembledContext()` 的 `sourceKeys` 包含 `worldview / storyCore / powerSystem / codex / characters / creativeRules / worldRules / historical / locations / existingVolumeOutlines`。
+- `outline.volume` 生成会把 `existingVolumeOutlines` 作为“已有卷大纲”注入,但它只读 `outlineNodes` 的卷标题与卷摘要。
+- `outline.chapter` 生成会读取目标卷 summary、上一卷 summary 与上述世界/角色上下文,但**不会读取本卷已写正文章节、章节摘要、连续性交接或正文事实进度**。
+- 代码里已有 `chapterContent / recentChapterSummaries / retrievedPassages` 等 chapter 级上下文源,但 outline 生成当前没有 chapterId,也没有“本卷已写正文进度”这个项目/卷级上下文源。
+
+**用户问题**
+- 用户可能先写正文,再回到大纲页补本卷卷纲或本卷章纲。
+- 这时 AI 只看原始规划,不知道用户正文已经写出的事实、世界观变化、角色状态、物品状态或剧情进展,容易生成与正文不一致的卷纲/章纲。
+- “随剧情变化更新世界观”本身更复杂,不应在本条里自动改世界观;本条第一版只解决“大纲生成时读到已写正文进度”,不自动回写设定。
+
+**方案(第一版:只读已写进度,不自动改世界观/正文)**
+1. 新增上下文源 `writtenChapterProgress` 或 `currentVolumeWrittenProgress`:
+   - scope 建议为 `node` 或 `project`,由 `outlineNodeId` 指向目标卷/章节后反查所属卷。
+   - 读取目标卷下已写正文的章节,按 `resolveCanonicalChapterSequence(outlineNodes, chapters)` 规范章序排序。
+   - 每章优先使用 `chapter.summary / continuityHandoff / planReconciliation` 等已抽取摘要;没有摘要时只取正文短摘录(如开头/结尾各若干字),避免把整卷正文塞进 prompt。
+   - 输出结构化块:章节序号、标题、字数、已写状态、关键摘要/结尾交接/正文短摘。
+2. `OutlinePanel` 的卷纲补全、整卷章纲生成、单章章纲补全都把该源加入 `assembleContext`:
+   - 卷纲补全:告诉 AI“本卷已有正文事实,补卷纲不得推翻”。
+   - 章纲生成:告诉 AI“已写章节不可重写、后续章纲需承接已有正文”。
+   - 单章补全:告诉 AI同级已写章节事实与前后衔接,只补当前空章。
+3. prompt 追加硬约束:
+   - “已写正文为事实边界,不得改写、否认或重排已写内容。”
+   - “若已写正文与旧大纲冲突,以正文事实为准,并在输出摘要中承接正文。”
+   - “只生成/补全目标范围,不要重写已写章节正文。”
+4. UI 可选显示只读“生成依据”折叠区:
+   - 复用已有 assembled included/omitted 信息,让用户看到本次是否读取了“已写正文进度”。
+   - 第一版不做自动世界观更新按钮;如果需要“正文事实 → 世界观/规则/主线回写”,另开一致性/事实回写工作流。
+
+**四问 checklist**
+- ① 读:新增 `CONTEXT_SOURCES` 源,通过 `assembleContext()` 注入大纲生成;不在 `OutlinePanel` 手拼正文。
+- ② 写:本条第一版只影响 AI 生成 prompt;写回仍走既有 `adopt({ target:'outlineNodes' })` 或现有大纲写入流程。
+- ③ 表生命周期:只读既有 `chapters / outlineNodes / detailedOutlines / narrative summaries` 等已登记表;无新表、无 schema、无迁移。
+- ④ 注册表:新增上下文源必须登记到 `CONTEXT_SOURCES`;若未来要自动回写世界观/故事核心,另走 `FIELD_REGISTRY + adopt()` 设计,不混在本条。
+
+**数据红线**
+- 不自动修改已写正文。
+- 不自动修改世界观、力量体系、故事核心。
+- 不因补章纲而覆盖已写章节摘要或正文事实;只生成目标大纲产物。
+
+**验证判据**
+- 构造目标卷已有第 1-3 章正文,补本卷章纲时 prompt 中包含“已写正文进度”块。
+- 生成约束明确要求不得推翻已写正文事实。
+- 单章补全只补目标章,不生成其它章节。
+- 多世界项目按目标卷 worldGroupId 读取对应世界上下文,不串世界。
+- `tsc` / `check:architecture` / 对应回归测试全绿。
+
+**DoD**
+- 用户先写正文再补卷纲/章纲时,AI 能看到本卷已写进度。
+- 旧的“从规划生成大纲”流程保留;已写进度只作为额外事实边界。
+- 不自动回写世界观/正文,避免越权改用户设定或手稿。
+
+**实现记录（2026-07-13 · 待 Claude 审）**
+- 新增 `writtenChapterProgress` 上下文源：由目标卷/章节反查所属卷，按 `resolveCanonicalChapterSequence()` 读取本卷已写章节，历史重复 `chapters.outlineNodeId` 仍由规范章序/择优逻辑选择正文记录。
+- `OutlinePanel.buildOutlineAssembledContext()` 已把该源加入卷纲补全、整卷章纲生成、单章章纲补全共用的 `assembleContext()` sourceKeys。
+- `outline.volume` / `outline.chapter` prompt 在检测到该块时追加“已写正文优先”硬约束：不得改写、否认、重排已保存正文；旧规划冲突时以已写正文为准。
+- 本轮只读 `outlineNodes / chapters`，不改 schema、不迁移、不自动修改正文/世界观/故事核心；UI “生成依据”折叠展示仍留后续增强。
+- 回归测试已覆盖：目标卷读取已写正文进度、跨卷不串、重复空章不覆盖正文、章纲 prompt 带已写正文优先约束。
+
+---
+
+## ✅ QUICKWIN-5（2026-07-13 完成）· 状态卡/物品栏命名统一 + 来源提示
+
+> ⚠️ 缩减(2026-07-09):原「`resolveInventoryOwner` owner 判定 band-aid」**已删除不做**——被 INVENTORY-1（物品按角色归属）取代,做了就是白干(DoD 不新旧并存)。真正的「状态卡↔物品栏同步」修复见 **INVENTORY-1**。本条仅保留便宜且不浪费的部分。
+
+**保留范围**
+- 命名统一:展示态「归属势力」→「所属势力」(已改,`StatePanel`)。
+- 状态卡持有物区已加**来源提示**（主角存在物品流水时显示“来自物品栏”，否则显示“来自状态字段”）和图标式「去物品栏」跳转；不新增同步逻辑、不改 schema。`R-QUICKWIN5-state-inventory-source` 覆盖两种来源与跳转回调，隔离预览浏览器实测空物品栏时来源提示正确且可跳到物品栏。
+
+**已删除**:owner 判定优先级阶梯、多主角降级"未归属"轻提示 —— 全部由 INVENTORY-1 的真实按角色归属取代。
+
+> 边界：本条只完成不浪费的命名/解释/导航。配角背包与状态卡↔物品栏真实按角色同步仍必须由 `INVENTORY-1` 的数据模型、迁移和全链路方案实现，不能把 QUICKWIN-5 的 UI 完成误报为同步问题已根治。
+
+## ✅ QUICKWIN-6 · 大纲章节支持跨卷拖动：从第一卷移动到第二卷（v3.8.0）
+
+> 来源:社区用户反馈(2026-07-09)。用户问“怎么把第一卷的部分章节,移动到第二卷”。作者确认:章节需要能直接拖到卷之前/卷内目标位置,方便长篇调整结构。
+
+**现状(已核代码)**
+- `useDragReorder.ts` 明确只做“同一组（同 parentId）内排序”,调用方分别传卷列表、当前卷直挂章节列表、故事块内章节列表。
+- `OutlinePanel.tsx` 当前的 `directChaptersDnD` 与 `BlockSection` 只允许同级章节互换顺序。
+- `useOutlineStore.reorderNodes(orderedIds[])` 只重写传入 id 的 `order`,不会改 `parentId`。
+- 因此章节可以在同一卷内拖动排序,但不能把第一卷的章节拖进第二卷;也不能从故事块内拖成卷直挂章节或反向移动。
+
+**用户问题**
+- 长篇大纲调整时,用户常需要把第一卷后半部分章节移到第二卷,或把章节挪进/挪出故事块。
+- 现在只能删除重建或手动复制内容,容易丢摘要/细纲/正文关联,操作成本高。
+- 截图反馈中的“直接拖拽能行吗”当前答案是:同卷内可以,跨卷不行。
+
+**根因**
+- 现有 FB-2 实现把“拖拽”定义为同级排序,没有“移动节点到另一个父节点”的语义。
+- 章节归属由 `outlineNodes.parentId` 决定;跨卷移动必须同时更新被拖章节的 `parentId` 和目标容器内 `order`。
+- 源容器移出章节后也要重排 `order`,否则同级序号会出现空洞或顺序错乱。
+
+**方案(第一版:只做用户手动拖拽,不改 AI 写回)**
+1. store 新增规范入口,例如 `moveNodeToParent(nodeId, targetParentId, targetIndex)`:
+   - 校验 node 必须是 `chapter`。
+   - 校验目标父节点只能是 `volume` 或 `storyBlock`。
+   - 禁止跨项目、跨世界组错移;多世界项目需确保 `worldGroupId` 一致。
+   - 在一个 Dexie transaction 内完成:更新节点 `parentId` + 目标同级 `order` + 源同级 `order`。
+2. UI 拖拽扩展:
+   - 卷行、卷内章节列表、故事块章节列表都可作为 drop zone。
+   - 拖到某个卷标题/卷内空白区:追加到该卷直挂章节末尾。
+   - 拖到某个章节行:插入到该章节之前或之后(可先做“放到目标章节位置”)。
+   - 拖到故事块:移入该故事块章节列表。
+3. 保留现有同级排序体验:
+   - 同 parentId 内仍走现有 `computeReorder + reorderNodes`。
+   - 只有当 sourceParentId !== targetParentId 时才调用 `moveNodeToParent`。
+4. 章节正文/细纲关联不需要改 id:
+   - 正文章节通过 `chapters.outlineNodeId` 绑定大纲节点;跨卷移动只改 outline 节点父级,不改 outlineNodeId,因此正文和细纲应自然保留。
+
+**四问 checklist**
+- ① 读:纯 UI 操作读取既有 `outlineNodes`;不涉及 AI 上下文。
+- ② 写:写 `outlineNodes.parentId/order/updatedAt`,必须走 outline store 的单一入口;不在组件裸写 `db.outlineNodes.update`。
+- ③ 表生命周期:只使用既有 `outlineNodes` 表;不新增表、不改 schema、无迁移。
+- ④ 注册表:非 AI 写回,不新增 `CONTEXT_SOURCES/FIELD_REGISTRY/PROJECT_TABLES`;若未来做 AI 自动重排大纲,再另走 `adopt({ target:'outlineNodes' })` 方案。
+
+**数据红线**
+- 不删除章节、不新建重复章节。
+- 不改 `chapters.outlineNodeId`,确保已有正文、字数、审校、细纲仍挂在原大纲节点上。
+- 移动失败必须整体回滚,不能出现章节同时在两个容器里或从两个容器都消失。
+
+**验证判据**
+- 第一卷第 5 章拖到第二卷后,该节点 `parentId` 变为第二卷 id,正文/细纲关联保持不变。
+- 源卷章节 order 连续重排,目标卷章节 order 连续重排;刷新后顺序不乱。
+- 章节从卷直挂移动到故事块、从故事块移动回卷直挂均可用。
+- 多世界项目不能把 A 世界组章节拖到 B 世界组卷下。
+- 同级排序旧行为不退化;`R-FB2-outline-reorder` 继续全绿,并新增 `R-QUICKWIN6-outline-cross-parent-move`。
+
+**DoD**
+- 用户能直接把第一卷的部分章节拖到第二卷指定位置。
+- 移动后章节正文、章节摘要、细纲、导出顺序都跟随新大纲位置。
+- 拖拽反馈清晰,用户能看出是“排序”还是“移入目标卷/故事块”。
+
+**实现记录(2026-07-11)**
+- `useOutlineStore.moveNodeToParent()` 新增跨父级移动能力,原子更新移动节点 parentId,并重排源父级与目标父级的同类型 sibling order。
+- 大纲 UI 章节拖拽增加跨父级 payload;章节可拖到目标卷末尾、故事块末尾或目标章节前。同父级拖动仍走原 FB-2 同级排序。
+- 多世界项目阻止跨世界组拖动章节。
+- 移动只改大纲节点 parentId/order,不改 chapters 表的 outlineNodeId,正文/细纲等仍跟随原章节节点。
+- 新增 `R-QUICKWIN6-outline-cross-parent-move`,并复跑 `R-FB2-outline-reorder` 保证旧同级排序不退化。
+
+# ═══ 待开发 · 编辑器增强 ═══
+
+> 定位:编辑器已"够用"(富文本/排版/字数/自动保存/AI 续写润色扩写去AI味/审校,且 AI 动作已注入世界上下文)。真正差异化不在通用功能(红海),在「把世界引擎焊进写作流」。分两类:🟡 通用及格线(去摩擦,够用即可)/ 🔴 护城河(别人抄不走,优先)。**以下功能经代码核查当前均不存在。**
+
+## ✅ EDITOR-1 · 全书查找替换(通用刚需 · 长篇痛点 · 作者点名要做)（v3.8.0）
+
+**用户故事**:作为写几百章长篇的作者,我想在全书范围查找 / 替换(统一改角色名、纠错别字),而不是一章章手动改。
+
+**现状**:已在章节页实现首版查找替换工具,待 Claude 审查后合 main。
+
+**实现记录(2026-07-11)**
+- UI:章节页右侧新增「查找替换」面板与 Ctrl/Cmd+F 快捷入口;查找框打开后自动聚焦,命中区支持上一处 / 下一处循环跳转。
+- 范围:单章 / 全书;全书目标按 canonical 大纲顺序遍历,并复用 `buildBestChapterByOutlineMap()` 只处理同一大纲节点的 canonical 正文章节,避免历史重复空章节被误搜/误替换。
+- 替换粒度:单处 / 本章全部 / 全书替换;替换统一走 `useChapterStore.updateChapter()`。
+- 安全阀:替换前显示「N 处 / M 章」确认;执行前创建项目快照;本次会话保存内存 undo patch,可一键撤销刚才替换。
+- 匹配:大小写敏感、正则(`$1`/`$&`/`$$`)、全字匹配;中文长实体名保护复用角色名列表,避免把「李明轩」里的「李明」误替换。
+- 富文本:按 DOM text node 替换,保留段落/加粗等标签,不做整段 HTML 字符串替换。
+- 首版边界:只查找/替换**已保存正文**;若当前编辑器有未保存草稿,用户需先点保存。首版不匹配跨富文本节点的连续文本(例如 `李<strong>明</strong>` 搜 `李明`)。
+
+**功能说明**
+- 查找范围:**单章 / 全书(所有章节)**可切;(可选)按卷 / 世界组限定。
+- 替换粒度:**单处 / 本章全部 / 全书全部**。
+- 匹配选项:**全字匹配**(防"李明"误伤"李明轩")、**大小写敏感**、(高级可选)正则。
+- 命中导航:列出所有命中(所在章 + 上下文片段),点击跳转,上一个 / 下一个。
+- **⚠️ 全书替换安全阀(必做)**:替换前显示「将替换 N 处,分布在 M 章」预览 + 确认;**替换前自动生成项目快照**;支持一键撤销。
+
+**开发方案**
+- **纯文本层匹配,不做 HTML 字符串替换**(避免破坏排版标签):每章 `htmlToPlainText` 后定位,替换经富文本安全路径(参考现有 `replaceSelection` 的 HTML 安全处理)/ 按节点替换。
+- 全书查找:遍历 `db.chapters`,异步分批 + 进度,不卡 UI。
+- 全书替换:走 chapter store `updateChapter`(单一写入路径,复用自动保存 / 字数重算);替换前调现有 `snapshots` 机制。
+- 多世界:范围过滤读 `activeGroupId` / 章节所属世界。UI:工具栏「查找替换」入口(Cmd/Ctrl+F)+ 浮层。
+
+**数据红线**:全书替换批量改用户手稿 → **必须替换前快照 + 预览确认 + 可撤销**。DoD 含"误替换可恢复"。
+
+**验证判据**:单章/全书查找命中正确;全字/大小写/正则生效;全书替换预览计数准、快照生成、撤销可还原;富文本替换不破坏标签;`R-EDITOR1` 测试;tsc/architecture/build 全绿。
+
+## 🔴 EDITOR-2 · 内联一致性提示(护城河 · 一致性工程化的编辑器出口 · 护城河里优先)
+
+**用户故事**:作为作者,我想**写的时候**就被提醒"这里把已持有的物品又写成首次获得了",而不是写完手动跑一次审校才发现。
+
+**现状**:一致性只在 `ReviewPanel` 手动"审校"跑一次;编辑器无实时/内联提示。
+
+**功能说明**:编辑器里对**确定性可判**的硬矛盾做**内联标注**(波浪线/角标),优先接已落地的 `checkHeldItemAcquisition`(物品重复获得),后续接 canon 校验器其余谓词;悬浮显示原因+建议;**只标确定性结果(零 token、不误报),LLM 软审校仍留 ReviewPanel 手动触发**(避免边写边烧 token)。
+
+**开发方案**:复用 `src/lib/consistency/held-items.ts`(纯函数,已有);编辑器停顿(debounce)时对当前章跑确定性校验,finding 映射成 TipTap `Decoration`;**不调 LLM**。四问:读走现有确定性校验器、不写库、无新表。随一致性工程化增量扩展可标谓词。
+
+**验证判据**:写"重复获得已持有物"→ 内联标出;真首次获得不误报;debounce 不卡输入;`R-EDITOR2`。**这是北极星在编辑器里的出口,护城河里优先级最高。**
+
+## ✅ EDITOR-3（2026-07-13 完成）· 对照润色(抄录)面板(护城河 · 社区直接需求)
+
+> **完成状态**：正文页增加正式「对照润色」模式。打开前先保存当前正文并冻结为左侧只读原稿，右侧复用 `RichEditor` 维护独立草稿，不触发主正文自动保存；保存前复用 `held-items` 确定性检查提示重复获得风险，用户确认后先创建项目手动快照，再经 chapter store 覆盖正文。快照失败会阻止正文更新；空稿不能保存；未保存草稿关闭前确认；切换章节自动退出旧章模式。未提前实现待审 EDITOR-2 的通用内联校验，也未新增表或并行正文存储。
+>
+> **验证**：`R-EDITOR3` 覆盖快照先于覆盖、快照失败不写正文、确定性风险提示和左右栏独立；同时回归 `R-EDITOR1` / `R-CONSISTENCY1`。tsc、build、architecture、42 tables、AI manual 全绿。2026-07-13 在隔离预览项目完成真实 UI 流程：打开前保存；左侧原稿固定、右侧独立编辑；脏稿关闭弹确认；取消后草稿保留；创建快照并保存后主正文、字数和列表同步更新并退出对照模式。
+
+**用户故事**(社区「半暮南城」):作为作者,我想左边看 AI 原文、右边手写润色,凭语感把 AI 正文重写得更像人写的。
+
+**功能说明**:分栏(左=AI 原文只读 / 右=手写可编辑),右侧写完保存为本章正文;**护城河加成**:右侧写完过一遍确定性一致性校验(EDITOR-2 同款),提示改动有没有写崩已确立事实;(可选)"AI 按我文风改一版"作起点(复用去 AI 味 / 润色 adapter)。
+
+**开发方案**:新分栏组件;右侧复用 `RichEditor`;保存走 `updateChapter`;一致性校验复用 held-items/canon。不新增表。**验证**:对照编辑、保存持久、一致性护栏触发;`R-EDITOR3`。
+
+## ✅ EDITOR-4（2026-07-13 完成）· @角色/物品补全 + 悬浮档案(护城河)
+
+> **完成状态**：正文 `RichEditor` 接入项目实体 descriptors：键入 `@查询` 可用上下键 / 回车 / 鼠标从角色、物品、地点、词条中选择并插入纯文本；正文里已有的完整实体名由 ProseMirror decoration 做非持久化虚线标记，悬浮显示同一份档案摘要。角色和词条按当前世界组过滤，跨世界角色与全局词条可见；地点/物品按现有项目级语义读取；重名按角色 > 物品 > 地点 > 词条稳定去重，长名称优先避免「李明」误覆盖「李明轩」。IME 组合输入回车不会触发候选，实体名不按 HTML 解析。对照润色右栏同步支持。正文只调用 store 读取，词条新增 `loadExisting()` 避免只读入口隐式播种写库；不新增表、不新增依赖、decoration 不污染正文 HTML。
+>
+> **验证**：`R-EDITOR4` 覆盖世界隔离、跨世界角色、重名优先级、最长匹配、查询排序和非持久化接线；同时回归词条播种/搜索与 EDITOR-3。tsc、build、lint(改动文件)、architecture、42 tables、AI manual 全绿。2026-07-13 在隔离预览项目实测 `@新` 出现“新角色 · 角色”候选，鼠标选择后仅插入纯文本“新角色”、候选关闭且正文渲染实体 decoration。悬浮卡因内置浏览器指针事件未可靠触发，仍以 DOM 接线 + 自动化测试为证，不冒充视觉通过。
+
+**用户故事**:作为作者,我在正文打角色名时想自动补全,鼠标悬浮能看到该角色/物品在我世界里的档案,不用切面板查。
+
+**功能说明**:输入触发(`@` 或匹配已知实体名)补全角色/物品/地点/词条;悬浮卡显示其注册表档案。**开发方案**:TipTap suggestion/mention 扩展;候选来自各 store 实体名;悬浮卡读 characters/codex/itemLedger/importantLocations。纯读、不写库。**验证**:补全命中、悬浮显示档案;`R-EDITOR4`。
+
+## 🔴 EDITOR-5 · 智能全书改名(护城河 · EDITOR-1 的实体感知升级)
+
+> **2026-07-13 实施前审计结论：需作者 / Claude 放行后再写批量事务。** 原两行方案低估了数据面：角色关系用稳定 ID，不需改；但 `stateCards.entityName`、`temporalFacts.subjectName` 是实际查询字段，角色 / 地点 / 词条事实同时保存稳定 FK + 冗余名；物品栏当前仅以 `itemLedger.itemName` 聚合，没有稳定物品实体 ID。同名还可能同时属于角色、地点、词条或物品。只做“主表 name + 全书正文替换”会造成状态卡 / 事实召回失联；按名字扫全库又可能误合并不同实体，属于数据红线，不能盲写。
+>
+> **推荐两阶段方案（等放行）**：
+> 1. **阶段 A：有稳定 ID 的实体**（角色 / 地点 / 词条）。新建单一 `renameProjectEntity()` 服务；先预览 canonical 正文章节命中数和将同步的结构化引用，再创建项目快照，在一个 Dexie 事务里更新主实体 + 仅该稳定 FK 对应的 `temporalFacts.subjectName` + 同类型同名 `stateCards.entityName`，正文复用 EDITOR-1 富文本 text-node 安全替换。角色关系、细纲角色引用等 ID 引用保持不动。事务失败整体回滚；完成后刷新相关 store。自由文本描述、事实 `value/sourceQuote` 不盲目替换，只在预览中提示人工复核。
+> 2. **阶段 B：物品改名**。等 `INVENTORY-1` 为物品归属 / 实体建立稳定身份后接入；在此之前不按 `itemName` 批量合并流水，避免把同名但不同持有人 / 不同物品误合并。
+> 3. **撤销边界**：项目快照提供完整恢复；本次会话可额外保存正文 + 主实体 + 冗余名称 patch 做一键撤销，但不能只撤正文不撤结构化数据。
+> 4. **验证**：`R-EDITOR5` 必须覆盖角色 / 地点 / 词条、同名跨类型不串、状态卡/事实冗余名同步、关系/细纲 ID 不变、正文富文本不破坏、快照失败零写入、事务中途失败全回滚、恢复后上下文仍按新名召回。涉及多表批量写入，合并前按数据红线由 Claude 审 + 作者放行。
+
+**用户故事**:作为作者,我改一个角色名时,想一次把注册表里的角色档案 + 全书所有章节里的名字**一起**改,而不是分两处手动。
+
+**功能说明**:选中一个**实体**(角色/物品/地点)改名 → 同时更新注册表该实体 + 全书正文出现处;区别于纯文本全局替换:它知道"这是实体",可精准(结合实体边界避免误伤同名子串)。**开发方案**:在 EDITOR-1 全书替换之上加"实体感知"入口(改角色名走 `updateCharacter` + 全书替换),共用 EDITOR-1 的预览/快照/撤销安全阀。**验证**:改名后注册表 + 全书一致、快照可恢复;`R-EDITOR5`。
+---
+
+# ═══ 待开发 · 透明生成管线(执行模型层 · 缝合 agent + 一致性 + 章纲方法论) ═══
+
+> 权威设计见 `docs/TRANSPARENT-GENERATION-PIPELINE.md`。核心:把所有 AI 生成收口到"可介入节点链"——**分阶段生成、提示词发送前可编辑、agent 每节点可调,是同一抽象(GenerationNode)的三种形态**。不是新子系统,是现有生成流的泛化(读经 assembleContext、写经 adopt、新表进 PROJECT_TABLES)。是 `AI-COPILOT-DESIGN.md` AgentRunner 的执行层补充;节点 gate 复用一致性校验器;节点内容消费社区「元写作 Skill」方法论。
+
+## 🔴 PIPELINE-1 · 发送前提示词预览 + 编辑(首刀 · 最便宜 · 立刻兑现"透明")
+在"messages 拼好 → `ai.start`"之间插一个**可选**预览/编辑环节;拼接后的最终提示词可看、可改,一次性覆盖不写回模板/字段;默认关、渐进披露(高级/折叠)。现状已有 `analyzeContextSegments` 分段 + `PromptRunPanel` 模板覆盖,缺"最终整块可编辑"。详见设计文档 §4.1 / 测试 `R-PIPELINE1`。
+
+## 🔴 PIPELINE-2 · 分阶段章纲工坊(旗舰 · 把一次性拆成节点链)
+现状:`OutlinePanel` 卷→章已粗分阶段,章内仍一次性。改为 5 节点管线:现状扫描 → 动机推演 → 碰撞预演 → 质检闸门 → 场景卡+不可写清单;节点 prompt 填「元写作 Skill」方法论(§6),质检节点接确定性校验(held-items/认知账本)。**保留"一键快速生成"两档并存**(快速=便宜 / 工坊=深)。详见 §4.2、§6 / 测试 `R-PIPELINE2`。数据红线:若新增 `outlinePipelineArtifacts` 表 → 迁移测试 + 导出/导入往返。
+
+## 🔴 PIPELINE-3 · agent 节点化接口(收口 · 可随 agent 工程做)
+`AgentRunner` 的每步对齐 `GenerationNode` 接口;每节点 gate/adopt 的用户确认 = `AI-COPILOT-DESIGN` "前台用户驱动写入确认"安全线的落地。做了 1/2 后这步基本免费。详见 §4.3 / 测试 `R-PIPELINE3`。
+
+**开发次序**:先抽象 `GenerationNode` + `runNode()` 并用它重构一个现有生成(回归全绿证明泛化无副作用)→ PIPELINE-1 → PIPELINE-2 → PIPELINE-3。
 
 ---
 
@@ -232,6 +779,302 @@
 
 ---
 
+# ═══ 社区反馈批次（2026-07-03 · 版本显示 / 卷纲参数 / JSON 导入 / 角色关系 / 长文本编辑 / 世界观贯通 / AI 设置 / 章节保存导出）═══
+
+> **来源**：2026-07-03 群内用户截图 + 作者转述，附件包括 `codex-clipboard-b3687bb2-0d9a-4beb-adde-213d2f37dad2.png`、`codex-clipboard-4a5181b3-4335-495f-9390-f644ea6556a6.png`、`codex-clipboard-8b917123-b49d-4caf-94e2-39e39ef694f8.png`、`codex-clipboard-dc3b6e65-2d35-4181-a529-b520e24e5390.png`、`codex-clipboard-7959e6ea-c573-4b89-8c9e-6d161f7647bb.png`、`codex-clipboard-fb70d9d6-0bd1-4b2b-a43f-788ecadbfc2b.png`、`codex-clipboard-4cac1864-cb65-4be0-9c5f-31de146bfbed.png`、`codex-clipboard-eae940bd-1895-45df-ad23-197db9cb6f1e.png`、`codex-clipboard-7230294e-bcb8-499f-ad27-72736fc491a0.png`、`codex-clipboard-70b4fdf8-4643-457a-9d5f-506a8974de9c.png`、`codex-clipboard-b39bfa96-cd1e-45a9-b5bd-6f3020249bae.png`、`codex-clipboard-22a99a77-8589-469f-9636-43a2a604b406.png`、`codex-clipboard-5329b449-65da-462d-afb5-a2d1dfa0ce0f.png`。
+> **当前状态**：Codex 已只读定位，尚未实现修复。后续应从最新 `main` 单开 hotfix 分支处理，避免混入 `codex/opencode-provider` 等待审功能分支。
+> **铁律复述**：本批前三项主要是 UI / 状态同步 / prompt seed 修复；若改 AI 生成链路，必须继续通过 prompt seed / adapter / `assembleContext()` 的既有入口，不允许绕过三注册表。角色关系若涉及写库，需确认 `PROJECT_TABLES` 与关系表生命周期不被破坏。
+
+## ✅ CF-20260703-1 — UI 版本号与 Release 不一致（v3.8.0 根治）
+
+- **状态（2026-07-13）**：v3.8.0 已完成根治：`APP_VERSION` 直接读取 `package.json.version`，并由回归测试锁定单一事实源；本分支重放时保留主线实现，不恢复旧的硬编码版本号。
+- **现象**：用户下载安装/打开 v3.7.5 后，左侧底部或首页版本徽标仍显示 `v3.7.2`，导致用户误以为自己没有更新成功。
+- **已确认代码定位**：
+  - `package.json` 当前版本是 `3.7.5`。
+  - `src/lib/version.ts` 仍硬编码 `export const APP_VERSION = 'v3.7.2'`。
+  - `src/pages/HomePage.tsx` 与 `src/components/layout/Sidebar.tsx` 都读取 `APP_VERSION` 展示版本号。
+- **根因判断**：发版流程 bump 了 `package.json`，但 UI 版本号是另一份手写常量；没有自动同步，也没有测试/脚本检查二者一致。
+- **解决方案**：
+  1. 立即把 `src/lib/version.ts` 更新为当前 Release 版本，修复用户可见误导。
+  2. 增加版本一致性检查：`APP_VERSION` 必须等于 `v${package.json.version}`，可放入 architecture check 或独立回归测试。
+  3. 后续优化为构建时注入版本号，例如 Vite `define` 读取 `package.json.version`，减少手写双源。
+- **完成记录（v3.8.0）**：`APP_VERSION` 已直接读取 `package.json.version`，并新增回归测试锁定单一事实源；后续发版只需 bump `package.json` / lockfile，不再手改 UI 常量。
+- **验收标准**：
+  - v3.7.5 构建产物首页与侧边栏显示 `v3.7.5`。
+  - 版本号一致性测试失败时能阻止再次出现 `package.json` 与 UI 常量不同步。
+- **优先级**：🔴 高（用户更新判断直接受影响，且修复小）。
+
+## ✅ CF-20260703-2 — 非内置题材包的“卷级大纲生成”参数区消失（已合入 main `bc72e73`）
+
+- **状态（2026-07-13）**：已合入当前 main。所有系统 `outline.volume` seed 统一使用 `VOLUME_OUTLINE_PARAMETERS`，并修正扩展玄幻 / 历史包旧变量契约；`R-CF20260703-2-volume-prompt-params` 防止题材包再次缺参数或引用 adapter 不传的变量。
+- **现象**：用户反馈“生成卷大纲的参数调整怎么不见了”。截图显示切换到某些题材包卷纲模板后，调参区没有“整体节奏 / 建议卷数”等参数；用户进一步确认“只有内置-卷级大纲生成才有这些东西，其他大纲生成包都是这样的”。
+- **已确认代码定位**：
+  - 调参浮窗 `src/components/shared/PromptRunPanel.tsx` 只读取当前激活模板的 `tpl.parameters`。
+  - 内置 `outline.volume` 模板在 `src/lib/ai/prompt-seeds.ts` 里定义了 `pace` 与 `volumeCount` 参数。
+  - 多个题材包 `outline.volume` 模板在 `src/lib/ai/prompt-seeds-genre-packs.ts` / `src/lib/ai/prompt-seeds-genre-packs-extended.ts` 缺少 `parameters`；扩展玄幻包甚至明确写了 `parameters: []`。
+  - 部分题材包卷纲模板变量名与运行器传入不一致，例如模板使用 `storySeed / protagonist / totalChapters`，而 `buildVolumeOutlinePrompt()` 传入的是 `storyCore / targetWordCount / estimatedVolumes / characterContext` 等。
+- **根因判断**：不是调参面板丢失，而是题材包模板 seed 没有声明卷纲参数，且个别模板变量与 adapter 契约漂移。`PromptRunPanel` 如实显示“无参数”，用户看起来就是功能消失。
+- **解决方案**：
+  1. 为所有 `moduleKey: 'outline.volume'` 的系统题材包补齐统一参数，至少包含 `pace` 与 `volumeCount`；如题材包需要额外参数，再追加题材专属项。
+  2. 统一卷纲模板变量契约：题材包应使用 `projectName / genres / targetWordCount / estimatedVolumes / worldContext / storyCore / characterContext / worldRulesContext / existingVolumesContext / userHint` 等 adapter 实际传入字段。
+  3. 更新 prompt store seed 刷新逻辑后，老用户已有 system 模板会按 name 刷新内容与 `parameters`，但必须保留用户 `isActive` 选择。
+  4. 增加回归测试：所有系统 `outline.volume` 模板必须至少有一个参数；模板变量不得引用 adapter 不传的字段；渲染后不得出现空的关键占位。
+- **验收标准**：
+  - 选择任意题材包的卷纲模板，生成面板都能看到节奏/卷数参数。
+  - 用户调 `volumeCount=30` 时，最终 prompt 明确要求目标总卷数或合理卷数约束，不再因模板差异失效。
+  - 老用户打开应用后，已有系统题材包模板参数被刷新补齐；用户自建模板不被覆盖。
+- **优先级**：🔴 高（核心大纲功能在多数题材包下体验断裂）。
+
+## ✅ CF-20260703-3 — 工作区内导入 JSON 后永久卡“加载中”，刷新后项目正常（已合入 main `bc72e73`）
+
+- **状态（2026-07-13）**：已合入当前 main。`loadProject(id)` 会把 DB 中查到的新项目 upsert 到 `projects` 列表，`R-CF20260703-3-import-project-list-sync` 覆盖“已有项目列表非空但不含导入项目”的卡死场景。
+- **现象**：用户在「数据管理 → 导出 / 导入 → 导入 JSON」点击导入后，页面一直停在“加载中”。刷新页面后恢复正常，且数据看起来已经成功导入。
+- **已确认代码定位**：
+  - `src/components/data/DataManagementPanel.tsx` 的 `handleFileSelected()` 导入成功后调用 `onImported?.(newId)`。
+  - `src/pages/WorkspacePage.tsx` 传入的回调是 `navigate(`/workspace/${newId}`)`。
+  - `WorkspacePage` 中 `loadProject(newId)` 只设置 `currentProjectId`，不会把新项目补进 `projects` 列表。
+  - `project` 由 `projects.find(p => p.id === currentProjectId)` 派生；如果列表里没有刚导入的新项目，则 `project` 一直是 `null`，页面显示“加载中...”。
+  - 当前只在 `projects.length === 0` 时补 `loadProjects()`；工作区内导入时列表通常不为空，但缺少新项目，因此不会触发补加载。
+- **根因判断**：导入事务本身大概率成功；卡住是前端项目列表状态没有同步。刷新后重新加载项目列表，所以导入项目出现并正常打开。
+- **解决方案**：
+  1. 在 `useProjectStore.loadProject(id)` 中，将查到的项目 upsert 到 `projects` 列表，保证直链、导入跳转、跨页跳转都能拿到当前项目。
+  2. 或在 `WorkspacePage` 中发现 `projects` 不含 `currentProjectId` 时强制 `loadProjects()`；Codex 倾向 store 层修，收益更通用。
+  3. 导入成功后先展示明确成功 toast，再跳转新项目；如果跳转加载失败，应显示错误和返回首页入口，而不是无限“加载中”。
+  4. 增加回归测试覆盖“已有项目列表非空，但跳转到刚导入的新项目”场景。
+- **验收标准**：
+  - 从某个项目的工作区导入 JSON 后，能自动跳到新项目并显示项目内容，不需要刷新。
+  - `projects` 原本非空且不包含新项目时，`loadProject(newId)` 后 store 内能找到该项目。
+  - 导入失败仍显示错误，不产生半成功卡死 UI。
+- **优先级**：🔴 高（数据恢复关键路径；虽然数据未丢，但用户会误判导入失败）。
+
+## ✅ CF-20260703-4 — 角色关系“无法保存”/保存反馈不明确（已合入 main `ee68677`）
+
+- **状态（2026-07-13）**：已合入当前 main。范围：当前项目过滤、关系图 props 化、保存反馈、非法端点提示；不改 schema。`R-CF20260703-4-5-character-relations` 覆盖写库与项目隔离，预览浏览器已实测新建关系、中文标签/描述自动保存、刷新后仍存在。
+- **现象**：用户截图显示在「角色关系」页面添加了主角与 NPC 的关系，随后反馈“这个角色关系无法保存”。截图中界面停留在关系图/关系列表顶部，用户看不到明确的“保存成功”反馈或保存按钮。
+- **已确认代码观察**：
+  - `src/components/relations/CharacterRelationPanel.tsx` 没有“保存”按钮；新增、下拉选择、标签输入、描述输入都通过 `addRelation()` / `updateRelation()` 在 `onChange` 时立即写入 IndexedDB。
+  - `src/stores/character-relation.ts` 的 `addRelation()` / `updateRelation()` 写库后直接更新内存状态，但没有 toast、失败回滚或错误提示。
+  - `handleAdd()` 默认取 `characters[0]` 与 `characters[1]`，没有先按当前 `projectId` 过滤；`RelationGraph` 也直接使用全局 `characters` / `relations` store。理论上如果 store 残留或跨项目切换异常，可能出现写入了当前项目关系但端点角色不是当前项目角色，表现为“保存了但看不对 / 看不到”。
+  - `projectRelations = relations.filter(r => r.projectId === projectId)` 只过滤列表数据；关系图组件内部没有接收 `projectId`，依赖 store 已经只加载当前项目。
+- **疑似根因**：
+  1. **交互误导**：页面采用自动保存，但没有“已保存”提示；用户输入后不知道是否落库，尤其在图视图下看不到列表编辑细节。
+  2. **缺少错误反馈**：IndexedDB 写入失败、外键角色缺失、关系端点异常时，UI 不提示。
+  3. **项目过滤不严**：新增关系和关系图没有在组件内二次按 `projectId` 过滤角色/关系，依赖全局 store 状态正确；一旦导入/切项目/加载竞态导致 store 混入旧数据，会出现关系保存到错误端点或图上不显示。
+- **解决方案**：
+  1. 明确交互模型：若继续自动保存，则在新增/更新/删除后显示轻量 toast 或行内“已保存”；若改为手动保存，则增加“编辑草稿 → 保存/取消”状态，避免用户误解。
+  2. 在 `CharacterRelationPanel` 内计算 `projectCharacters = characters.filter(c => c.projectId === projectId)`，新增、下拉、AI 导入匹配、空态判断全部使用当前项目角色。
+  3. `RelationGraph` 改为接收当前项目的 `characters` 与 `relations` props，或接收 `projectId` 后内部过滤，禁止直接绘制全局 store 全量。
+  4. `character-relation` store 的写操作增加 try/catch 或让组件捕获错误，并显示“保存失败：原因”；失败时不要乐观更新成已保存状态。
+  5. 写入前校验 `fromCharacterId / toCharacterId` 都属于当前项目且不能缺失；非法关系不入库，并给用户提示。
+- **验收标准**：
+  - 在有两个当前项目角色时点击“添加关系”，刷新页面后关系仍存在。
+  - 编辑关系类型、方向、标签、描述后无需刷新即可看到“已保存”反馈；刷新后值仍保持。
+  - 切换项目或从导入项目进入关系页，不会使用旧项目角色创建关系。
+  - IndexedDB 写入失败或角色端点不存在时，UI 明确提示保存失败。
+  - 关系图只显示当前项目角色与当前项目关系。
+- **待验证问题**：
+  - 需要用户补充浏览器控制台错误 / 复现步骤，确认是否存在真实写库异常，而不仅是自动保存无反馈。
+  - 需本地构造“导入后跳转新项目 + 进入角色关系新增关系”的复现场景，排查是否与 CF-20260703-3 的项目列表状态不同步有关。
+- **优先级**：🟠 中高（角色关系是已上线功能，用户认为无法保存；需先补反馈与项目过滤，再看是否还有底层写库错误）。
+
+## ✅ CF-20260703-5 — 抽取出的角色关系反写角色词条“人物关系”（已合入 main `ee68677`）
+
+- **状态（2026-07-13）**：已合入当前 main。仅在采纳 AI 抽取关系后通过 `adopt()` 追加双方角色卡 `relationships`；手动新增的默认占位关系不反写。AI 写回、去重、双向/单向和连续多条导入由 `R-CF20260703-4-5-character-relations` 的真实 IndexedDB 用例覆盖。
+- **现象**：用户指出：系统从正文中抽取角色关系后，预期不仅应保存在「角色关系 / 关系网」里，也应自动出现在单个角色词条下的“人物关系”栏。但当前角色详情中的“人物关系”字段仍显示“点击填写人物关系”，不会自动出现抽取结果。
+- **用户预期逻辑**：
+  - 从正文 / 大纲中抽取到“甲与乙是师徒 / 宿敌 / 同盟”等关系后，系统应保存一条结构化关系到 `characterRelations`。
+  - 同时，甲的角色卡 `relationships` 应补充“与乙：师徒 / 宿敌 / 同盟……”的自然语言描述；乙的角色卡也应有相应反向描述。
+  - 后续章节正文生成读取 `characters` 上下文时，也能读到角色卡里的人物关系，而不只依赖单独的关系网。
+- **已确认代码定位**：
+  - `src/components/relations/CharacterRelationPanel.tsx` 的 `handleAcceptExtracted()` 只调用 `addRelation()`，写入 `characterRelations` 表。
+  - `src/stores/character-relation.ts` 的 `addRelation()` 也只维护 `characterRelations`，不会更新 `characters.relationships`。
+  - `src/lib/registry/field-registry.ts` 已登记 `longtext('characters', 'relationships', ['关系'])`，说明角色卡人物关系字段允许通过 `adopt({ target:'characters' })` 写回。
+  - `src/lib/ai/context-builder.ts` 会把 `characters.relationships` 注入角色上下文；因此该字段为空会影响后续正文/大纲生成对人物关系的感知。
+- **根因判断**：当前“结构化关系表”和“角色卡文字字段”是两套并行数据。关系抽取只落 `characterRelations`，没有反写/汇总到 `characters.relationships`，所以用户在角色词条里看不到抽取结果；后续只读 `characters` 的 AI 链路也可能漏掉关系信息。
+- **解决方案**：
+  1. 在接受 AI 抽取关系后，除写入 `characterRelations` 外，生成双方角色卡的关系摘要 patch。
+  2. 写回角色卡必须走规范入口：优先用 `adopt({ target:'characters', recordId, mode:'merge-diffs', data:{ relationships } })`，或封装在角色 store 的规范方法中；禁止在组件里裸 `db.characters.update()`。
+  3. 合并策略不能粗暴覆盖用户已有 `relationships`：应按“对方角色名 + 关系类型/标签”去重追加，保留用户手写内容。
+  4. 双向/单向关系要生成不同文案：
+     - 双向：甲写“与乙：朋友/同盟……”，乙写“与甲：朋友/同盟……”。
+     - 单向：甲写“对乙：保护/敌视/追随……”，乙可写“被甲保护/敌视/追随……”或根据类型生成反向描述。
+  5. 手动新增/编辑关系时也应同步角色卡，至少在新增和接受 AI 抽取时同步；编辑已有关系后是否重写旧摘要需设计去重/替换策略，避免残留旧描述。
+  6. 若用户删除关系，第一版可不自动删除角色卡文字，避免误删用户手写内容；若要支持删除同步，应只删除带系统标记/可识别来源的那一段。
+- **推荐第一阶段范围**：
+  1. 覆盖 `handleAcceptExtracted()` 和“添加关系”后的自动追加。
+  2. 不做删除同步，不覆盖手写内容。
+  3. 文本格式采用稳定可去重格式，例如每行 `- 与【角色名】：关系标签。描述`。
+  4. 为后续可维护性抽出纯函数：`buildRelationshipFieldPatch(character, relations, allCharacters)`，单测覆盖去重、双向、单向、已有手写内容。
+- **验收标准**：
+  - AI 抽取并导入“甲-乙：师徒”后，`characterRelations` 新增关系，同时甲/乙角色详情“人物关系”栏都出现对应描述。
+  - 用户已有 `relationships` 手写内容不会被覆盖。
+  - 同一关系重复抽取/重复导入不会在角色卡里追加多遍。
+  - 后续 `buildCharacterContext()` 输出包含新写入的人物关系文本。
+  - 写回路径有测试证明走 `FIELD_REGISTRY/adopt` 或规范 store 方法，未绕过注册表。
+- **风险 / 待决策**：
+  - `characters.relationships` 是自然语言长文本，长期与 `characterRelations` 可能发生不一致。后续可考虑在角色详情中直接展示“结构化关系自动摘要 + 用户手写补充”两层，而不是永久复制一份文本。
+  - 关系编辑 / 删除是否反向同步角色卡需谨慎，避免删掉用户手工润色后的关系描述。
+- **优先级**：🟠 中高（符合作者原始产品逻辑；能让关系抽取结果进入角色卡与后续生成上下文）。
+
+## ✅ CF-20260703-6 — 角色设计完整维度手动输入会自动重复前文（已合入 main `bc72e73`）
+
+- **状态（2026-07-13）**：已合入当前 main 并通过 UI 复测。每个维度改为独立 draft：输入期间忽略父级旧值回灌，400ms 防抖、失焦和组件卸载都会提交最新值；保留 `CTextarea` 中文 IME 保护。`R-CF20260703-6-character-dimension-draft` 和“连续输入两个字段 → 立即切到大纲 → 返回 → 刷新”真实路径共同锁定，两字段均完整保留且不重复。
+- **现象**：用户反馈在「角色设计」里手动填写完整维度字段时，打字会自动重复输入前一次以及之前所有文字；复制粘贴同样内容没有问题；“简介”字段可以正常打字。
+- **已确认代码定位**：
+  - “简介”字段走 `src/components/shared/InlineEdit.tsx` 的 `InlineInput`，只在 blur / Enter 时提交一次。
+  - 角色完整维度字段走 `src/components/character/CharacterDimensionFields.tsx` 的 `CTextarea`，每次 `onChange` 都调用父级 `updateCharacter(char.id, patch)`。
+  - `src/stores/character.ts` 的 `updateCharacter()` 是异步写 IndexedDB 后再更新 Zustand；快速连续输入时，多次异步写入可能乱序返回。
+  - `CTextarea` 虽然有 IME 组合输入保护，但外部 `character[d.key]` 回流变化时会同步本地值；如果较旧的异步更新后返回，会把旧值灌回正在编辑的 textarea。
+- **根因判断**：
+  - 这不是普通复制粘贴问题，也不完全是 CF-20260702-6 那种原生 input 未处理 composition 的问题。
+  - 更可能是“长文本字段逐键自动保存 + 异步写库乱序 + 外部值回灌”组合导致：旧值覆盖新输入，用户继续打字时输入法把旧内容和新内容拼在一起，表现为自动重复前文。
+  - “简介能打字”是关键旁证：简介不逐键写库，而是本地 draft 编辑完再提交，所以不会被异步回流打断。
+- **解决方案**：
+  1. 角色完整维度字段改为本地 draft 编辑，不要每个按键都立即写库；可采用 blur 保存 / 防抖保存 / 显式保存。
+  2. 若保留自动保存，必须加字段级 debounce 和版本序号：只有最新一次保存结果允许回写 UI，旧 promise 返回不能覆盖新 draft。
+  3. `CTextarea` 增加“编辑中忽略外部旧值回灌”的保护：focus/composing/dirty 状态下，不用外部 value 覆盖 local draft；失焦或保存成功后再同步。
+  4. 对角色完整维度建议复用 `InlineTextarea` 的 draft 提交模型，或新增 `DraftTextarea`，统一用于 `CharacterDimensionFields` 和“人物关系”。
+  5. Store 层 `updateCharacter()` 可补充 per-record/per-field sequence guard，避免乱序异步更新把旧 patch 写回内存；但 UI 本地 draft 仍应作为第一道防线。
+- **验收标准**：
+  - 在角色完整维度任意长文本字段中连续输入中文，不会重复前一次或更早文字。
+  - 快速输入、输入法候选、删除、换行都能保持光标与内容稳定。
+  - 复制粘贴仍正常。
+  - 失焦/防抖保存后刷新页面，字段内容正确落库。
+  - 回归测试或组件测试覆盖“连续触发多次 updateCharacter，旧 promise 后返回时不能覆盖新值”。
+- **优先级**：🔴 高（角色设计核心编辑体验；用户手写设定时会直接损坏输入内容）。
+
+## ✅ CF-20260703-7 — 长文本编辑时输入框内滚动被页面滚动替代（代码与回归测试完成，待预览连接恢复后补 UI 复测）
+
+- **完成状态（2026-07-13）**：共享 `InlineTextarea / CTextarea / AutoResizeTextarea` 已统一接入滚动边界处理。`InlineTextarea` 新增长度上限，长内容不再无限撑高页面；输入框仍可滚动时拦截滚轮冒泡，到达顶/底边界后把滚动交还页面。`R-CF20260703-7-textarea-scroll` 与组件测试覆盖边界判定、长文本高度上限和内部滚动；当前应用内预览标签连接失效，真实 UI 复测未冒充完成，待连接恢复后补测。
+
+- **现象**：用户反馈“编辑内容的时候，输入框内的滑动会被页面滑动替代，导致编辑内容被遮挡”。追问后确认：当长文本输入框内容很多、光标/编辑位置接近页面底部时，用户想在输入框内部滚动，结果外层页面滚动，当前正在编辑的位置被页面底部或视口遮住。
+- **截图定位**：
+  - 反馈截图展示在世界观/人文等长文本编辑区域内，文本内容很长，右侧页面滚动条处于中下段。
+  - 相关通用组件包括 `src/components/shared/InlineEdit.tsx` 的 `InlineTextarea`、`src/components/shared/CompositionInput.tsx` 的 `CTextarea`、`src/components/shared/AutoResizeTextarea.tsx`，以及大量面板外层 `overflow-y-auto` 容器。
+  - `src/pages/WorkspacePage.tsx` 主内容区本身是 `flex-1 overflow-y-auto`，内层长文本编辑区与页面滚动形成嵌套滚动。
+- **根因判断**：
+  - `InlineTextarea` 进入编辑态后会把 textarea 高度设置为 `scrollHeight`，并使用 `resize-none`，没有 `max-height` 与稳定内部滚动；内容越长，输入框越高，最终依赖外层页面滚动。
+  - `CTextarea` 只处理 IME 组合输入，不处理滚动边界；多数调用点也没有统一的 `max-height / overflow-y-auto`。
+  - `AutoResizeTextarea` 虽然有 `maxRows` 和 `overflowY = auto`，但没有处理 wheel/touch 事件冒泡；当 textarea 滚到顶部/底部或浏览器滚动链触发时，外层页面会继续滚动。
+  - 这属于“长文本编辑器缺少统一滚动边界与滚动链控制”的通用体验 bug，不是单个面板内容错位。
+- **解决方案**：
+  1. 建一个统一长文本编辑组件或增强现有三类 textarea：超过 `maxRows / max-height` 后固定高度并在输入框内滚动，不能无限撑高页面。
+  2. 在可滚动 textarea 上加滚动边界处理：`onWheel` / `onTouchMove` 只在 textarea 能沿当前方向继续滚动时阻止事件冒泡；到达边界时允许页面滚动，避免死锁。
+  3. 为 `InlineTextarea` 补齐 `minRows / maxRows / maxHeight` 能力，世界观、角色、设定词条等长文本字段默认使用内部滚动模式。
+  4. 编辑态聚焦时保证光标所在行可见：必要时用 `scrollIntoView({ block: 'nearest' })` 或调整外层容器底部 padding，避免底部按钮/视口遮挡当前编辑行。
+  5. 保留中文输入法组合输入保护，不得回退 CF-20260702-6 / CF-20260703-6 已定位的 IME 问题。
+- **验收标准**：
+  - 在任意世界观/角色长文本字段粘贴 2000 字后，输入框高度不无限撑开页面，内部出现可用滚动条。
+  - 鼠标滚轮或触控板在 textarea 内滚动时，优先滚动 textarea；外层页面不会抢走滚动导致光标位置被遮挡。
+  - 当 textarea 已滚到顶/底后，页面仍可继续滚动，不造成滚动卡死。
+  - 中文输入、换行、删除、复制粘贴、失焦保存均正常。
+  - 至少覆盖 `InlineTextarea` 和 `CTextarea` 两条路径；若保留 `AutoResizeTextarea`，需验证其滚动链行为一致。
+- **优先级**：🟠 中高（高频编辑体验问题；不直接丢数据，但会显著阻碍长设定维护）。
+
+## 🔴 CF-20260703-8 — 世界来源 / 力量体系 / 神明与信仰生成上下不贯通，后续模块遗忘前置设定
+
+- **现象**：用户反馈“之前设定好的内容在下一个模块并不同步，导致它会生成全新的内容”。典型例子：在「世界来源」里已经设定了几个神灵，后续生成「力量体系」时忘记这些神灵，重新生成一套无关来源/力量设定。截图明确指向同一面板内三个子模块：世界来源、力量体系、神明与信仰。
+- **已确认代码定位**：
+  - 主面板在 `src/components/worldview/WorldviewOriginPanel.tsx`，三个子页签共享 `worldviews.worldOrigin / powerHierarchy / divineDesign`。
+  - `buildCtx(excludeKey)` 会把兄弟字段拼进当前 AI 上下文，但只做局部摘要：世界来源 `slice(0, 200)`、力量体系 `slice(0, 200)`、神明规则 `slice(0, 100)`，且神明只在 `divineDesign.hasDivinity` 为 true 时注入。
+  - AI prompt 由 `src/lib/ai/adapters/worldview-adapter.ts` 的 `buildWorldviewPrompt()` 构造，目前有字段边界提示：力量体系不得改写世界来源，世界来源是上游事实。
+  - `PowerSystemPanel.tsx` 仍存在一个旧独立“力量体系”面板，使用本地 `useState` 文本区，容易和 `WorldviewOriginPanel` 内的 `worldviews.powerHierarchy` 形成概念混淆。
+- **根因判断**：
+  - 当前不是完全没读前置字段，而是读得太薄、太随意：靠 `buildCtx()` 手拼短摘要，不是正式的字段依赖契约，也不是通过 `CONTEXT_SOURCES` 声明“生成力量体系必须读取世界来源 + 神明与信仰”。
+  - 字段边界只告诉 AI “不要改写上游”，没有强制“必须引用并延续上游事实”。如果世界来源里写了神灵但 `divineDesign.hasDivinity` 未勾选，力量体系最多只能看到世界来源前 200 字；神名在 200 字之后会直接丢失。
+  - 生成结果没有“引用了哪些上游设定 / 哪些设定未被使用 / 冲突点”反馈，用户无法判断 AI 是否真正接住了前一模块。
+  - 旧独立 `PowerSystemPanel` 与新世界起源内“力量体系”并存，长期会放大用户对“力量体系到底以哪里为准”的困惑。
+- **解决方案**：
+  1. 定义世界起源三字段依赖契约：`worldOrigin` 是 `powerHierarchy` 与 `divineDesign` 的上游事实；`powerHierarchy` 生成必须读取完整或预算裁剪后的 `worldOrigin + divineDesign`；`divineDesign` 生成必须读取 `worldOrigin + powerHierarchy`。
+  2. 将该依赖接入正式上下文装配：优先新增/扩展 `CONTEXT_SOURCES` 中的 worldview 子源或字段级源，让世界观字段生成通过 `assembleContext()` 获取“当前世界的上游约束”，避免面板内 `slice()` 手拼成为事实源。
+  3. prompt 加硬约束：生成力量体系时必须列出“本次沿用的世界来源/神明事实”，力量来源、等级、晋升代价要能解释这些上游事实；若无法兼容，输出冲突与兼容方案，而不是另起炉灶。
+  4. UI 增加只读“生成依据/上游设定”折叠区，复用 CF-20260702-3 的生成依据思路，让用户在点 AI 生成前看到本次会读取哪些世界来源、神明、力量设定。
+  5. 处理旧 `PowerSystemPanel`：要么下线/隐藏旧入口，要么明确迁移到 `worldviews.powerHierarchy`，避免两套“力量体系”并存；此项必须守 `PROJECT_TABLES / FIELD_REGISTRY / CONTEXT_SOURCES`，不能裸写新表。
+  6. 对“世界来源里提到神灵但神明页签未勾选”的情况做兼容：上游约束抽取时应从 `worldOrigin` 原文识别神名/创世实体，或至少完整注入相关段落，不能只依赖 `divineDesign.hasDivinity`。
+- **验收标准**：
+  - 在世界来源写入“九位创世神/具体神名”，生成力量体系时 prompt 中可见这些上游事实，输出必须解释力量来源与这些神灵的关系。
+  - 在神明与信仰已填写时，重新生成力量体系不会创造互相冲突的新神系；若需要新增，必须说明与既有神明的关系。
+  - 生成结果展示“沿用的上游设定 / 冲突点 / 新增设定”摘要，用户能确认是否采纳。
+  - 旧独立力量体系入口不会与世界起源页签产生双源冲突。
+  - 回归测试覆盖：`buildWorldviewPrompt('力量体系', ...)` 或新 adapter 路径必须包含世界来源、神明事实与“不另起炉灶”的约束；多世界模式下读取当前 `worldGroupId`，不串世界。
+- **优先级**：🔴 高（世界观核心链路断裂；会直接导致 AI 设定前后矛盾）。
+
+## ✅ CF-20260703-9 — AI 设置“上下文窗口”切出去后看起来未保存 / 被预设覆盖（代码与回归测试完成）
+
+- **完成状态（2026-07-13）**：已确认当前配置原本就会即时写入 localStorage，根因是自动保存缺少反馈、当前配置与预设的保存语义不清，以及非法输入会被旧解析逻辑当作清空。设置页现明确显示“已自动保存 / 尚未写回预设”，说明套用预设会采用整套配置；输入支持逗号和空格分组，非法值不会覆盖已保存值，并提供重置为模型预设按钮。回归测试覆盖刷新恢复、换模型/provider 保留、预设往返和输入解析。
+
+- **现象**：用户在「设置 → AI 模型配置」中填写“上下文窗口（高级·可选）”，例如 `2100000`，界面没有保存按钮；用户反馈“没有保存按钮”“切出去还是没变化”。此前也有人填过但未报问题，说明不是所有路径必现。
+- **截图定位**：
+  - 截图显示 `Temperature: 0.8`、`Max Tokens: 不限制（模型最大）`、`上下文窗口（高级·可选）2,100,000 token`，输入框内为 `2100000`。
+  - 页面上方存在“配置预设”和“保存当前为预设 / 用当前配置覆盖此预设”能力；截图未显示用户是否正在使用某个预设。
+- **已确认代码定位**：
+  - `src/components/settings/AIConfigPanel.tsx` 中上下文窗口输入框直接调用 `setConfig({ contextWindow: Number(e.target.value) || undefined })`。
+  - `src/stores/ai-config.ts` 的 `setConfig()` 会立刻 `persistConfig(newConfig, rememberApiKey)`，把当前配置写入 `localStorage` 的 `storyforge-ai-config`；API Key 不记住时只剔除 `apiKey`，不会剔除 `contextWindow`。
+  - `saveAsPreset()` / `updatePresetFromCurrent()` 会把当前配置另存到 `storyforge-ai-presets`；但用户手动改“上下文窗口”时只保存当前配置，不会自动更新已存在的预设。
+  - `applyPreset(id)` 会用预设里的整份 `preset.config` 覆盖当前配置；旧预设如果没有 `contextWindow` 或值不同，会把刚填的上下文窗口覆盖掉。
+  - 现有 `tests/regression/R-ai-config-storage.test.ts` 覆盖 API Key、LongCat 预设，但没有覆盖 `contextWindow` 的当前配置持久化、预设保存、套用旧预设覆盖行为。
+- **根因判断**：
+  1. **不是普通输入框未绑定保存**：当前配置路径理论上是即时保存的，刷新/重新打开同一当前配置应保留。
+  2. **高概率是预设交互导致的“保存感知异常”**：用户以为改了当前页面就等于改了当前预设，但代码会把 `activePresetId` 置空；之后若再次点击原预设或切换 provider，旧预设会覆盖 `contextWindow`，表现为“切出去就没了”。
+  3. **缺少保存状态反馈**：设置页大量字段自动保存，但没有“已保存 / 未保存到预设 / 当前配置已脱离预设”的提示；对高级字段尤其容易误解。
+  4. **输入解析边界弱**：`Number(value) || undefined` 会把空值、非法值、`0` 都变成 `undefined`；如果用户输入逗号、中文逗号、空格分组等格式，也会被当作未设置。截图里是纯数字，暂不认为是本次主因，但需要补防护。
+- **解决方案**：
+  1. 增加明确反馈：设置页顶部或上下文窗口行内显示“已自动保存到当前配置”；当 `activePresetId === null` 且刚由某预设改动后，显示“当前配置已修改，未写回预设，可点 💾 覆盖预设或保存为新预设”。
+  2. 对预设行为做防丢保护：从旧预设套用时，如果预设缺少 `contextWindow`，不要无声清掉当前手填值；可选择继承当前 `contextWindow`，或弹出确认“套用预设会覆盖上下文窗口”。
+  3. `saveAsPreset()` / `updatePresetFromCurrent()` 必须完整保存 `contextWindow`，并增加测试断言。
+  4. 输入解析改为独立纯函数，例如 `parseContextWindowInput()`：允许纯数字和常见分隔符，非法输入不立刻清空已保存值，而是显示错误；空字符串才表示“用模型预设”。
+  5. 在输入框旁提供“重置为模型预设”按钮，避免用户只能靠清空输入框理解 `undefined`。
+- **验收标准**：
+  - 填写 `2100000` 后切到其他侧栏再回来，仍显示 `2,100,000 token` 和输入值。
+  - 刷新页面后当前配置仍保留 `contextWindow: 2100000`。
+  - 保存为预设后，切换到其他预设再切回来，`contextWindow` 仍保留。
+  - 套用旧预设不会无提示清除用户刚填的上下文窗口；若确实要覆盖，必须有明确提示或保留策略。
+  - 输入 `2,100,000` / `2100000` 都能稳定解析；输入非法内容时不清空旧值，并提示格式错误。
+  - 回归测试覆盖 `setConfig({ contextWindow })` 持久化、`saveAsPreset()` 保留、`applyPreset()` 旧预设覆盖/继承策略。
+- **优先级**：🟠 中高（本地模型/长上下文用户关键配置；不影响手稿数据，但会导致误报上下文不足或用户误以为设置无效）。
+
+## ✅ CF-20260703-10 — 章节正文已采纳/保存，但章节列表仍显示 0 字，导出为空（已修 `61bf441`：同一 outlineNode 多条 chapters 时用择优 selector，导出不再丢正文）
+
+- **现象**：用户反馈章节已经生成好，截图中大纲/章节入口处有章节标题和约 `2,521 / 2,670 / 3,000` 字；但进入创作区外层章节列表后对应章节仍显示 `0 字`，用户补充“采纳了”“保存也点了”，并反馈导出文件为空。
+- **截图定位**：
+  - 第一张截图显示：章节列表/外层卡片中章节显示 `0 字`，旁边有“删除”等操作；用户文字为“为什么章节生成好了外面还是0个字，导出也是空的”。
+  - 第二张截图补充：用户确认已“采纳了”“保存也点了”，排除“未点击采纳/保存”的简单原因。
+- **已确认代码定位**：
+  - 正文编辑器 `src/components/editor/ChapterEditor.tsx` 的 `handleAcceptAI()`：`generate / continue` 采纳后会把 `editorRef.current.getHTML()` 写入 `updateChapter(id, { content, wordCount })`；但其他 AI 操作只更新编辑器，依赖自动保存或手动保存。
+  - 手动保存按钮当前是 `updateChapter(currentChapter.id, { content, wordCount })`，使用 React state 中的 `content / wordCount`，没有像 `handleManualMemory()` 那样直接读取 `editorRef.current.getHTML()` 与 `getPlainText()`；若 TipTap 最新内容尚未同步到 state，手动保存可能保存旧值。
+  - 同一文件有两处自动创建章节记录：进入 `outlineNodeId` 时的 effect 会 `addChapter({ outlineNodeId, content:'', wordCount:0 })`；`handleCreateFromOutline()` 也可创建章节。创建前只查 `chapters.find(c => c.outlineNodeId === outlineNodeId)`，没有 DB 级唯一约束，也没有并发 in-flight guard。
+  - `src/components/editor/ChaptersListPanel.tsx` 外层列表用 `chapters.find(c => c.outlineNodeId === ch.id)` 取第一条章节记录显示字数。
+  - `src/lib/export/text-export.ts` 导出时用 `const chapterMap = new Map<number, Chapter>(); chapters.forEach(ch => chapterMap.set(ch.outlineNodeId, ch))`，同一 `outlineNodeId` 多条章节时后写入 Map 的记录会覆盖前一条。
+  - `src/lib/ai/chapter-memory/canonical-chapter-sequence.ts` 已经有 `duplicate-chapter-mapping` 异常检测，说明“一个大纲节点映射多条章节记录”是项目已知可能出现的数据异常。
+- **根因判断**：
+  1. **最高嫌疑：重复章节记录导致读写对象不一致**。用户编辑/保存的是某条有正文的 `chapters` 记录，但外层列表 `find()` 可能拿到另一条 `wordCount=0` 的空记录；导出 `Map.set()` 又可能被空记录覆盖，最终导出为空。这与“编辑器里有内容、外面 0 字、导出空”高度吻合。
+  2. **次级嫌疑：手动保存读取旧 state**。TipTap `setContent()` 或采纳/替换选区后，React state 更新存在异步窗口；手动保存按钮若立刻使用旧 `content`，可能把旧空内容写回 DB。`handleManualMemory()` 已经用 editor ref 规避了这个问题，但保存按钮还没同步修。
+  3. **导出链路缺少去重/择优策略**。即便历史数据里已经存在重复章节记录，导出也应选择有正文/字数较大/更新时间较新的记录，而不是让遍历顺序决定是否导出空文。
+- **解决方案**：
+  1. 修正文保存按钮：统一抽出 `persistCurrentEditorContent()`，保存时直接读 `editorRef.current?.getHTML()` 与 `getPlainText()`，更新 `content / plainText / savedContent`，不要用可能滞后的 state。
+  2. 修采纳路径：所有会改变正文的采纳操作（整章生成、续写、整章润色、选区替换）完成后都应明确落库，或至少调用同一个 `persistCurrentEditorContent()`；用户点“采纳”后不应只靠防抖自动保存。
+  3. 防重复创建：在 `addChapter` 前二次查 DB 是否已有 `outlineNodeId`；组件侧增加 `creatingChapterForOutlineRef` 防止 effect 重复触发；store 层提供 `getOrCreateByOutlineNode(projectId, outlineNodeId)` 原子式入口，组件不直接 `addChapter()`。
+  4. 数据修复/兼容：增加重复章节合并函数。对于同一 `projectId + outlineNodeId` 的多条记录，保留“正文非空且 wordCount 最大 / updatedAt 最新”的主记录，把 summary/notes/status 等有价值字段合并，删除或归档空重复记录。
+  5. 列表与导出择优：在彻底清理历史重复前，`ChaptersListPanel`、`text-export.ts`、`context-snapshot.ts` 等按 `outlineNodeId` 取章节的地方统一用 `pickBestChapterForOutline()`，优先选择有内容、字数大、更新时间新的记录。
+  6. 加异常提示：如果检测到一个大纲节点存在多条章节记录，在开发日志或数据维护入口提示“检测到重复章节映射，可一键修复”，避免静默导出空章。
+- **验收标准**：
+  - AI 生成正文后点击“采纳”，章节列表立即显示正确字数，不需要切页/刷新。
+  - 点击“保存”后刷新页面，正文仍存在，章节列表字数正确。
+  - 导出 Markdown / TXT 时包含已采纳正文，不再导出空章。
+  - 构造同一 `outlineNodeId` 两条章节记录（一条空、一条 3000 字），列表和导出都选择 3000 字那条；修复工具能合并/清理重复记录。
+  - 连续快速进入同一大纲节点、切页再回来，不会创建重复章节记录。
+  - 回归测试覆盖：`getOrCreateByOutlineNode()` 防重复、`pickBestChapterForOutline()` 择优、导出重复章节时不丢正文、保存按钮从 editor ref 取最新 HTML。
+- **优先级**：🔴 高（用户会以为正文和导出丢失；涉及核心手稿安全与导出可信度）。
+## ✅ PR-20260702-20 — OpenCode Go AI provider 接入（已进入 v3.8.0 主线）
+
+- **来源**：外部贡献者 PR [#20 Opencode provider](https://github.com/yuanbw2025/storyforge/pull/20)。
+- **状态**：未直接合并冲突 PR；当前主线已吸收 provider 枚举、OpenAI-compatible Base URL、本地代理、兼容模型清单与 128K 上下文预算，`R-opencode-provider` 锁定端点和模型边界。
+- **改动范围**：仅新增 AI provider 枚举 / 模型列表 / 默认 Base URL / 设置页选项 / Vite 本地代理 / 上下文窗口预设；不改 DB schema，不新增 AI 动作，不涉及三注册表数据读写。
+- **实现注意**：StoryForge 当前 AI client 只调用 OpenAI-compatible `/chat/completions`；OpenCode Go 官方文档中 MiniMax/Qwen 等模型走 `/messages`，本轮先只暴露明确支持 `/chat/completions` 的模型，后续若支持 Anthropic messages 端点再扩。
+- **验证**：`check:required-tables` / `check:architecture` / `check:ai-manual` / `tsc` / targeted tests / build。
+
+---
+
 # ═══ 社区反馈批次（2026-07-02 · 角色弧光 / 生成一致性 / 本地模型 / 输入法 / 流派约束）═══
 
 > **来源**：2026-07-02 群内用户截图 + 录屏，附件包括 `QQ20260702-100105.mp4` 与 7 张截图。
@@ -308,7 +1151,9 @@
   - `npx tsc --noEmit` ✅
 - **优先级**：✅ 语言硬约束已处理；采纳质量闸门并入 CF-20260702-7。
 
-## 🔴 CF-20260702-3 — 卷纲生成依据不可见，且可能与灵感 / 故事核心脱节
+## ✅ CF-20260702-3（2026-07-13 完成）— 卷纲生成依据可见，且与故事核心主线对齐
+
+- **完成状态**：卷纲、整卷章纲和单章章纲的确认区会在调用 API 前通过同一 `assembleContext()` 预装配本次上下文，并显示实际 `included / omitted / trimmed`、token 预算、故事核心摘要与已有卷纲摘要。读取期间禁用确认，读取失败禁止空上下文盲发并可重试；确认执行复用用户看到的上下文快照，避免 UI 展示和实际发送二次读取后分叉。无故事核心时明确提示生成边界，始终说明未采纳灵感草稿不会进入上下文。`R-CF20260702-3-outline-basis` 覆盖注册表名称映射、主线缺失、灵感边界与预算裁剪提示；隔离预览浏览器实测确认区在 API 调用前展示真实来源。此前卷纲/章纲 prompt 的主线硬约束与 `writtenChapterProgress` 已分别落地，本条不新增表、不自动保存灵感、不改用户设定。采纳前统一质量闸门仍归 CF-20260702-7，不重复实现。
 
 - **现象**：用户问“卷纲的生成是以什么为依据的，还是就是随机的？”并反馈“卷纲生成的内容完全和灵感对不上号 / 像抽卡”。
 - **用户故事**：
@@ -466,6 +1311,14 @@
 - **待决策**：
   - 第一版是否只做“提示 + 重试 / 仍然采纳”，暂不做“AI 修正后采纳”。
   - 质量检查结果是否需要持久化。Codex 建议第一版不落库，只作为本次待采纳结果的 UI 状态。
+- **2026-07-13 Codex 收敛方案（待审，不实施）**：
+  1. v1 固定为**非阻断、纯会话态**：只提供“重试 / 仍然采纳”，不落库、不自动改稿、不调用 AI 二次修正；因此无 schema、迁移、导出/导入影响。用户点“仍然采纳”后照旧走现有 `adopt()` / chapter store 写回。
+  2. `languageLeak` 只报高置信场景：先剔除 Markdown 代码块、URL、邮箱、文件路径、变量名、模型/技术专名白名单和单个拉丁缩写；剩余文本中只有满足“连续英文词 ≥ 5 且整段 ≥ 24 个拉丁字符”，或“拉丁字母占可见字符 ≥ 18% 且至少 40 个拉丁字符”才提示。中文夹正常专名（AI、OpenAI、DNA、iPhone 等）不报；阈值必须有中英混排反例测试，不能仅靠一条正则。
+  3. `mainlineWeak` v1 **不做关键词命中判定**。主线是语义，不出现“推进主线”四字不等于偏题；纯代码用关键词会高误报。v1 只检查结构性可证事实：存在故事核心时，卷/章结果为空、过短（去标记后 < 40 个汉字）或完全没有具体角色/事件文本才归 `emptyGeneric`；真正的主线语义偏离留给现有 LLM 一致性审校 advisory，等 PIPELINE-2 有结构化“本节点推进哪段主线”字段后再做确定性校验。
+  4. `genreWeak` 同理暂不靠关键词判题材。流派约束已经进入 prompt，但“科幻作品没写飞船”不是错误；v1 只在题材上下文本身未生效/为空时显示配置风险（由生成依据 `included` 可证），不审判结果文本是否“够像题材”。
+  5. `emptyGeneric` 的确定性规则：去掉 Markdown 标记和空白后，卷/章摘要 < 40 个汉字，或全文只有标题没有正文时提示；正文生成单独阈值，不与大纲共用。任何规则均返回 `{ code, confidence, evidence }`，UI 明示“自动提示可能误判”，严格 advisory。
+  6. 测试门槛：至少覆盖正常中英专名、代码块/URL 白名单、真正整句英文、中文大纲短但具体、空标题壳、用户“仍然采纳”原路径。没有这些反例前不得接入采纳 UI。
+- **待审问题**：是否认可上述“v1 宁可少报、不做主线/题材伪确定性判决”的边界；通过后再实现 `quality-gates.ts` 与卷纲/章纲两条采纳入口，正文另批。
 - **优先级**：🟡 中（不是单点 bug，但能系统性降低同类反馈复发）。
 
 ## ✅ CF-20260702-8 — v3.7.2 纯点击进入大纲崩溃：`Cannot read properties of undefined (reading 'trim')`
@@ -667,7 +1520,10 @@
   - 对“不可改章节”的保护级别是否需要强制锁定。Codex 建议第一版只作为 AI prompt 硬约束和 UI 提醒。
 - **优先级**：🟠 中高（角色驱动功能从开书工具升级为长篇连载中途可用的修订工具，但涉及正文安全，必须分阶段实施）。
 
-## 🔴 CF-20260702-13 — 本地 `.bat` / `.exe` 打开疯狂重定向，Service Worker 自愈无效
+## ✅ CF-20260702-13 — 本地启动器重定向（启动器路线已废弃；localhost SW 根治已保留）
+
+> **2026-07-03 分发决策更新**：本条中“继续修 `.bat` / `.exe` / Portable”的部分已作废。v3.7.5 起仓库删除启动器与 exe 打包线，Release 只保留源码包，用户统一按 `使用npm指令启动项目.md` 通过 npm 启动。仍保留的有效结论：本地 localhost 不应注册 PWA SW；自愈逻辑只允许清 SW / Cache Storage，绝不碰 IndexedDB / localStorage。
+> **2026-07-10 核实**：`codex/isolated-bugs-20260710` 已扫描仓库，除历史文档和下载统计外，根目录 `.bat/.command` 与 Windows 打包目录未复活；本条继续作为历史根因记录，不再进入代码施工。
 
 - **现象**：用户用 `.bat` / `.exe` 启动本地构建后，浏览器在 `localhost:1111` 或 `127.0.0.1:1111` 反复重定向，页面打不开并报 `ERR_TOO_MANY_REDIRECTS`。此前已在 `index.html` 加过“注销 SW + 清 Cache Storage”的本地自愈脚本，但用户侧仍复发。
 - **根因判断（Claude 审核补充）**：
@@ -692,7 +1548,11 @@
   - 自愈 reload 必须用 `sessionStorage` 防抖，禁止形成新的 reload 循环。
 - **优先级**：🔴 高（本地发行入口不可用；此前自愈方案已被证实不足，需根治）。
 
-## 🟡 CF-20260702-10 — 多模型任务路由：本地模型跑创作，API 模型跑分析 / 审查 / 提取
+## ✅ CF-20260702-10（2026-07-13 完成）— 多模型任务路由：本地模型跑创作，API 模型跑分析 / 审查 / 提取
+
+> **完成状态**：设置页复用既有 AI 预设，为创作 / 提取 / 分析 / 审查四类任务分别绑定模型；配置存在 localStorage，不改 IndexedDB。所有 `chat/streamChat/useAIStream` 最终在统一客户端边界解析实际模型，批量大纲、导入解析、参考分析和自由工作流 category 同样覆盖；未知 category 保持全局模型。删除预设、旧绑定失效或不同服务的 session-only 预设缺 Key 时安全回退全局模型，不借用错误服务的 Key；调用级 `maxTokens` 等临时覆盖继续保留。消耗记录新增实际 provider / model / taskKind（非索引可选字段，旧记录兼容），统计页可见。隐私告知采用设置页常驻说明，明确云端预设会接收对应任务提示词与上下文，不对每次生成重复弹窗。
+>
+> **验证**：`R-CF20260702-10` 18 条覆盖分类、四路由、未知分类、调用覆盖、localStorage 往返、删除清理、缺 Key 回退、真实 `chat()` 端点与用量记录；全套 117 files / 426 tests、tsc、build、architecture、42 tables、AI manual 全绿。预览浏览器当次没有绑定可控标签，设置页视觉手测未冒充完成，合入前可做一次外观复核。
 
 - **现象 / 诉求**：用户提出“本地模型跑创作，API 跑分析”的工作方式，并进一步指出不同模型擅长的任务不同：例如 Gemini 擅长概括总结，适合状态提取 / 信息提取 / 存储检索；DeepSeek 创作可用，适合大纲和正文；Claude 更适合真实性判断、真实内容调用和后期文本审查。当前全局只配置一套主模型，用户无法按任务分配模型。
 - **已有相关内容**：
@@ -733,7 +1593,9 @@
   - 如果未来涉及云端真实资料检索 / 外部搜索，需另行设计权限提示和来源记录。
 - **优先级**：🟡 中（不是当前 bug，但能显著提升本地模型用户体验、成本控制和不同 AI 功能质量）。
 
-## 🟡 CF-20260702-11 — 本地模型列表刷新与 Ollama 模型拉取入口
+## ✅ CF-20260702-11（第一阶段）— 本地模型列表刷新与选择（代码与回归测试完成）
+
+- **完成状态（2026-07-13）**：设置页的本地模型与自定义 provider 已增加“刷新模型”入口，复用 `normalizeOpenAIBaseUrl()` 请求 OpenAI-compatible `/v1/models`；返回 ID 去重排序后可直接选择，最终仍只持久化既有 `config.model`。请求仅在填写 Key 时发送 Bearer 鉴权，带 10 秒超时和格式/网络/CORS 错误提示，失败不影响手动输入。第一阶段不让浏览器直接下载权重；Ollama pull 继续由 Ollama 管理，完成后刷新即可。
 
 - **现象 / 诉求**：用户截图中出现“拉取本地模型”按钮和本地模型列表，追问“是当前 API 列表里没有显示的那些吗？如果新加模型就得改代码吗？”实际诉求是：用户使用 Ollama、LM Studio 或其他本地模型管理框架时，希望 StoryForge 能读取服务里已有模型，减少手填模型名；对 Ollama 还希望能拉取新模型。
 - **边界判断**：
@@ -773,13 +1635,13 @@
 > **当前状态（2026-07-01 · Claude 已修复一轮）**：
 > - ✅ **CF-2 场景采纳崩溃** — 已修复并部署 main（`json→arr` + `normalizeDetailedScenes` 自愈，R-CF2）。
 > - ✅ **CF-3 大纲偏离主线** — 已修复并部署 main（卷纲/章纲 prompt 主线硬约束，R-CF3）。
-> - ✅ **CF-1 本地启动重定向** — 代码侧已修并部署 main（index.html localhost 注销遗留 SW + 清 Cache Storage，绝不碰 IndexedDB/localStorage；vite `strictPort`；`启动.bat` 端口占用检测）。**bat/exe/SW 在真实 Windows 的端到端验证需用户侧完成**。
+> - ✅ **CF-1 本地启动重定向** — 代码侧已修并部署 main（index.html localhost 注销遗留 SW + 清 Cache Storage，绝不碰 IndexedDB/localStorage；vite `strictPort`）。**后续分发决策已废弃 `启动.bat` / `StoryForge.exe`，不再维护启动器路径**。
 > - ✅ **CF-5 灵感反推边界提示** — 已修复并部署 main（输入区适用边界提示 + 超长非阻断警告）。
-> - ✅ **CF-7 分发引导** — 已修复并部署 main（README「Windows 一键启动·小白路径」+ bat 诊断）。
+> - ✅ **CF-7 分发引导** — 已被 v3.7.5 分发决策取代：Release 只保留源码包，README / 根目录文档改为 npm 启动说明；`.bat` / `.exe` / Portable 路线停止维护。
 > - ✅ **CF-4 主题可读性** — Codex 本批次已做，在 `codex/community-theme-tips` 分支（随该分支合并 main 生效）。
 > - ✅ **CF-6 伏笔边界说明** — 显示错位半边由 `d7a252f`(Codex)+`ca61d0f`(Claude 复审修复) 覆盖；作用边界 Tips `0563763` 已加，在 `codex/community-theme-tips` 分支。
 > **备注**：CF-1/2/3/5/7 已在 `origin/main`；CF-4/6 待 codex 分支合并 main。原始批次定位见下方各条。
-> **重要约束**：① 不改用户正文数据；② 涉及 AI 读写继续走 `CONTEXT_SOURCES / FIELD_REGISTRY / ADOPTION_SCHEMA / adopt()`；③ Windows 启动修复必须覆盖「源码 ZIP + 启动.bat」和「Release Portable + StoryForge.exe」两条路径；④ 主题修复必须按整体色彩系统处理，不能只补单个按钮。
+> **重要约束**：① 不改用户正文数据；② 涉及 AI 读写继续走 `CONTEXT_SOURCES / FIELD_REGISTRY / ADOPTION_SCHEMA / adopt()`；③ 启动器维护要求已作废，v3.7.5 起不再重建 `.bat` / `.exe` / Portable；④ 主题修复必须按整体色彩系统处理，不能只补单个按钮。
 
 ## 附图索引
 
@@ -792,7 +1654,10 @@
 | 图 5 | 复现路径：章节页右上角展开场景细纲 → AI 生成 → 采纳 → 崩溃 | ![场景采纳复现路径](assets/community-feedback-2026-06-30/CF-20260630-05-scene-adopt-flow.png) |
 | 图 6 | Release Portable `StoryForge.exe` 打开后 `ERR_TOO_MANY_REDIRECTS` | ![exe 重定向过多](assets/community-feedback-2026-06-30/CF-20260630-06-exe-too-many-redirects.png) |
 
-## 🔴 CF-20260630-1 — Windows 启动入口 `启动.bat` / `StoryForge.exe` 出现 `ERR_TOO_MANY_REDIRECTS`
+## ✅ CF-20260630-1 — Windows 启动器重定向（已由 v3.7.5 废弃启动器路线关闭）
+
+> **状态更新（2026-07-03）**：本条作为历史根因记录保留，不再作为活跃待办执行。作者已拍板废弃 `.bat` / `.exe` / Portable 启动路线，仓库已删除相关文件；后续只维护源码包 + npm 启动文档。严禁按本条旧方案重建启动器。
+> **2026-07-10 核实**：`codex/isolated-bugs-20260710` 已确认当前仓库无根目录启动器和旧 Windows 打包目录，只有 `node_modules` 依赖文件、历史下载统计和文档记录中仍出现 `.exe/.bat` 字样；无需代码改动。
 
 - **现象**：
   - 用户 A：下载源码 ZIP，进入 `storyforge-main/storyforge-main`，明确双击图 2 中的 `启动.bat`，浏览器打开后提示 `127.0.0.1` 重定向次数过多。
@@ -809,13 +1674,13 @@
     1. 1111 端口被旧 StoryForge / 其他本地服务占用，当前入口打开了错误服务；
     2. 旧 PWA service worker / Workbox cache 拦截 `/storyforge/` 导航；
     3. `localhost` 与 `127.0.0.1` 混用导致用户侧状态分裂，进一步放大缓存 / 端口混乱。
-- **修复方案**：
+- **历史修复方案（已作废，不再执行）**：
   1. `启动.bat` 启动前检测 1111 端口占用；占用时清晰提示用户关闭旧黑窗 / 旧 `StoryForge.exe` / 占用程序，不继续误导打开浏览器。
   2. Vite `server.strictPort = true`，避免端口变化但说明仍指向 1111。
   3. 本地环境（`localhost` / `127.0.0.1`）默认不注册 PWA，或启动期自动 unregister StoryForge SW + 清 Workbox cache；**不得清 IndexedDB / localStorage 中的用户作品和 API 配置**。
   4. `StoryForge.exe` 监听 1111 失败时不要直接打开浏览器；先做健康检查，确认该端口返回的是当前 StoryForge，再打开；否则给端口占用提示。
   5. 文档明确区分两种包：源码 ZIP 运行 `启动.bat`；Release Portable 运行 `StoryForge.exe`；不要混用。
-- **验证要求**：
+- **历史验证要求（已作废，不再执行）**：
   - Windows 环境至少验证：
     1. 无旧进程首次启动；
     2. 1111 被占用；
@@ -825,7 +1690,7 @@
   - 验证不得依赖开发者本机已有 node_modules。
 - **优先级**：🔴 高（新用户第一启动失败，直接影响传播与留存）。
 
-## 🔴 CF-20260630-2 — 场景细纲 AI 采纳后崩溃：`scenes.reduce is not a function`
+## ✅ CF-20260630-2 — 场景细纲 AI 采纳后崩溃（已修并部署，回归 `R-CF2-scenes-array`）
 
 - **现象**：用户在章节页展开「场景细纲」，点击「一键 AI 拆场景」，生成结果后点「采纳」，页面崩溃并显示 `scenes.reduce is not a function`（图 3～5）。
 - **代码定位**：
@@ -854,7 +1719,7 @@
   - 跑 `npx tsc --noEmit`、`npm run check:architecture`、对应 vitest、`npm run build`。
 - **优先级**：🔴 高（核心创作链路可复现崩溃）。
 
-## 🟠 CF-20260630-3 — 自动生成大纲与「故事设计 / 故事主线」不一致
+## ✅ CF-20260630-3 — 自动生成大纲与故事主线不一致（已修并部署，回归 `R-CF3-mainline-constraint`）
 
 - **现象**：用户反馈自动生成的大纲、故事设计里填写的主线不一致（图 1）。
 - **代码定位**：
@@ -877,7 +1742,7 @@
   - 浏览器/API 验证至少一次：填写明确主线 → 生成卷纲 → 检查各卷 summary 是否围绕该主线。
 - **优先级**：🟠 中高（不一定崩溃，但会破坏核心创作方向）。
 
-## 🟠 CF-20260630-4 — 暖白 / 新增主题整体可读性不足，不能只修单个按钮
+## ✅ CF-20260630-4 — 暖白 / 新增主题整体可读性不足（已合入 `c55c7f9` 并部署）
 
 - **现象**：
   - 用户反馈暖白主题下「灵感反推」的“开始反推”按钮无底色 / 字看不清；进一步反馈是暖白主题多处文字和按钮都不清楚，不只是一个按钮。
@@ -897,7 +1762,7 @@
   - 覆盖用户提到的“暖白按钮看不清”和“正文彩色标注看不清”两类案例。
 - **优先级**：🟠 中高（不阻塞功能，但影响第一印象和可用性）。
 
-## 🟡 CF-20260630-5 — 灵感反推大文本使用边界需要明确提示
+## ✅ CF-20260630-5 — 灵感反推大文本使用边界提示（已修并部署）
 
 - **现象**：用户把较长网文片段复制进「灵感反推」后，反馈只能识别前半截约 1.2 章。
 - **产品决策**：
@@ -907,7 +1772,7 @@
   - 若输入超过合理长度，给非阻断提示，而不是静默截断造成误解。
 - **优先级**：🟡 中（说明边界，减少误用）。
 
-## 🟡 CF-20260630-6 — 伏笔功能边界与章节关联说明不足
+## ✅ CF-20260630-6 — 伏笔功能边界与章节关联说明（已合入 `c55c7f9`，回归 `R-foreshadow-context`）
 
 - **现象**：
   - 用户问“自动生成的伏笔怎么添加到对应章节正文里”。
@@ -925,12 +1790,14 @@
   3. 复核章节关联显示：统一章节名来源、去重、避免把同一章显示多次。
 - **优先级**：🟡 中（说明不足 + 显示可能错位）。
 
-## 🟡 CF-20260630-7 — Release / 源码 ZIP 分发体验需要整理
+## ✅ CF-20260630-7 — Release / 源码 ZIP 分发（v3.7.5 起统一源码 + npm）
+
+> **状态更新（2026-07-03）**：已由 v3.7.5 分发决策取代。Release 不再提供 Portable / exe；源码 ZIP 用户统一按根目录 `使用npm指令启动项目.md` 执行 `npm install` + `npm run dev`。
 
 - **现象**：
   - 用户不懂命令行，不会 npm，倾向于下载 ZIP 后双击启动。
   - 当前同时存在源码 ZIP 的 `启动.bat` 和 Release Portable 的 `StoryForge.exe`，用户容易混淆。
-- **待做**：
+- **历史待做（已作废，不再执行）**：
   1. Release 页面写清：普通 Windows 用户优先下载 Portable 包并运行 `StoryForge.exe`；开发者 / 源码用户才使用 `启动.bat`。
   2. 源码 ZIP 的 `启动.bat` 增加更强诊断：Node 未安装、npm install 失败、端口占用、浏览器打不开分别提示不同解决方案。
   3. README 首页增加“Windows 小白启动路径”。
@@ -949,7 +1816,9 @@
 - **方向（先记，未定稿）**：在现有「灵感反推」功能上做增量——把历史灵感碎片作为一个可追加的输入集，反推时一并喂入 AI 融合，而非新建并行子系统。读经 `CONTEXT_SOURCES`、写经 `adopt()`，不裸写。需先确认碎片存储落点（是否新增字段/表 → 走 PROJECT_TABLES）。
 - **优先级**：🟡 中（高频创作诉求，非 bug，无数据风险）。
 
-## 🟡 CM-2 — 文档解析（导入）「长时间加载、无自动跳转」
+## ✅ CM-2 — 文档解析（导入）「长时间加载、无自动跳转」（Phase 18 已覆盖，2026-07-13 核实闭环）
+
+- **完成状态**：后续 Phase 18 已提供真实分块进度、活动日志、完成/失败态、完成后自动弹出解析报告、前往设定库/项目参考入口，以及 IndexedDB 原文存档与刷新后续跑。原始“长时间只显示加载中、完成后无状态/无去向”的描述已不符合当前实现；本轮未发现可复现的剩余根因，因此不再追加猜测性修复。
 - **现象**：导入文档时长时间显示「加载中」像卡死；用户重开网页发现其实已解析完成——疑似**解析完成后没有自动跳转 / 状态没刷新**。
 - **现状（待查证）**：可能是解析为长任务但完成后未触发 UI 跳转/状态更新；也可能是进度反馈缺失让用户误判卡死。需先复现确认根因（是「真完成但不跳转」还是「进度提示缺失」）。
 - **方向**：解析完成 → 明确的完成态 + 自动跳到结果/落地页（或清晰的「已完成，点此查看」），并在解析中给真实进度，避免「假死」观感。**先查根因再定方案，不猜着改。**
@@ -1291,11 +2160,13 @@ for each character:
 - **安全网（数据红线）**：`R-export-fullcoverage`（全 31 表 + 双世界组往返）锁当前行为 → `R-export-derive-equivalence`（派生导出 ≡ 真实旧格式 fixture，逐字段）→ `R-export-derive-roundtrip`（派生往返 + 旧 fixture 向后兼容）。等价仅两处无害差异：派生版去掉了旧版冗余的 outlineNodes/worldNodes 原始 parentId 死字段。
 - **验收达成**：新增 exportable 表只登记注册表即自动进出导出/导入；旧备份/Gist 云存档格式不变（fixture 锁死）；往返测试全绿。
 
-### ✅ AUDIT-1b（AUDIT-1 派生时发现 · 2026-07-15 已修）— 数组/JSON 嵌套引用可移植重映射
-- **实现**：`PROJECT_TABLES.refs` 的 `kind: 'array' | 'json'` 可登记 portable 规则；项目 JSON 升级为 `version: 4`，并以 `nestedRefEncoding: "export-index-v1"` 显式声明嵌套引用使用目标表导出序号。导入在所有目标表映射建立后统一回填，覆盖 `detailedOutlines.appearingCharacterIds`、`scenes[].characterIds`、`foreshadowIds`、JSON-string `creativeRules.citedReferenceIds` 与 `codexEntries.refs` 自引用。
-- **数据边界**：v4 marker 缺失或错误时 fail closed，非法序号使整个导入事务回滚且不留下半数据。旧 v1/v2/v3 仍可导入，但其嵌套数字缺乏可移植映射元数据，只按历史 raw database ID 原样保留，绝不猜测为 v4 export index。
-- **验证证据**：`tests/regression/R-export-nested-reference-remap.test.ts` 覆盖高位非连续源主键、export index 0、重复值、多场景、JSON-string、非法序号原子回滚、legacy v3 与 marker fail-closed；`tests/desktop-contract/D0.4-fixtures.test.ts` 的固定 `small-v1` 导出→清库→导入得到 `dangling=[]`，`referenceRemapStatus=PASS`。
-- **D0.4 后续闭环（2026-07-15）**：树表导出已改为稳定父先顺序，精确项目名成对变换与路径级运行时字段排除后，`small-v1` 的 source/re-export 业务 hash 等值且嵌套业务字段仍保持敏感。`empty-v1`、`small-v1`、`large-synthetic-v1`、`blob-ladder-v1`、`legacy-matrix-v1` 与严格 manifest 已实际生成、哈希并通过可重建校验；生产 `web-tab` 动态功能、数据 hash、性能、恢复和安全实测仍未完成，D0.4 继续保持 `NOT_ELIGIBLE`。
+### ✅ AUDIT-1b（2026-07-13 完成）— 细纲数组/JSON 内的角色引用导入未重映射
+
+- **完成状态**：`exportRefRemap` 已扩展便携 ID 数组与场景角色 ID 类型。新备份为细纲出场角色、场景角色、伏笔以及创作规则引用写显式导出索引，导入在目标表 ID 映射完成后二阶段回填；旧备份没有影子索引时保持旧字段，不猜测无法可靠恢复的历史 DB ID。全量往返测试已恢复精确重映射断言。
+- **现状**：`detailedOutlines.appearingCharacterIds`（number[]）与 `scenes[].characterIds`（JSON 内）当前导入**未重映射**到新角色 id（注册表 `refs` 已声明为 character 引用，但导出/导入只处理 `exportRemap` 字段，不处理 refs 里的 array/json 引用）。同类：`creativeRules.citedReferenceIds` → references。
+- **影响**：导入后细纲「本章出场角色」可能指向错误/不存在的角色。属次要元数据，非正文/主外键，不致命。
+- **改法**：派生引擎已统一架构，后续可让 `refs` 中 `kind: 'array' | 'json'` 且指向 exportable 表的引用也纳入导出/导入重映射（开启后 `R-export-fullcoverage` 里被锁的 `appearingCharacterIds` 断言可恢复为「重映射到新 id」）。
+- **优先级**：🟢 低（次要元数据，且已有架构支撑，增量小）。
 
 ### ✅ AUDIT-2（已完成 2026-06-16 · 核实收尾）— 原生 alert/confirm/prompt 全面替换为 Dialog
 - **现状核实（2026-06-16）**：UI 层（`src/components` / `hooks` / `pages`）原生弹窗**已全部替换**——`Dialog` 组件已被 **22 个文件**使用，`check:architecture` ⑥号守卫（禁 UI 层 `alert/confirm/prompt`）持续绿。审查报告时的"约 23 文件"已在商业审查 P0/P1 批次及后续逐步替换完毕。
@@ -1307,7 +2178,8 @@ for each character:
 - **做法**（§11.5 决策③）：装 ESLint 9 + typescript-eslint 8 + eslint-plugin-react-hooks 7 + eslint-plugin-import；扁平配置 `eslint.config.mjs`。**观察期策略**：默认全 warning（噪音大的 `no-explicit-any` 等降 warn/off）、仅 `react-hooks/rules-of-hooks` 设 error；`package.json` 加 `lint`/`lint:fix`；**`lint` 不进 `ci` 脚本**（CI 暂不因 lint fail）。
 - **现状基线**：`npm run lint` = 0 error / 29 warning（已 `--fix` 安全项，剩余为观察期允许的真实但低优先问题）。
 - **验收达成**：`npm run lint` 可跑；CI 不因 lint fail；rules-of-hooks 为 error 守住。
-- **待续**：type-aware 规则（`no-floating-promises` 等）未启用（需 type-checked config，lint 变慢）；`import/order` 已装插件未启用（避免一次性大量重排噪音）。后续清理一轮再收紧 + 接入 CI。
+- **2026-07-13 收紧完成**：清理全仓 33 条现存 warning（Set 切换无副作用表达式、Hook 稳定依赖、正则全角空格表示、无用导入/注释等），`npm run lint` 改为 `eslint . --max-warnings=0` 并接入本地 `npm run ci` 与 GitHub Actions。规则严重度仍按风险分 error/warn/off，但当前零 warning 成为硬基线，任何新 warning 都会阻断。两个刻意只随实体 ID 重置的 Hook（章节保存基线、提示词本地草稿）保留精确局部豁免并写明原因，避免为清 warning 改坏用户编辑状态。
+- **待续**：type-aware 规则（`no-floating-promises` 等）未启用（需 type-checked config，lint 变慢）；`import/order` 已装插件未启用（避免一次性大量重排噪音）。后续按收益再收紧，不一次性制造格式噪音。
 
 ### ✅ AUDIT-4（已完成 2026-06-16 · 安全）— SVG XSS 回归测试 + 清死代码
 - **核实现状（2026-06-16）**：① HTML/EPUB 导出**已随 B 段死代码清理下线** → `sanitize-html.ts` 成死代码（生产无引用），本次删除（连带删 `R-18` 里测该死功能的 `sanitizeExportHtml` 用例）；② 真正的 XSS 面是 `GeographyPanel` 用 `dangerouslySetInnerHTML` 渲染 AI 生成的 SVG 概念地图，由 `sanitize-svg.ts` 清洗——它**已是 DOM 解析 + 黑名单剔除**（非 ROADMAP 旧述的"正则式"），比正则可靠。
@@ -1321,11 +2193,32 @@ for each character:
 - **验收**：新用户能在 onboarding 内完成"建项目→配 Key→生成/导入→采纳→导出"；首屏信息密度可控。
 
 ### 🟡 AUDIT-6（3.5 / P2-2 · 可维护性）— 拆分巨型组件 / prompt 文件
+- **2026-07-13 第一批完成**：将 1845 行 `prompt-seeds.ts` 收口为 18 行唯一有序聚合入口；基础创作模板与导入/分析/提取工具模板分别落到 `prompt-seeds-core.ts` / `prompt-seeds-tools.ts`，题材包保持独立。`PromptSeed` 抽到无依赖类型文件，解除题材包反向导入聚合模块的循环。新增 `R-AUDIT6-prompt-seed-integrity`，对全部 86 条模板的数量、顺序和序列化内容做 SHA-256 指纹锁，保证纯拆分不改变运行时模板。生成版 AI manual 已按新源码位置刷新。两个领域文件仍为 787 / 1055 行，后续按稳定领域继续拆；本批不冒充整个专项完成。
+- **2026-07-13 第二批完成**：`OutlinePanel` 将 CF-3 生成依据纯视图、QUICKWIN-6 章节拖拽协议、AI 采纳预览和故事结构菜单分别拆到 `OutlineGenerationBasis.tsx` / `chapter-drag.ts` / `OutlinePreviewPanel.tsx` / `OutlineStructureMenu.tsx`；面板不再同时维护上下文来源标签/摘要渲染、DataTransfer payload 编解码和两块纯 UI。原 CF-3、QUICKWIN-6/FB-2 与新增纯视图共 12 条反例持续绿，源码可达性守卫确认新模块均从生产入口可达。`OutlinePanel` 从本轮开始的 1648 行降到 1436 行；章节行/故事块等后续继续按可独立测试边界拆，不冒充已达成 `<500` 行目标。
+- **2026-07-13 第三批完成**：将章节行、摘要草稿/失焦保存、行内操作和故事块章节容器拆到 `OutlineChapterTree.tsx`，`OutlinePanel` 降到 1165 行。新增组件回归锁定“摘要未变不写、变化后失焦写入”及生成/插入/打开回调；QUICKWIN-6 跨父级移动与 FB-2 同级排序共 11 条相关测试持续绿。该专项仍未达到 `<500` 行目标，后续继续按生成控制器、侧栏和卷详情边界拆分。
+- **2026-07-13 第四批完成**：将卷操作栏、批量生成进度/结果、卷排序、章节跨卷投放区与卷空态拆到 `OutlineVolumeSidebar.tsx`，`OutlinePanel` 降到 1035 行。独立组件回归锁定直挂+故事块章节计数、多世界标记、命令禁用、进度取消、结果确认/关闭、空态操作，以及章节投放到目标卷直挂章节末尾；相关定向 16 tests 全绿。父组件仍持有 AI 执行、store 命令与移动规则，未复制业务入口。
+- **2026-07-13 第五批完成**：将卷标题/摘要/所属世界编辑、卷操作栏、故事块/直挂章节列表和未选卷空态拆到 `OutlineVolumeDetail.tsx`，`OutlinePanel` 降到 896 行。新增独立卷详情测试文件，锁定编辑回调、AI/新增/删除命令、已有卷纲时按钮显隐、故事结构入口、直挂+块内总章数与自定义故事块命令；相关定向 4 文件 / 20 tests 全绿。父组件继续独占 AI 调用、`assembleContext()`、`adopt()`、store 写入和跨世界移动校验。
+- **2026-07-13 第六批完成**：将四类大纲生成请求的 operation 编解码/模块归属收口到纯函数模块，并把生成前确认、上下文依据、读取失败重试与取消/确认操作拆到 `OutlineGenerationRequestPanel.tsx`，`OutlinePanel` 降到 831 行。新增 4 条回归锁定四类请求往返、原按钮文案、单章参数边界、读取中/失败禁用确认及准备完成后放行；父组件仍独占上下文装配、AI 调用和采纳写回。
+- **2026-07-13 第七批完成**：将 AI 流输出、结构化解析进度、卷/章节新增与定点补全预览收口到 `OutlineGenerationResultPanel.tsx`，`OutlinePanel` 降到 811 行。新增 3 条组件回归锁定整理中状态、卷/章新增和定点补全文案、目标卷名称与确认/取消回调；解析、AI session 和 `adopt()` 写回仍由父级控制器持有。
+- **2026-07-13 第八批完成**：新增 `src/lib/outline/adopt-generation.ts`，将 AI 生成卷/章的顺序新增、重复原因汇总和单卷/单章摘要定点替换收口为正式 use-case，所有写入仍逐条经过 `adopt()`；`OutlinePanel` 降到 774 行，只保留目标选择、store 刷新与用户反馈。新增 3 条真实 DB 回归，锁定顶层卷 `parentId:null`/顺序/首个 ID、章节父卷归属/重复原因及跨项目定点更新拒绝。
+- **2026-07-13 第九批完成**：将四类请求协议移入 `lib/outline/generation-request.ts`，新增 `generation-plan.ts` 统一目标卷/章解析、注册表上下文片段读取和 volume/chapter prompt 计划构造；`OutlinePanel` 降到 699 行，只执行上下文装配与 AI session。修复单章所属卷来自原始 nodes、卷序列来自规范化副本时用对象 `indexOf` 漏掉前卷摘要的旧隐患，改为按卷 ID 定位；删除目标后的重试在装配上下文前明确失败。新增 5 条纯计划回归覆盖四类请求、故事块单章、同父级隔离、卷数已满足与缺失目标。
+- **2026-07-13 第十批完成**：新增 `useOutlineBatchGeneration.ts`，将批量章纲的上下文装配、逐卷多世界解析、AbortController、进度/结果状态和确认写回收口到专用 controller；`OutlinePanel` 降到 617 行。修复基础上下文装配在原 `try/finally` 外抛错后 `batchRunning` 永久卡住的状态机根因。新增 4 条 hook 回归锁定失败复位、多世界逐卷上下文、取消不保留部分结果和确认追加/刷新/清空。
+- **2026-07-13 第十一批完成**：新增 `useOutlineGenerationController.ts`，统一四类大纲生成的上下文预检、乱序请求隔离、快照确认、重试与 AI 执行；重试装配失败现在会重置会话并反馈，不再产生未处理 Promise。章节数智能默认和拖拽瞬时状态分别收口到专用 hook，锁定“用户手动章节数不被覆盖”和 state/ref 同步。`OutlinePanel` 从 617 行降到 489 行，达到主要 panel `<500` 的单文件目标；`AUDIT-6` 仍需继续治理其它巨型 panel / prompt 文件。
+- **2026-07-14 第十二批完成**：历史考据/风暴 AI 从 `HistoryPanel` 手拼 worldview store + 字符 `slice()` 上下文迁到 `assembleContext(['worldview','manualText'])`，保留历史总述/纪年原语义并按当前世界隔离；四套事件/关键词 prompt 收口为纯计划 + `useHistoryAI` controller。AI 结果写回新增 `recordOnly` 采纳约束，只允许通过 `recordId` 将 `aiConsult/aiBrainstorm` 写回既有历史记录，拒绝新增不完整历史行和跨项目 ID。修复切换到无历史总述的世界时沿用上个世界本地草稿的串世界隐患；共享纪年格式化明确区分公元前/公元/纪年原点，事件与关键词 UI 也如实说明“历史 agent 会读取条目定稿作核验/发散，但不会直接覆盖”。`HistoryPanel` 从 1389 行降到 1223 行，后续继续拆视图。
+- **2026-07-14 第十三批完成**：将事件/关键词卡重复的双 Agent 触发、生成输出、已保存结果与清除/删除操作收口到纯视图 `HistoryAgentWorkspace`；关联章节增删选择收口到 `HistoryChapterPicker`。父面板继续独占 store 命令、AI controller 与采纳入口，新组件只接收状态并转发回调；`HistoryPanel` 从 1224 行降到 983 行。新增 6 条组件回归锁定只读/准备中/流式禁用、命令转发、活动输出与已保存结果互斥，以及章节关联 ID 增删。
+- **2026-07-14 第十四批完成**：将历史总述/纪年表单拆到 `HistoryOverviewTab`，两个失焦保存回调仍由父面板提供；时间线与关键词的纯说明侧栏拆到 `HistoryHelpPanels`。新视图不持有 store/AI/DB 逻辑，`HistoryPanel` 从 983 行降到 883 行。新增 2 条回归锁定总述/纪年草稿与失焦保存转发，以及两类说明文案边界。
+- **2026-07-14 第十五批完成**：将正文编辑器的章节标题、字数、五种章节状态、上下文/对照润色/保存命令及保存中/失败/完成展示拆到纯视图 `ChapterEditorHeader`；父组件继续独占章节 store 写回、编辑器内容、AI、上下文和对照润色状态，新组件只转发回调。`ChapterEditor` 从 1362 行降到 1313 行。新增 3 条组件回归，并同步迁移旧源码结构断言，锁定五状态写回、命令转发和保存状态；新端口实测覆盖标题、字数、状态、上下文、手动保存、刷新恢复与对照润色开关。
+- **2026-07-14 第十六批完成**：将历史时间线事件卡与历史关键词卡拆到 `HistoryTimelineEventCard` / `HistoryKeywordCard`，字段编辑、章节关联和双 Agent 工作区均通过 patch/命令回调转发；父面板继续独占多世界过滤、store、AI controller、删除确认和当前展开/生成目标。`HistoryPanel` 从 883 行降到 482 行，达到该主要 panel `<500` 的单文件目标。新增 6 条组件回归，锁定纪年原点/世界徽标、史实/虚构、事件与关键词字段、章节关联和 Agent 命令；刷新恢复实测通过。
+- **2026-07-14 第十七批完成**：将章节摘要、章节记忆生成状态、计划—正文对账分类/证据/失效提示及两种确认命令拆到纯视图 `ChapterMemoryPanel`；父级继续负责正文/章纲 hash 校验、AI 抽取、store 与章纲写回。`ChapterEditor` 从 1313 行降到 1248 行。新增 3 条组件回归，锁定空摘要/忙碌态、失效对账和当前待确认对账的命令转发。
+- **2026-07-14 第十八批完成**：将世界观/角色/章纲上下文预览与状态卡注入计数/调整列表拆到纯视图 `ChapterContextPreview`；父级继续独占选择性状态匹配和手动额外 ID 规则。状态分类文案复用 `STATE_CATEGORY_LABELS`，移除旧内联五分支；`ChapterEditor` 从 1248 行降到 1206 行。新增 3 条回归锁定截断边界、注入计数、自动/手动/未选标签和卡片命令。
 - **位置**：`prompt-seeds.ts`、`json-export.ts`（800+ 行）、大型 panel（多个 600-1500 行混 prompt/UI/业务）。
 - **改法**：按领域拆 prompt pack / service / hook / view；大 panel 先拆状态逻辑与纯 UI；形成 use-case/service 层（`importProjectUseCase()` / `generateChapterUseCase()`）。
 - **验收**：主要 panel 单文件尽量 <500 行；业务逻辑下沉；测试不退化。
 
 ### 🟡 AUDIT-7（P2-1 / 3.7 · 测试与发布护栏）— Playwright 核心路径 E2E + 崩溃上报 + 发布清单
+- **2026-07-13 发布护栏进度**：新增 `check:release-metadata`，强制 Release tag、`package.json.version` 与 `CHANGELOG.md` 版本标题三方一致；源码 Release 工作流在创建/修改 Release 前先运行完整 `npm run ci`（含类型、测试、构建、架构、注册表、AI manual、源码可达性和体积预算）。手动发版遇到同名 tag 时还会验证该 tag 必须指向当前 release commit，禁止旧 tag 配新源码的错版发布。`R-AUDIT7-release-metadata` 覆盖正常发版与 tag/日志双错位。
+- **2026-07-13 本地诊断包进度**：数据管理新增用户主动下载的本地诊断 JSON，内容仅限应用/浏览器版本、数据库 schema、各注册表表的记录数量和本次页面会话错误的类型/堆栈位置；明确不读取表行内容、作品文本、API Key、localStorage 或错误 message，也不联网自动上传。表枚举复用 `PROJECT_TABLES`，React ErrorBoundary 与全局 error/unhandledrejection 只保留最近 20 条脱敏位置。`R-AUDIT7-local-diagnostics` 用书名/正文/API Key/错误消息哨兵证明均未泄露；隔离预览浏览器实测入口、隐私说明与成功反馈。内置浏览器未捕获 Blob 下载事件，因此只认定生成/触发成功，不冒充落盘事件自动化通过。剩余 Playwright 商业 smoke、第三方匿名错误上报（涉及隐私/服务商，待决策）和升级前自动快照仍未完成。
+- **2026-07-13 Playwright 浏览器闸门完成**：新增独立 Chromium E2E 配置与 8 条真实用户路径，覆盖①首页新建项目并进入工作区；②UI 建卷/建章、输入正文、手动保存完成、刷新恢复、Markdown 下载正文与隐私诊断 JSON 下载；③完整 JSON 导出后从 UI 重新导入并验证正文；④手动快照恢复为新项目且原项目仍保留；⑤删除项目经过列表二次确认、危险操作确认和备份选择三层安全门，且不误删其它项目；⑥取消删除后项目与正文保留；⑦上下文窗口、两个预设和四类任务路由跨模块/刷新持久化；⑧本地 OpenAI 兼容服务 `/v1/models` 刷新、URL 归一化、选中模型刷新保留。测试接入 GitHub CI 和 Release workflow，失败保留 trace/screenshot/video。本轮 E2E 抓出“点保存后立刻刷新可能发生异步写入竞态”，正文保存按钮现明确显示`保存中... / 已保存 / 保存失败`，只有 IndexedDB 写入完成才进入已保存态。剩余第三方匿名错误上报仍需隐私/服务商决策；不实施。
 - **改法**：① Playwright 5 条商业级 smoke（建项目/配 AI/生成/采纳/导出导入/备份恢复）；② 可关闭的匿名错误上报或本地诊断包导出；③ release checklist（升级前自动快照、变更说明、回滚方案、已知问题）。
 - **验收**：核心路径 E2E 通过；有发布前自动快照与回滚预案。
 - **注**：与现有 HEALTH-2/HEALTH-5 重叠，实施时合并推进，勿重复立项。
@@ -1401,7 +2294,9 @@ for each character:
 
 ---
 
-## 🟢 ENH-OUTLINE-1（提示词增强 · 低优先 · 部分完成 2026-06-16）— 把"番茄方法论卷纲"精华内化进纲要提示词
+## ✅ ENH-OUTLINE-1（2026-07-13 完成）— 把"番茄方法论卷纲"精华内化进纲要提示词
+
+> **完成状态**：在既有情绪公式/爽点密度/卷内节奏基础上补齐“全局骨架先行”：卷纲生成前内部对齐一句话主线、成长坐标、角色进退场和伏笔收放，但仍只输出原有卷纲 JSON。已有伏笔通过 `CONTEXT_SOURCES.foreshadows + assembleContext()` 正式读取，不新造角色表/伏笔表或旁路上下文；统一约束位于 adapter，因此内置与题材包模板都生效。
 
 > **已内化(2026-06-16)**：`OUTLINE_SYSTEM` 已吸收番茄方法论的「情绪公式(蓄力→爆发→余韵)、爽点密度(每3-5章钩子)、必含结构要素(坠落时刻/选择困境/信息差/伏笔/悬念交替)、节奏段设计(开局蓄力/矛盾升级/高潮爆发/收尾过渡)」;`outline.volume` summary 要求升级为「4-6句覆盖核心冲突+情绪走向+主角变化+卷末钩子」。JSON 输出格式与 `parseVolumeOutlineSmart` 未变。
 > **待续**：「全局骨架先行」那层(一句话主线/升级体系坐标/核心角色总表/伏笔总表 作为生成卷纲前的前置结构)尚未并入——需复用既有 storyCore/foreshadows/角色数据源,避免另起并行结构。优先级仍 🟢 低。
@@ -1513,7 +2408,7 @@ for each character:
 > **段二/段三待续(本条降级为 🟢,留 ROADMAP)**:改前/改后 few-shot 动态构建、重写-对比-追问互动校准、个人写作向量知识库;FB-4 原稿续写共享本画像基建。
 > ——以下为原始反馈与设计记录——
 
-## 🟡 FB-5 原始记录（高价值功能）— 创作区「自适应文风学习」（按用户改稿前后学习其文风）
+## 🟢 FB-5 后续阶段（基础版已完成；高级校准待后续）— 改前/改后 few-shot 与互动校准
 
 > 反馈人：你的生命过客（管理员）。诉求：AI 生成前 5 章 → 用户去 AI 味 + 亲自改 → 让 AI 对比「改前/改后」学习用户文风习惯 → 后续章节按此文风生成（一种自我学习）。群主已答应「记一下，之后开发」。
 
@@ -1638,7 +2533,9 @@ for each character:
 
 **排期**：观察期内尽快(优先级最高,因为已经上线了)。**完成判据**:至少 3 份代表性老库 fixture 往返测试绿 + 迁移前自动快照确认生效。
 
-## 🟠 HEALTH-2（P1 · 中期 · 分批）— 功能层/关键流程集成测试（把护栏延伸到 UI 层）
+## ✅ HEALTH-2（2026-07-13 完成）— 功能层/关键流程集成测试（把护栏延伸到 UI 层）
+
+> **完成状态（2026-07-13）**：关键路径已有 6 组自动化网：`R-FB6` 多块导入、`R-WF` 工作流多步链、`R-05` 删除级联、`R-export-fullcoverage` 全量导出导入、`R-02/R-07` 多世界迁移，以及本轮新增的快照恢复。快照用例在真实 IndexedDB 中创建快照、修改原正文、恢复为新项目，并锁定“仅清理旧自动快照、手动快照不误删”。真实浏览器 UI 覆盖仍归 HEALTH-4，不在本条冒充完成。
 
 **问题**：三注册表只守数据层,**用户实际走的流程(分块导入 / 工作流多步链 / 词条 / 灵感反推 / 删除级联)没有自动化守护**,FB-6 这类"数据写进去了但流程/展示错"的 bug 从这层漏出,只能靠用户撞到。
 
@@ -1666,13 +2563,17 @@ for each character:
 
 **排期**：先 1 天扫出清单 + 定每项归宿,再按表逐项执行。**完成判据**:清单表落档 + 高优先项(词条化重复 / 自然资源保存)清掉。
 
-## 🟡 HEALTH-4（P2 · 与 HEALTH-2 合并推进）— UI 层测试覆盖率补强
+## 🟡 HEALTH-4（P2 · 持续补网）— UI 层测试覆盖率补强
+
+> **2026-07-13 进度**：新增工作流步骤卡 DOM 回归，锁住“生成前用户输入确实传给运行器”和“编辑 AI 输出后保存使用编辑值”；同时把输入与 `step.userHint` 的合并收口到 `assembleWorkflowStepVars()` 并补纯逻辑反例。已有角色维度草稿、长文本内滚动两组组件测试。本轮补齐 CF-3 生成依据的加载/失败/空态，以及数据管理诊断下载的 Blob/MIME/内容/隐私/成功反馈组件测试；另建立 8 条 Chromium E2E，覆盖创建、正文保存刷新、Markdown/诊断下载、JSON 往返、快照恢复、删除确认/取消、AI 设置持久化和本地模型刷新。剩余按世界观生成等高风险面板逐批补，不追求低价值全局覆盖率数字。
 
 **问题**：整体覆盖率偏低,UI 层很薄(核心逻辑层~86%,UI 接近裸奔)。盲目追全局百分比性价比低。
 
 **方案**：对**高风险面板**(导入 / 工作流 / 世界观生成 / 删除 / 灵感反推)加组件级或集成测试,目标"核心创作流程可回归",而非全局覆盖率数字。与 HEALTH-2 共用测试基建。**排期**：跟 HEALTH-2 同批做。
 
 ## 🟡 HEALTH-5（P2 · 低优先 · 穿插做）— 死代码清理 + i18n 渐进迁移 + 包体积
+
+> **2026-07-13 确定性清理进度**：全仓按生产 / 测试引用复核后，删除五个真实孤儿：未挂载到任何面板的 `EventTimeline.tsx`、从未接入 UI / prompt / store 的 `methodology.ts`，以及已被 `world-map/engine/*` 取代的旧 Canvas 地图 `interaction/perlin/renderer.ts`。保留旧 `Project.methodologyId` 可选字段，避免把代码清理误做成用户数据迁移。新增 `check:source-reachability`，从生产入口沿静态 / 动态 import 检查源码文件可达性并接入 CI；i18n 脚手架作为产品明确保留的未来入口单独声明。构建产物复核显示首屏应用块约 **200 KB gzip**，已低于本条 `<300 KB gzip` 目标；另一个约 131 KB gzip 的大块是 `react-force-graph-2d`，只随关系面板动态加载，章节编辑器、导入、地图等重面板也均为 lazy chunk，因此不为数字继续制造碎片化分包。新增 `check:bundle-size` 并接入本地 `npm run ci` 与 GitHub Actions：从构建后的 `index.html` 识别真实入口，分别限制入口、普通 JS chunk、CSS 和 PDF worker 的 raw/gzip 体积，超限时报告具体文件，防止依赖意外回灌首屏。当前入口约 616 KiB / 196 KiB gzip，最大普通异步块约 491 KiB / 128 KiB gzip，均在预算内。WorldMap 的 `3D Labs` 是已明确标识且禁用的实验入口，不当死代码误删。**本条剩余仅为 i18n 产品里程碑**，需等是否做英文版的产品决策；当前中文版本不盲目迁 100+ 组件。
 
 **问题**：可能存在死代码(WorldMap3DCanvas)、108 组件硬编码中文未 i18n、主包仍偏大(gzip 415KB)。
 
@@ -1749,17 +2650,17 @@ for each character:
 > 每个文本框都应能让用户**自己输入**内容；当用户点击该文本框对应的「AI 生成」按钮时，**把用户已输入的内容自动带进提示词**，在用户写的基础上生成/扩展（而不是无视用户输入从零生成）。
 
 **已核实的现状**：
-1. **工作流步骤卡（WorkflowRunner StepCard）= 重灾区**：步骤卡**完全没有用户输入框**，只读地显示 AI 的 `result.output` + 一个「重新生成」按钮 → 用户连「一句话故事」都**没法自己敲**，更谈不上带着它去生成。这是本次反馈最直接的痛点。
+1. ✅ **工作流步骤卡（WorkflowRunner StepCard）已完成**：已有生成前用户输入框，输入与步骤提示合并进 `userHint`；AI 输出可编辑，保存/复制以及暂停后下一步都使用编辑值，不再让下游继续读取原始 AI 输出。`R-WF-6` + `R-HEALTH4-workflow-step-card` 锁住生成变量和 DOM 用户路径。
 2. **各面板内联字段编辑器**（如 `WorldviewOriginPanel` 的 `TextFieldEditor`/`InlineEdit`；原 `AIFieldCard` 已移除）：用户**能**编辑字段值（`value`/`onChange`）、也能填一个独立的提示（`hint`）；但「AI 生成时是否把当前字段值（用户已写内容）带进 prompt」**取决于各调用方传入的 `buildMessages` 实现，不统一**——有的带、有的只带 hint 不带 value。
-3. ✅ **（已修 · FB-1, 2026-06-09）** `WorkflowRunner` 裸 `renderPrompt` 不注入项目上下文的问题已修复——现每步走 `assembleContext` 注入 projectName/genres/worldContext/dimension + 步骤间链路贯通。**但步骤卡「可编辑输入框」本身仍未做**（本条 1 仍待办）。
+3. ✅ **（已修 · FB-1, 2026-06-09）** `WorkflowRunner` 裸 `renderPrompt` 不注入项目上下文的问题已修复——现每步走 `assembleContext` 注入 projectName/genres/worldContext/dimension + 步骤间链路贯通；步骤卡输入/输出编辑也已由 `41661ef` 完成并在 2026-07-13 补回归测试。
 4. **章节大纲/章节摘要字段(下游自动总结)不可手改 = 首批审计对象**（来源 FB-3 · light莫言）：「读上游内容自动总结生成」的章节大纲，当前不能手动编辑或改了不保存；用户要能手改并保存，不必为改一句话反复整章重生成。这是本通用原则在「下游自动总结字段」方向的典型落点。
 
 **解决方案**：
-- **工作流（首要，仍待办）**：给每个步骤卡加**可编辑输入框**（用户可预先输入本步内容，如一句话故事）；点「生成」时把该输入并入 ctx（作为 userHint/seed 之一），随项目上下文一起喂给 AI；AI 产出后也允许用户**编辑输出再采纳**。（注：上下文注入与链路贯通部分已由 FB-1 完成，此处只剩"输入框 UI + 把输入并入 ctx"。）
+- **工作流（已完成）**：每个步骤卡支持生成前输入，点生成时并入 `userHint` 并随项目上下文送给 AI；AI 产出后可编辑，保存/复制及暂停后续步骤均使用编辑值。
 - **通用约定**：约定所有「AI 生成」按钮在构建 prompt 时**必须带上对应字段的当前值**（用户已输入内容）作为「在此基础上改写/扩展」的种子。审计所有 `buildMessages`/生成入口，统一让其纳入当前 `value`。
 - **下游自动总结字段(含章节大纲)**：① UI 上必须**可编辑 + 失焦/离开即保存**（修当前"改了不保存、恢复原样"的 bug）；② 用户手改后，下次点 AI 生成**带上当前值改写**，不无脑覆盖（带 currentValue，而非另起）；③ 可考虑加"锁定/已手改"标记，避免上游变动时被自动总结冲掉。
 - **首批审计对象清单（按用户实际撞到的优先）**：
-  1. 🔴 工作流步骤卡（无输入框）
+  1. ✅ 工作流步骤卡（输入 + 输出编辑已完成并有回归）
   2. 🔴 **章节大纲 / 章节摘要**（下游自动总结，不可改/不保存 · FB-3）
   3. 🟠 各面板内联字段编辑器（buildMessages 是否带 currentValue 不统一）
 - **验证**：① 工作流每步可手动输入、且生成带上用户输入；② **章节大纲可手改→失焦保存→刷新仍在→再次生成是在手改基础上改写**；③ 抽查若干面板字段：先输入半句→点 AI 生成→产出是在用户输入基础上扩展而非另起。
@@ -2178,15 +3079,24 @@ for each character:
 
 > 来源：社区反馈（zzjj 等）+ 作者构想 | 状态：**设计文档已完成** → `docs/AI-COPILOT-DESIGN.md`
 
-**核心定位**：把"对话"做成整个工具的总入口——用户自然语言提需求，AI 调用项目里对应功能生成/填写内容（世界观→正文）；同时一组后台 Agent 基于现有内容自动运行维护一致性。两者共用同一套工具层（Tool Layer）。
+**核心定位**：把"对话"做成整个工具的总入口——用户自然语言提需求，AI 调用项目里对应功能生成/填写内容（世界观→正文）；同时一组后台 Agent 基于现有内容自动运行维护一致性。两者共用同一套工具层（Tool Layer）。升级版形态是 **ChatCopilot 前台入口 + 总 agent 编排 + 多个领域分 agent 协作 + 确定性 canon 校验器收敛**。
 
 - **27.1-a** 工具层地基（只读工具优先，零风险）
 - **27.1-b** Agent 执行引擎 + 提供商 tool calling 适配/降级
 - **27.1-c** 对话副驾 MVP（右侧对话栏 + 意图识别 + 确认卡片 + 面板同步），从世界观引导填写切入
 - **27.1-d** 扩展对话覆盖面（灵感反推/角色/大纲/正文）
+- **27.1-e** 多 agent 团队编排：总 agent 负责任务拆解、领域分发、结果收敛和冲突打回；分 agent 按世界观 / 故事设计 / 角色 / 大纲 / 章节细纲等领域执行，并可配置专属模型/API与输入权重
 - **后台 Agent**：整理本章 Agent（先）→ 一致性 Agent → NPC 演进 Agent（即 27.3）
 
 详细愿景、产品故事、工具集（精确对应现有 store/adapter）、与现有功能的精密组合、风险对策、分期，见设计文档。
+
+**Phase 27 关键设计补充（2026-07-08）**：
+
+1. **多 agent 团队 + per-role 模型**：现有 AgentRunner + ToolRegistry 是简版“一个 agent 调无状态工具”。后续应升级为总 agent（领导 / 编排 / 分发任务 / 收结果 / 检测打回）+ 分 agent（世界观 / 故事设计 / 角色 / 大纲 / 章节细纲等）的团队形态。分 agent 是生成工具的进化版，每个领域可以配置专属模型/API，用户可以调每个分 agent 的重点输入权重；但 UI 入口仍是 ChatCopilot，不把复杂度抛给用户。
+2. **检测环必须是确定性主干、向量副手**：**「有没有违反已确立的事实 / 规则」由确定性代码判(零 token、不漏硬矛盾);向量化只负责『召回相关远处前文供参考』,不作为判定一致性的依据。** 总 / 分 agent 团队的串联组合与匹配性检测复用确定性 canon validator；不匹配就带证据打回分 agent。不能让 LLM 在编排层“看一致性”，否则会放大“劝不判 + 烧 token”的旧问题。
+3. **Agent 阶段依赖一致性工程化**：一致性工程化 / 收敛路线是 Agent 检测环的地基。已落地的 CONSISTENCY-1 `held-items`、后续 `readCurrentFacts`、持有投影、角色状态投影、世界规则 canon validator 等，都是多 agent 编排复用的确定性检测基础设施；Agent 编排是地基之上的协作层。
+4. **保留前台 / 后台驱动与安全线**：对话副驾（前台 · 用户驱动）是用户聊天 → agent 团队执行 → 写入必须经过确认卡片；后台 Agent（自主驱动）由事件 / 定时触发，例如写完章整理、一致性核对、NPC 推演，默认只读 / 低风险，不能自动改用户手稿。安全线：写入确认只属于用户驱动侧；自主 agent 默认只读。
+5. **成本与受众定位**：多 agent 模式会产生项目级 token 消耗，每轮可能多模型并行或串联调用，面向工作室 / 有产者 / 专业用户；不应作为普通 BYOK 用户的默认负担。
 
 旧 27.1 评估要点（已纳入设计文档）：
   - 当前架构限制：AI 调用是「用户触发 → 流式输出 → 用户采纳」的单轮模式
@@ -2228,10 +3138,10 @@ for each character:
 
 | 功能 | 来源 | 备注 |
 |------|------|------|
-| 协同编辑 | 02-FEATURE-SPEC | 需要后端，当前纯前端架构不支持 |
-| WebDAV/坚果云导出 | 02-FEATURE-SPEC | 需 CORS 代理 |
-| 国际化 i18n | 02-FEATURE-SPEC | 当前仅中文，架构预留 |
-| 移动端适配 | 02-FEATURE-SPEC | 创作工具不适合手机，低优先级 |
+| 协同编辑 | 历史功能规格（WPS 归档） | 需要后端，当前纯前端架构不支持 |
+| WebDAV/坚果云导出 | 历史功能规格（WPS 归档） | 需 CORS 代理 |
+| 国际化 i18n | 历史功能规格（WPS 归档） | 当前仅中文，架构预留 |
+| 移动端适配 | 历史功能规格（WPS 归档） | 创作工具不适合手机，低优先级 |
 | Vercel Serverless 代理 | PROGRESS.md | 解决 CORS 限制的 OpenAI/Claude/Kimi |
 | TipTap 富文本编辑器优化 | Phase 24 | 长期目标，已有基础 |
 
@@ -2253,13 +3163,13 @@ Phase 32（真实与幻想）→ 取代 Phase 31.3（creativeMode 联动），�
 
 ## 归档说明
 
-以下旧文档已移至 `docs/archive/`，内容已整合到本文档和 PROGRESS.md：
+以下旧文档已迁移到 WPS 云文档 `storyforge故事熔炉 / 仓库文档迁移_20260708 / archive`，内容已整合到本文档和当前施工文档：
 
 | 文件 | 原用途 | 归档原因 |
 |------|--------|---------|
 | 01-09 系列 (9个) | 早期产品/技术/开发规划 (2026-04-13) | 已过时或已实现 |
-| DEV_PLAN_EVOLUTION.md | Phase A-H 演进计划 | A-H 已完成，未完成项整合到本文档 |
-| DEV_PLAN_OUTLINE_REDESIGN.md | 大纲重构计划 | 已完成 |
-| HANDOFF.md | AI 换机交接手册 | 已过时，PROGRESS.md 覆盖 |
+| `DEV_PLAN_EVOLUTION.md` | Phase A-H 演进计划 | A-H 已完成，未完成项整合到本文档 |
+| `DEV_PLAN_OUTLINE_REDESIGN.md` | 大纲重构计划 | 已完成 |
+| `HANDOFF.md` | AI 换机交接手册 | 已过时，PROGRESS.md 覆盖 |
 | playbooks/PHASE-00~20 (21个) | 各 Phase 执行手册 | 全部已完成 |
 | design-system/*.md (2个) | 设计系统迁移 | 已完成 |

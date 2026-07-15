@@ -5,20 +5,52 @@ import { createLog, updateLog, type TokenUsage } from './logger'
 import { recordUsage } from './usage-log'
 import { trimMessagesToFit } from './context-budget'
 import { buildOpenAIEndpoint } from './openai-endpoint'
-import {
-  bindAiCredential,
-  executeAiRequest,
-  isSuccessfulAiResponse,
-  normalizeAiTransportError,
-  readAiResponseText,
-  waitForAiRetry,
-} from './runtime-transport'
+import { useAIConfigStore } from '../../stores/ai-config'
+import { resolveAIConfigForTask, type AITaskKind } from './task-routing'
 
 /** 调用元信息（用于消耗统计分类） */
 export interface AICallMeta {
   /** 消耗类型标识（moduleKey 或显式 category，如 'chapter.content'） */
   category?: string
   projectId?: number | null
+  /** 调用方显式要求保留的临时生成参数，不参与持久化。 */
+  configOverrides?: Partial<AIConfig>
+}
+
+export function resolveRequestConfig(config: AIConfig, meta?: AICallMeta) {
+  const state = useAIConfigStore.getState()
+  return resolveAIConfigForTask({
+    category: meta?.category,
+    requestedConfig: config,
+    globalConfig: state.config,
+    presets: state.presets,
+    routes: state.taskRoutes,
+    explicitOverrides: meta?.configOverrides,
+  })
+}
+
+function warnRouteFallback(resolved: ReturnType<typeof resolveRequestConfig>, meta?: AICallMeta): void {
+  if (resolved.fallbackReason) {
+    console.warn(`[AI] task route fallback (${resolved.fallbackReason}): ${meta?.category ?? 'uncategorized'}`)
+  }
+}
+
+function usageEntry(
+  meta: AICallMeta | undefined,
+  config: AIConfig,
+  taskKind: AITaskKind | null,
+  usage: TokenUsage,
+) {
+  return {
+    projectId: meta?.projectId ?? null,
+    timestamp: Date.now(),
+    category: meta?.category ?? '',
+    provider: config.provider,
+    model: config.model,
+    taskKind: taskKind ?? undefined,
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+  }
 }
 
 /** 可变容器，streamChat 写入 usage，调用方读取 */
@@ -159,71 +191,12 @@ function buildRequest(config: AIConfig, messages: ChatMessage[], stream: boolean
   }
 
   return {
-    configuredBaseUrl: config.baseUrl,
-    logUrl: buildOpenAIEndpoint(config.baseUrl, 'chat/completions'),
-    body,
-  }
-}
-
-function sseData(line: string): string | null {
-  const normalized = line.endsWith('\r') ? line.slice(0, -1) : line
-  if (!normalized.startsWith('data:')) return null
-  return normalized.slice(5).trim()
-}
-
-/** Yield complete SSE data fields while preserving UTF-8 and lines split across chunks. */
-async function* readSseData(body: AsyncIterable<Uint8Array>): AsyncGenerator<string> {
-  const decoder = new TextDecoder()
-  let buffer = ''
-  try {
-    for await (const chunk of body) {
-      buffer += decoder.decode(chunk, { stream: true })
-      let newline = buffer.indexOf('\n')
-      while (newline !== -1) {
-        const data = sseData(buffer.slice(0, newline))
-        buffer = buffer.slice(newline + 1)
-        if (data !== null) yield data
-        newline = buffer.indexOf('\n')
-      }
-    }
-    buffer += decoder.decode()
-    if (buffer) {
-      const data = sseData(buffer)
-      if (data !== null) yield data
-    }
-  } catch (error) {
-    throw normalizeAiTransportError(error)
-  }
-}
-
-interface OpenAIUsagePayload {
-  prompt_tokens?: number
-  completion_tokens?: number
-  total_tokens?: number
-}
-
-interface OpenAIStreamPayload {
-  choices?: Array<{
-    delta?: {
-      reasoning_content?: string
-      thinking?: string
-      reasoning?: string
-      content?: string
-    }
-  }>
-  usage?: OpenAIUsagePayload
-}
-
-interface OpenAIChatPayload {
-  choices?: Array<{ message?: { content?: string } }>
-  usage?: OpenAIUsagePayload
-}
-
-function toTokenUsage(usage: OpenAIUsagePayload): TokenUsage {
-  return {
-    inputTokens: usage.prompt_tokens ?? 0,
-    outputTokens: usage.completion_tokens ?? 0,
-    totalTokens: usage.total_tokens ?? 0,
+    url: buildOpenAIEndpoint(config.baseUrl, 'chat/completions'),
+    headers: {
+      'Content-Type': 'application/json',
+      ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+    },
+    body: JSON.stringify(body),
   }
 }
 
@@ -237,7 +210,10 @@ export async function* streamChat(
   signal?: AbortSignal,
   result?: StreamResult,
   meta?: AICallMeta,
-): AsyncGenerator<AIStreamChunk> {
+): AsyncGenerator<string> {
+  const resolved = resolveRequestConfig(config, meta)
+  warnRouteFallback(resolved, meta)
+  config = resolved.config
   const trimmed = trimMessagesToFit(messages, config.provider, config.model, config.maxTokens, config.contextWindow)
   if (trimmed.trimmed) {
     console.warn(`[AI] request messages trimmed to fit context window: ${trimmed.totalInputTokens}/${trimmed.inputBudget} tokens`)
@@ -311,101 +287,45 @@ export async function* streamChat(
     let insideThinkTag = false
     let contentTagBuffer = ''
 
-    const complete = () => {
-      const logUpdate: Record<string, unknown> = {
-        status: 'success',
-        statusCode: response.status,
-        duration: Date.now() - startTime,
-      }
-      if (usage) logUpdate.usage = usage
-      if (result && usage) result.usage = usage
-      updateLog(log.id, logUpdate)
-      if (usage) {
-        void recordUsage({
-          projectId: meta?.projectId ?? null,
-          timestamp: Date.now(),
-          category: meta?.category ?? '',
-          model: config.model,
-          inputTokens: usage.inputTokens,
-          outputTokens: usage.outputTokens,
-        })
-      }
-    }
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
 
-    for await (const data of readSseData(response.body)) {
-      if (data === '[DONE]') {
-        // 冲刷标签缓冲区残留
-        if (contentTagBuffer) {
-          yield { kind: insideThinkTag ? 'reasoning' : 'content', text: contentTagBuffer }
-          contentTagBuffer = ''
-        }
-        complete()
-        return
-      }
-      try {
-        const json = JSON.parse(data) as OpenAIStreamPayload
-        const delta = json.choices?.[0]?.delta
-        if (delta) {
-          const reasoning = delta.reasoning_content ?? delta.thinking ?? delta.reasoning
-          if (reasoning) yield { kind: 'reasoning', text: reasoning }
-          const content = delta.content
-          if (content) {
-            // <think> 标签解析：中转可能将思考包裹在 content 的 <think>...</think> 中
-            contentTagBuffer += content
-            while (contentTagBuffer.length > 0) {
-              if (!insideThinkTag) {
-                const idx = contentTagBuffer.indexOf('<think>')
-                if (idx !== -1) {
-                  const before = contentTagBuffer.slice(0, idx)
-                  if (before) yield { kind: 'content', text: before }
-                  contentTagBuffer = contentTagBuffer.slice(idx + 7)
-                  insideThinkTag = true
-                } else {
-                  // 检查末尾是否可能是 <think> 的不完整前缀（最多 6 字符）
-                  let holdback = 0
-                  for (let i = 1; i < 7 && i <= contentTagBuffer.length; i++) {
-                    if ('<think>'.startsWith(contentTagBuffer.slice(-i))) { holdback = i; break }
-                  }
-                  const safe = contentTagBuffer.slice(0, contentTagBuffer.length - holdback)
-                  if (safe) yield { kind: 'content', text: safe }
-                  contentTagBuffer = holdback ? contentTagBuffer.slice(-holdback) : ''
-                  break
-                }
-              } else {
-                const idx = contentTagBuffer.indexOf('</think>')
-                if (idx !== -1) {
-                  const before = contentTagBuffer.slice(0, idx)
-                  if (before) yield { kind: 'reasoning', text: before }
-                  contentTagBuffer = contentTagBuffer.slice(idx + 8)
-                  insideThinkTag = false
-                } else {
-                  let holdback = 0
-                  for (let i = 1; i < 8 && i <= contentTagBuffer.length; i++) {
-                    if ('</think>'.startsWith(contentTagBuffer.slice(-i))) { holdback = i; break }
-                  }
-                  const safe = contentTagBuffer.slice(0, contentTagBuffer.length - holdback)
-                  if (safe) yield { kind: 'reasoning', text: safe }
-                  contentTagBuffer = holdback ? contentTagBuffer.slice(-holdback) : ''
-                  break
-                }
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6).trim()
+          if (data === '[DONE]') {
+            const logUpdate: Record<string, unknown> = { status: 'success', statusCode: response!.status, duration: Date.now() - startTime }
+            if (usage) logUpdate.usage = usage
+            if (result && usage) result.usage = usage
+            updateLog(log.id, logUpdate)
+            if (usage) void recordUsage(usageEntry(meta, config, resolved.taskKind, usage))
+            return
+          }
+          try {
+            const json = JSON.parse(data)
+            const content = json.choices?.[0]?.delta?.content
+            if (content) yield content
+            // 提取 token 用量（通常在最后一个 chunk 中）
+            if (json.usage) {
+              usage = {
+                inputTokens: json.usage.prompt_tokens ?? 0,
+                outputTokens: json.usage.completion_tokens ?? 0,
+                totalTokens: json.usage.total_tokens ?? 0,
               }
             }
+          } catch {
+            // 忽略解析错误
           }
         }
-        // 提取 token 用量（通常在最后一个 chunk 中）
-        if (json.usage) usage = toTokenUsage(json.usage)
-      } catch {
-        // 与旧实现一致：忽略单个不可解析的 SSE data，不中断整个生成。
       }
     }
 
-    // 流结束：冲刷标签缓冲区残留
-    if (contentTagBuffer) {
-      yield { kind: insideThinkTag ? 'reasoning' : 'content', text: contentTagBuffer }
-      contentTagBuffer = ''
-    }
-
-    complete()
+    const logUpdate: Record<string, unknown> = { status: 'success', statusCode: response!.status, duration: Date.now() - startTime }
+    if (usage) logUpdate.usage = usage
+    if (result && usage) result.usage = usage
+    updateLog(log.id, logUpdate)
+    if (usage) void recordUsage(usageEntry(meta, config, resolved.taskKind, usage))
   } catch (err) {
     if (err instanceof AIError) throw err
     const normalizedError = normalizeAiTransportError(err)
@@ -429,6 +349,9 @@ export async function chat(
   signal?: AbortSignal,
   result?: ChatResult,
 ): Promise<string> {
+  const resolved = resolveRequestConfig(config, meta)
+  warnRouteFallback(resolved, meta)
+  config = resolved.config
   const trimmed = trimMessagesToFit(messages, config.provider, config.model, config.maxTokens, config.contextWindow)
   if (trimmed.trimmed) {
     console.warn(`[AI] request messages trimmed to fit context window: ${trimmed.totalInputTokens}/${trimmed.inputBudget} tokens`)
@@ -465,14 +388,7 @@ export async function chat(
   if (json.usage) {
     const usage = toTokenUsage(json.usage)
     if (result) result.usage = usage
-    void recordUsage({
-      projectId: meta?.projectId ?? null,
-      timestamp: Date.now(),
-      category: meta?.category ?? '',
-      model: config.model,
-      inputTokens: usage.inputTokens,
-      outputTokens: usage.outputTokens,
-    })
+    void recordUsage(usageEntry(meta, config, resolved.taskKind, usage))
   }
   return json.choices?.[0]?.message?.content || ''
 }
