@@ -47,7 +47,7 @@ import type { TemporalFact } from '../types/temporal-fact'
 import type { RetrievalChunk } from '../types/retrieval-chunk'
 import type { NarrativeSummaryNode } from '../types/narrative-summary'
 
-class StoryForgeDB extends Dexie {
+export class StoryForgeDB extends Dexie {
   projects!: Table<Project>
   worldviews!: Table<Worldview>
   storyCores!: Table<StoryCore>
@@ -129,8 +129,8 @@ class StoryForgeDB extends Dexie {
   // NS-5 —— 章→卷→全书层级摘要树（可重建派生缓存，不导出）
   narrativeSummaryNodes!: Table<NarrativeSummaryNode, number>
 
-  constructor() {
-    super('storyforge')
+  constructor(databaseName = 'storyforge') {
+    super(databaseName)
 
     this.version(1).stores({
       projects: '++id, name, createdAt, updatedAt',

@@ -100,11 +100,11 @@ D0.4 只建立可复现协议、固定夹具规格、结果格式和无浏览器
 npm.cmd run check:desktop-fixtures
 ```
 
-它先从真实 Dexie schema 重建并逐字节核对已提交的 `empty-v1`、`small-v1` 与严格 manifest，再从 `PROJECT_TABLES` 动态证明全部 42 个项目表恰好覆盖一次，并验证稳定 ID、固定时钟、精确正文长度、canonicalizer 的确定性/敏感性/危险键边界，以及 `small-v1` 的 10 章导出/清库/导入路径。两端数据先经过真实 JSON stringify/parse 产物边界；树表导出再稳定为父先顺序，防止清库导入后运输序号漂移。canonicalizer 会先验证完整输入图，再排除规格声明的根级/行级运行时路径；往返比较先精确验证目标项目名等于源名追加一次 `（导入）`，再还原该目标投影。源名本来带后缀时必须匹配双后缀；任何其他字段、嵌套同名时间字段、数组位置或引用变化都会使业务 hash 不等，Blob 与 JSON 不支持的值在排除前失败关闭。当前 `small-v1` 的规范化 source/re-export SHA-256 已相等。该命令仍不能代替生产 `web-tab`、真实浏览器 profile、重启或性能证据。
+它先从真实 Dexie schema 重建并逐字节核对已提交的 `empty-v1`、`small-v1`、`large-synthetic-v1`、`blob-ladder-v1`、`legacy-matrix-v1` 与严格 manifest，再从 `PROJECT_TABLES` 动态证明全部 42 个项目表恰好覆盖一次。除稳定 ID、固定时钟、精确正文长度和 canonicalizer 的确定性/敏感性/危险键边界外，`small-v1` 与 10 卷 × 100 章的 `large-synthetic-v1` 都经过真实 JSON 产物边界、清库、导入、主键重映射、注册引用完整性和规范化业务 hash 等值验证。Blob 配方按 1 MiB 分块重建并哈希，普通检查只重建 10/100/500 MiB，1 GiB 必须用显式 `--include-1g` 命令；仓库不提交大二进制。legacy matrix 从当前 `schema.ts` 的全部 Dexie 版本声明派生，为每个版本建最小旧库并用真实 `StoryForgeDB` 升到最新版本，要求规范化最新态 hash 全部相等。该命令仍不能代替生产 `web-tab`、真实浏览器 profile、重启或性能证据。
 
-当前项目 JSON 导出格式为 `version: 4`，并用精确 marker `nestedRefEncoding: "export-index-v1"` 声明嵌套数字是目标表的导出序号。`small-v1` 已确定性验证 `detailedOutlines` 的角色/场景角色/伏笔数组、`creativeRules[].citedReferenceIds[]` 与 `codexEntries[].refs.*[]` 在清库导入后全部解析到新主键，`dangling=[]`，`referenceRemapStatus=PASS`；规范化往返业务 hash 也为 `PASS`。旧 `version: 1/2/3` 仍可导入，但其嵌套数字只能按历史 raw database ID 原样保留；没有 v4 marker 时不得猜测或按导出序号解释。`empty-v1` / `small-v1` 当前状态为 `GENERATED_VALID`，文件、原始字节 SHA-256、业务 hash、逐表计数与断言记录在已提交的严格 manifest 中。
+当前项目 JSON 导出格式为 `version: 4`，并用精确 marker `nestedRefEncoding: "export-index-v1"` 声明嵌套数字是目标表的导出序号。`small-v1` 与 `large-synthetic-v1` 已确定性验证注册表声明的嵌套引用在清库导入后全部解析到新主键，规范化往返业务 hash 为 `PASS`。旧 `version: 1/2/3` 仍可导入，但其嵌套数字只能按历史 raw database ID 原样保留；没有 v4 marker 时不得猜测或按导出序号解释。上述五个合成夹具当前状态均为 `GENERATED_VALID`，文件、原始字节 SHA-256、业务 hash、逐表计数与断言记录在已提交的严格 manifest 中。
 
-尚未生成并通过上述断言的 large/blob/legacy/real 夹具，其状态仍只能是 `NOT_GENERATED` 或 `NOT_AVAILABLE`。
+`real-anonymized-v1` 仍为可选且 `NOT_AVAILABLE`；本任务未读取真实浏览器数据，也未把真实用户内容或密钥写入仓库。
 
 ## 6. 运行纪律
 

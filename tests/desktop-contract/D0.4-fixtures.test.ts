@@ -1,9 +1,17 @@
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
+import {
+  BLOB_LADDER_SIZES,
+  buildBlobLadderRecipe,
+  createDeterministicBlobChunk,
+  hashDeterministicBlob,
+  validateBlobLadderRecipe,
+} from '../../scripts/lib/windows-desktop-blob-fixture.mjs'
 import { db } from '../../src/lib/db/schema'
 import { exportProjectJSON, importProjectJSON } from '../../src/lib/export/json-export'
 import { PROJECT_TABLES } from '../../src/lib/registry/project-tables'
@@ -24,6 +32,7 @@ import {
   stableFixtureHexId,
   stableFixtureNumericId,
 } from '../helpers/d04-fixture-kit'
+import { assertRegisteredReferenceIntegrity } from '../helpers/d04-reference-integrity'
 import { seedFullProject } from '../helpers/seed-full-project'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
@@ -505,5 +514,116 @@ describe('D0.4 deterministic fixture contract', () => {
     expect(businessHashes.reExportedSha256).toBe(businessHashes.sourceSha256)
     expect(businessHashes.equal).toBe(true)
     expect(fixtureSpec.determinism.clock).toBe(D04_FIXTURE_CLOCK_ISO)
+  })
+
+  it('roundtrips the committed maximum project with exact scale and registered references', async () => {
+    const fixtureRoot = path.join(root, 'tests', 'fixtures', 'windows-desktop', 'd0.4-v1')
+    const largeBytes = fs.readFileSync(path.join(fixtureRoot, 'large-synthetic-v1.storyforge.json'))
+    const large = JSON.parse(largeBytes.toString('utf8')) as Record<string, unknown>
+    const manifest = JSON.parse(fs.readFileSync(
+      path.join(fixtureRoot, 'fixture-manifest.json'),
+      'utf8',
+    )) as { fixtures: Array<Record<string, unknown>> }
+    const manifestEntry = manifest.fixtures.find(entry => entry.id === 'large-synthetic-v1')
+    expect(manifestEntry).toBeDefined()
+    expect(createHash('sha256').update(largeBytes).digest('hex')).toBe(manifestEntry?.sha256)
+
+    const chapters = large.chapters as Array<{ content: string }>
+    const outlineNodes = large.outlineNodes as Array<{ type: string }>
+    expect(chapters).toHaveLength(1_000)
+    expect(chapters.every(chapter => countNonWhitespace(chapter.content) === 5_000)).toBe(true)
+    expect(outlineNodes.filter(node => node.type === 'volume')).toHaveLength(10)
+    expect((large.worldGroups as unknown[])).toHaveLength(1)
+    for (const spec of PROJECT_TABLES.filter(spec => spec.exportable && spec.name !== 'projects')) {
+      const rows = large[spec.name]
+      expect(Array.isArray(rows), `${spec.name} must be derived into the large export`).toBe(true)
+      expect((rows as unknown[]).length, `${spec.name} must be populated`).toBeGreaterThan(0)
+    }
+
+    const importedProjectId = await importProjectJSON(large as never)
+    await assertRegisteredReferenceIntegrity()
+    const reExported = throughJsonArtifact(await exportProjectJSON(importedProjectId))
+    const hashes = fixtureRoundtripBusinessHashes(large, reExported)
+    expect(hashes.equal).toBe(true)
+    expect(hashes.sourceSha256).toBe(manifestEntry?.businessSha256)
+
+    const damaged = structuredClone(large)
+    ;(damaged.chapters as Array<{ content: string }>)[511].content += '损坏'
+    expect(fixtureSha256(damaged)).not.toBe(fixtureSha256(large))
+  }, 30_000)
+
+  it('proves streamed blob and actual-schema legacy properties over representative cases', () => {
+    const fixtureRoot = path.join(root, 'tests', 'fixtures', 'windows-desktop', 'd0.4-v1')
+    const blobRecipe = validateBlobLadderRecipe(JSON.parse(fs.readFileSync(
+      path.join(fixtureRoot, 'blob-ladder-v1.json'),
+      'utf8',
+    )))
+    expect(blobRecipe.chunkBytes).toBe(1_048_576)
+    expect(blobRecipe.peakGeneratedBytes).toBe(1_048_576)
+    expect(blobRecipe.ordinaryCiIncludesOneGiB).toBe(false)
+    expect(blobRecipe.sizes.map((entry: { bytes: number }) => entry.bytes)).toEqual([
+      10 * 1_048_576,
+      100 * 1_048_576,
+      500 * 1_048_576,
+      1_024 * 1_048_576,
+    ])
+
+    const tenMiB = BLOB_LADDER_SIZES[0]
+    for (const chunkIndex of [0, 1, 9]) {
+      const first = createDeterministicBlobChunk(tenMiB, chunkIndex)
+      const second = createDeterministicBlobChunk(tenMiB, chunkIndex)
+      expect(first).toHaveLength(1_048_576)
+      expect(second.equals(first)).toBe(true)
+      const damaged = Buffer.from(first)
+      damaged[chunkIndex] ^= 0xff
+      expect(createHash('sha256').update(damaged).digest('hex')).not.toBe(
+        createHash('sha256').update(first).digest('hex'),
+      )
+    }
+    expect(hashDeterministicBlob(tenMiB)).toBe(blobRecipe.sizes[0].sha256)
+    expect(hashDeterministicBlob(tenMiB)).toBe(blobRecipe.sizes[0].sha256)
+    expect(() => buildBlobLadderRecipe({ includeOneGiB: false })).toThrow(
+      'locked 1 GiB SHA-256',
+    )
+    expect(() => hashDeterministicBlob(BLOB_LADDER_SIZES[3])).toThrow(
+      'explicit includeOneGiB opt-in',
+    )
+    expect(() => validateBlobLadderRecipe({
+      ...blobRecipe,
+      ordinaryCiIncludesOneGiB: true,
+    })).toThrow('frozen metadata')
+
+    const legacy = JSON.parse(fs.readFileSync(
+      path.join(fixtureRoot, 'legacy-matrix-v1.json'),
+      'utf8',
+    )) as {
+      normalizedLatestSha256: string
+      sourceArtifacts: Array<{
+        normalizedSha256: string
+        sourceVersion: number
+        upgradedVersion: number
+      }>
+      sourceVersionRange: { count: number; maximum: number; minimum: number }
+    }
+    const schemaSource = fs.readFileSync(path.join(root, 'src', 'lib', 'db', 'schema.ts'), 'utf8')
+    const declaredVersions = [...schemaSource.matchAll(/this\.version\((\d+)\)/g)]
+      .map(match => Number(match[1]))
+    const actualSchema = {
+      count: declaredVersions.length,
+      minimum: Math.min(...declaredVersions),
+      maximum: Math.max(...declaredVersions),
+    }
+    expect(legacy.sourceVersionRange).toEqual({
+      count: actualSchema.count,
+      minimum: actualSchema.minimum,
+      maximum: actualSchema.maximum,
+    })
+    expect(legacy.sourceArtifacts.map(entry => entry.sourceVersion)).toEqual(
+      Array.from({ length: actualSchema.count }, (_, index) => actualSchema.minimum + index),
+    )
+    expect(legacy.sourceArtifacts.every(entry => (
+      entry.upgradedVersion === actualSchema.maximum
+      && entry.normalizedSha256 === legacy.normalizedLatestSha256
+    ))).toBe(true)
   })
 })

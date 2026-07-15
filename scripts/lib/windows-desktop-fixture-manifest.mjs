@@ -3,6 +3,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { TextDecoder } from 'node:util'
 
+import { validateBlobLadderRecipe } from './windows-desktop-blob-fixture.mjs'
+
 const HASH_PATTERN = /^[a-f0-9]{64}$/
 const COMMIT_PATTERN = /^[a-f0-9]{40}$/
 const FIXTURE_DEFINITIONS = Object.freeze({
@@ -13,6 +15,18 @@ const FIXTURE_DEFINITIONS = Object.freeze({
   'small-v1': Object.freeze({
     artifactKind: 'project-export-v4',
     artifactPath: 'small-v1.storyforge.json',
+  }),
+  'large-synthetic-v1': Object.freeze({
+    artifactKind: 'project-export-v4',
+    artifactPath: 'large-synthetic-v1.storyforge.json',
+  }),
+  'blob-ladder-v1': Object.freeze({
+    artifactKind: 'streamed-blob-recipe-v1',
+    artifactPath: 'blob-ladder-v1.json',
+  }),
+  'legacy-matrix-v1': Object.freeze({
+    artifactKind: 'schema-upgrade-matrix-v1',
+    artifactPath: 'legacy-matrix-v1.json',
   }),
 })
 
@@ -119,7 +133,7 @@ export function buildFixtureManifest({ dataSourceCommit, generatorSourceSha256, 
     generator: {
       id: 'storyforge-d04-fixtures',
       sourceSha256: generatorSourceSha256,
-      version: '1.0.0',
+      version: '2.0.0',
     },
     dataSourceCommit,
     generatedAt: '2026-01-01T00:00:00.000Z',
@@ -158,7 +172,7 @@ export function validateFixtureManifest(value) {
   }
 
   requireExactKeys(manifest.generator, ['id', 'sourceSha256', 'version'], '$.generator')
-  if (manifest.generator.id !== 'storyforge-d04-fixtures' || manifest.generator.version !== '1.0.0') {
+  if (manifest.generator.id !== 'storyforge-d04-fixtures' || manifest.generator.version !== '2.0.0') {
     fail('generator identity/version is unsupported')
   }
   requireHash(manifest.generator.sourceSha256, 'generator.sourceSha256')
@@ -169,8 +183,9 @@ export function validateFixtureManifest(value) {
   requireHash(manifest.registry.sourceSha256, 'registry.sourceSha256')
   requireHash(manifest.registry.nameSetSha256, 'registry.nameSetSha256')
 
-  if (!Array.isArray(manifest.fixtures) || manifest.fixtures.length !== 2) {
-    fail('fixtures must contain exactly empty-v1 and small-v1')
+  if (!Array.isArray(manifest.fixtures)
+    || manifest.fixtures.length !== Object.keys(FIXTURE_DEFINITIONS).length) {
+    fail('fixtures must contain every generated D0.4 fixture exactly once')
   }
   const seen = new Set()
   for (const [index, fixtureValue] of manifest.fixtures.entries()) {
@@ -280,8 +295,37 @@ export function verifyFixtureManifest({ manifest: value, fixtureRoot }) {
         || Object.values(parsed.tableCounts ?? {}).some(count => count !== 0)) {
         fail('empty-v1 artifact semantics are invalid')
       }
-    } else if (parsed.version !== 4 || parsed.nestedRefEncoding !== 'export-index-v1') {
-      fail('small-v1 must be project export v4 with export-index-v1')
+    } else if (fixture.id === 'small-v1' || fixture.id === 'large-synthetic-v1') {
+      if (parsed.version !== 4 || parsed.nestedRefEncoding !== 'export-index-v1') {
+        fail(`${fixture.id} must be project export v4 with export-index-v1`)
+      }
+      if (fixture.id === 'large-synthetic-v1'
+        && (parsed.chapters?.length !== 1_000
+          || parsed.outlineNodes?.filter(row => row.type === 'volume').length !== 10
+          || parsed.worldGroups?.length !== 1)) {
+        fail('large-synthetic-v1 frozen scale is invalid')
+      }
+    } else if (fixture.id === 'blob-ladder-v1') {
+      try {
+        validateBlobLadderRecipe(parsed)
+      } catch (error) {
+        fail(`blob-ladder-v1 semantics are invalid: ${error.message}`)
+      }
+    } else if (fixture.id === 'legacy-matrix-v1') {
+      const range = parsed.sourceVersionRange
+      if (parsed.fixtureId !== 'legacy-matrix-v1'
+        || parsed.artifactKind !== 'schema-upgrade-matrix-v1'
+        || !range
+        || range.minimum !== 1
+        || range.maximum !== range.count
+        || parsed.sourceArtifacts?.length !== range.count
+        || parsed.sourceArtifacts.some((entry, index) => (
+          entry.sourceVersion !== index + 1
+          || entry.upgradedVersion !== range.maximum
+          || entry.normalizedSha256 !== parsed.normalizedLatestSha256
+        ))) {
+        fail('legacy-matrix-v1 semantics are invalid')
+      }
     }
   }
   return manifest

@@ -19,8 +19,10 @@ export interface SeedFullProjectOptions {
   now?: number
   projectName?: string
   chapterCount?: number
+  volumeCount?: number
   nonWhitespaceCharactersPerChapter?: number
   useDeterministicPrimaryKeys?: boolean
+  includeSecondaryWorldGroup?: boolean
 }
 
 /** 种子:每张 exportable 表至少一行,带双世界组 + 树 + 各类外键。返回各源 id 便于断言。 */
@@ -29,10 +31,14 @@ export async function seedFullProject(options: SeedFullProjectOptions = {}) {
   const now = options.now
     ?? (options.useDeterministicPrimaryKeys ? D04_FIXTURE_CLOCK_MS : DEFAULT_NOW)
   const chapterCount = options.chapterCount ?? 1
+  const volumeCount = options.volumeCount ?? 1
   const nonWhitespaceCharacters = options.nonWhitespaceCharactersPerChapter
 
   if (!Number.isSafeInteger(chapterCount) || chapterCount < 1) {
     throw new Error('chapterCount must be a positive safe integer')
+  }
+  if (!Number.isSafeInteger(volumeCount) || volumeCount < 1 || chapterCount % volumeCount !== 0) {
+    throw new Error('volumeCount must be positive and divide chapterCount exactly')
   }
   if (nonWhitespaceCharacters !== undefined
     && (!Number.isSafeInteger(nonWhitespaceCharacters) || nonWhitespaceCharacters < 1)) {
@@ -56,12 +62,24 @@ export async function seedFullProject(options: SeedFullProjectOptions = {}) {
 
   // ── 双世界组(order 决定导出序) ──
   const wgA = await addRow('worldGroups', { projectId, name: '主世界群', order: 0, createdAt: now, updatedAt: now } as any) as number
-  const wgB = await addRow('worldGroups', { projectId, name: '镜世界群', order: 1, createdAt: now, updatedAt: now } as any) as number
-  await addRow('worldGroupLinks', { projectId, fromGroupId: wgA, toGroupId: wgB, type: 'portal', createdAt: now, updatedAt: now } as any)
+  const includeSecondaryWorldGroup = options.includeSecondaryWorldGroup ?? true
+  const wgB = includeSecondaryWorldGroup
+    ? await addRow('worldGroups', { projectId, name: '镜世界群', order: 1, createdAt: now, updatedAt: now } as any) as number
+    : wgA
+  await addRow('worldGroupLinks', {
+    projectId,
+    fromGroupId: wgA,
+    toGroupId: wgB,
+    type: includeSecondaryWorldGroup ? 'portal' : 'loop',
+    createdAt: now,
+    updatedAt: now,
+  } as any)
 
   // ── worldScoped 设定表(挂 wgA / wgB,验证 worldGroupId 重映射) ──
   await addRow('worldviews', { projectId, worldGroupId: wgA, worldOrigin: '混沌创世', powerHierarchy: '炼气→金丹', createdAt: now, updatedAt: now } as any)
-  await addRow('worldviews', { projectId, worldGroupId: wgB, worldOrigin: '镜中倒影', createdAt: now, updatedAt: now } as any)
+  if (includeSecondaryWorldGroup) {
+    await addRow('worldviews', { projectId, worldGroupId: wgB, worldOrigin: '镜中倒影', createdAt: now, updatedAt: now } as any)
+  }
   await addRow('storyCores', { projectId, logline: '少年逆袭', mainPlot: '从山村到仙界', createdAt: now, updatedAt: now } as any)
   await addRow('powerSystems', { projectId, worldGroupId: wgA, name: '修真体系', description: '九重天', createdAt: now, updatedAt: now } as any)
   await addRow('geographies', { projectId, worldGroupId: wgA, overview: '三大洲', createdAt: now, updatedAt: now } as any)
@@ -93,7 +111,22 @@ export async function seedFullProject(options: SeedFullProjectOptions = {}) {
   const foreshadow = await addRow('foreshadows', { projectId, name: '神秘玉佩', type: 'item', status: 'planted', description: '身世之谜', createdAt: now, updatedAt: now } as any)
 
   // ── 大纲(树,wgA)+ 章节 + 细纲 + 情感卡 ──
-  const vol = await addRow('outlineNodes', { projectId, worldGroupId: wgA, parentId: null, type: 'volume', title: '第一卷', summary: '开篇', order: 0, createdAt: now, updatedAt: now } as any) as number
+  const volumeIds: number[] = []
+  for (let volumeIndex = 0; volumeIndex < volumeCount; volumeIndex += 1) {
+    volumeIds.push(await addRow('outlineNodes', {
+      projectId,
+      worldGroupId: wgA,
+      parentId: null,
+      type: 'volume',
+      title: volumeCount === 1 ? '第一卷' : `第${volumeIndex + 1}卷`,
+      summary: volumeIndex === 0 ? '开篇' : `卷${volumeIndex + 1}`,
+      order: volumeIndex,
+      createdAt: now,
+      updatedAt: now,
+    } as any) as number)
+  }
+  const vol = volumeIds[0]
+  const chaptersPerVolume = chapterCount / volumeCount
   const chapNodeIds: number[] = []
   const chapterIds: number[] = []
   for (let index = 0; index < chapterCount; index += 1) {
@@ -102,7 +135,7 @@ export async function seedFullProject(options: SeedFullProjectOptions = {}) {
     const chapNodeId = await addRow('outlineNodes', {
       projectId,
       worldGroupId: wgA,
-      parentId: vol,
+      parentId: volumeIds[Math.floor(index / chaptersPerVolume)],
       type: 'chapter',
       title,
       summary: index === 0 ? '觉醒' : `推进${chapterNumber}`,
@@ -199,6 +232,7 @@ export async function seedFullProject(options: SeedFullProjectOptions = {}) {
     char1,
     char2,
     vol,
+    volumeIds,
     chapNode,
     chapter,
     chapNodeIds,

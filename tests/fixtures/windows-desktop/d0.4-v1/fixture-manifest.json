@@ -1,5 +1,5 @@
 {
-  "dataSourceCommit": "e0e7857b147f69c4166dde162ea2b08417f017d4",
+  "dataSourceCommit": "f257e92114afd1eb3384f7736dc01a1dd670ae0e",
   "fixtureSpecVersion": "d0.4-fixtures-v1",
   "fixtures": [
     {
@@ -127,13 +127,145 @@
       "required": true,
       "sha256": "92f33232ffc977e06ee59d3f92d21f1ed341584f2f5a83235d5ae3d970a5249d",
       "status": "GENERATED_VALID"
+    },
+    {
+      "artifactKind": "project-export-v4",
+      "artifactPath": "large-synthetic-v1.storyforge.json",
+      "assertions": [
+        {
+          "id": "LARGE-TEN-VOLUMES-ONE-THOUSAND-CHAPTERS",
+          "status": "PASS"
+        },
+        {
+          "id": "LARGE-FIVE-MILLION-EDITOR-CHARACTERS",
+          "status": "PASS"
+        },
+        {
+          "id": "LARGE-DENSE-REGISTERED-REFERENCES-VALID",
+          "status": "PASS"
+        },
+        {
+          "id": "LARGE-GRAPH-AND-MEMORY-LOAD-SHAPES",
+          "status": "PASS"
+        },
+        {
+          "id": "LARGE-PRIMARY-KEYS-REMAPPED",
+          "status": "PASS"
+        },
+        {
+          "id": "LARGE-ROUNDTRIP-BUSINESS-HASH-EQUAL",
+          "status": "PASS"
+        }
+      ],
+      "businessSha256": "9b293633189bb1754a94930657cfdbec8d5701d568da78cf100c7a516c4b0ac0",
+      "byteLength": 9256819,
+      "id": "large-synthetic-v1",
+      "logicalCounts": {
+        "chapters": 1000,
+        "characterRelations": 257,
+        "characters": 64,
+        "codexCategories": 2,
+        "codexEntries": 128,
+        "creativeRules": 8,
+        "detailedOutlines": 1000,
+        "emotionBeatCards": 1000,
+        "foreshadows": 128,
+        "geographies": 1,
+        "historicalKeywords": 1,
+        "historicalTimelineEvents": 1,
+        "histories": 1,
+        "importantLocations": 128,
+        "itemLedger": 1000,
+        "notes": 256,
+        "outlineNodes": 1010,
+        "powerSystems": 1,
+        "projects": 1,
+        "referenceChunkAnalysis": 128,
+        "references": 32,
+        "stateCards": 128,
+        "storyArcs": 16,
+        "storyCores": 1,
+        "storyTimelineEvents": 1000,
+        "temporalFacts": 2000,
+        "userStyleProfiles": 1,
+        "worldGroupLinks": 1,
+        "worldGroups": 1,
+        "worldNodes": 128,
+        "worldRulesProfiles": 1,
+        "worldviews": 1
+      },
+      "required": true,
+      "sha256": "212e37e5ebcf939e00845d74384c1d2fde80b9bcd033dab355317e8951382141",
+      "status": "GENERATED_VALID"
+    },
+    {
+      "artifactKind": "streamed-blob-recipe-v1",
+      "artifactPath": "blob-ladder-v1.json",
+      "assertions": [
+        {
+          "id": "BLOB-ONE-MIB-STREAMING-CHUNKS",
+          "status": "PASS"
+        },
+        {
+          "id": "BLOB-RAW-BYTE-HASHES-LOCKED",
+          "status": "PASS"
+        },
+        {
+          "id": "BLOB-ONE-GIB-EXPLICIT-OPT-IN",
+          "status": "PASS"
+        }
+      ],
+      "businessSha256": "296ebabdebc852213008b7a62a339de2ec6f480a8a0aed26bcf2ae76fa2f5b17",
+      "byteLength": 1077,
+      "id": "blob-ladder-v1",
+      "logicalCounts": {
+        "chunks": 1634,
+        "sizes": 4,
+        "totalBytes": 1713373184
+      },
+      "required": true,
+      "sha256": "b8fa2ae11a5db9c1d7a4e9874be27ec02775d7876904138a977d88f43a4286ee",
+      "status": "GENERATED_VALID"
+    },
+    {
+      "artifactKind": "schema-upgrade-matrix-v1",
+      "artifactPath": "legacy-matrix-v1.json",
+      "assertions": [
+        {
+          "id": "LEGACY-RANGE-DERIVED-FROM-CURRENT-SCHEMA",
+          "status": "PASS"
+        },
+        {
+          "id": "LEGACY-ARTIFACT-PER-DECLARED-VERSION",
+          "status": "PASS"
+        },
+        {
+          "id": "LEGACY-ALL-SOURCES-UPGRADE-TO-LATEST",
+          "status": "PASS"
+        },
+        {
+          "id": "LEGACY-NORMALIZED-LATEST-HASH-EQUAL",
+          "status": "PASS"
+        }
+      ],
+      "businessSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57",
+      "byteLength": 11320,
+      "id": "legacy-matrix-v1",
+      "logicalCounts": {
+        "currentProjectTables": 42,
+        "schemaVersions": 37,
+        "sourceArtifacts": 37
+      },
+      "required": true,
+      "sha256": "5f59b9bbaab0553c37ab418d1f6265404f3c223e676513725d906b597fb211c0",
+      "status": "GENERATED_VALID"
     }
   ],
   "generatedAt": "2026-01-01T00:00:00.000Z",
   "generator": {
     "id": "storyforge-d04-fixtures",
-    "sourceSha256": "6255f5bafd3e9ad672c04fa0a7ec5aa5f02a6ff4a14056c7891bc323e5152707",
-    "version": "1.0.0"
+    "sourceSha256": "b7d94b30145d030a2fb8b2cb6878a1b29745d6670d529ae11e8e20f0827b14c8",
+    "version": "2.0.0"
   },
   "protocolVersion": "d0.4-v2",
   "registry": {

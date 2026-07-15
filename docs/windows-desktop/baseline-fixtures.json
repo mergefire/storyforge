@@ -47,8 +47,8 @@
       "artifactBytes": 1244,
       "artifactSha256": "dcdd05d02618562e54baa7fa3874634f3008299f0dd842442c8728af23b034be",
       "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
-      "manifestSha256": "a6ac6b88d6562ffa23d163187d0aea35e7648a3ac72da651bbe18a95e50db165",
-      "dataSourceCommit": "e0e7857b147f69c4166dde162ea2b08417f017d4",
+      "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd",
+      "dataSourceCommit": "f257e92114afd1eb3384f7736dc01a1dd670ae0e",
       "purpose": "First launch, empty database, empty project list and import boundary.",
       "expected": {
         "projects": 0,
@@ -66,8 +66,8 @@
       "artifactBytes": 39843,
       "artifactSha256": "92f33232ffc977e06ee59d3f92d21f1ed341584f2f5a83235d5ae3d970a5249d",
       "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
-      "manifestSha256": "a6ac6b88d6562ffa23d163187d0aea35e7648a3ac72da651bbe18a95e50db165",
-      "dataSourceCommit": "e0e7857b147f69c4166dde162ea2b08417f017d4",
+      "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd",
+      "dataSourceCommit": "f257e92114afd1eb3384f7736dc01a1dd670ae0e",
       "purpose": "Representative daily editing, save, restart, export and import.",
       "expected": {
         "projects": 1,
@@ -109,25 +109,45 @@
     {
       "id": "large-synthetic-v1",
       "required": true,
-      "artifactStatus": "NOT_GENERATED",
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/large-synthetic-v1.storyforge.json",
+      "artifactBytes": 9256819,
+      "artifactSha256": "212e37e5ebcf939e00845d74384c1d2fde80b9bcd033dab355317e8951382141",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd",
+      "dataSourceCommit": "f257e92114afd1eb3384f7736dc01a1dd670ae0e",
       "purpose": "Deterministic worst-normal project for opening, editor, graph/canvas and 30-minute memory workloads.",
       "expected": {
         "projects": 1,
         "worldGroups": 1,
         "worldviews": 1,
-        "worldNodes": 1,
+        "worldNodes": 128,
         "volumes": 10,
         "chaptersPerVolume": 100,
         "chapters": 1000,
         "wordsPerChapter": 5000,
         "registryCoverage": "ALL_APPLICABLE_PROJECT_TABLES",
         "crossReferences": "DETERMINISTIC_DENSE_BUT_VALID"
+      },
+      "currentValidation": {
+        "status": "PASS_ARTIFACT_GENERATED_VALIDATED",
+        "editorCharacters": 5000000,
+        "characterRelations": 257,
+        "temporalFacts": 2000,
+        "roundtripHashStatus": "PASS",
+        "registeredReferenceIntegrity": "PASS"
       }
     },
     {
       "id": "blob-ladder-v1",
       "required": true,
-      "artifactStatus": "NOT_GENERATED",
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/blob-ladder-v1.json",
+      "artifactBytes": 1077,
+      "artifactSha256": "b8fa2ae11a5db9c1d7a4e9874be27ec02775d7876904138a977d88f43a4286ee",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd",
+      "dataSourceCommit": "f257e92114afd1eb3384f7736dc01a1dd670ae0e",
       "purpose": "Binary persistence, memory pressure and byte-exact import/export.",
       "expected": {
         "sizesBytes": [
@@ -136,7 +156,12 @@
           524288000,
           1073741824
         ],
-        "sha256": "COMPUTE_AFTER_GENERATION",
+        "sha256BySize": {
+          "10485760": "d67229b9fb611bafc5d5d76c1876eb2dcf97d8ff0ecd1c3e1fa4fc20daf363a6",
+          "104857600": "67a626e4d3e7910d7cdbaa586afc1b80451cef362bfc4d3d544f3f70abbc0f74",
+          "524288000": "42d2e4c3356043bb931c490556eb64ccd65f9d5497a7642902971643cdf16e9d",
+          "1073741824": "a8a8bc69a2efdbfe810cf0c7d7528dde07ca885f745662fab30085b7975e77dc"
+        },
         "chunkBytes": 1048576,
         "fullGenerationMode": "EXPLICIT_COMMAND_ONLY",
         "ordinaryCi": false,
@@ -146,7 +171,13 @@
     {
       "id": "legacy-matrix-v1",
       "required": true,
-      "artifactStatus": "NOT_GENERATED",
+      "artifactStatus": "GENERATED_VALID",
+      "artifactPath": "tests/fixtures/windows-desktop/d0.4-v1/legacy-matrix-v1.json",
+      "artifactBytes": 11320,
+      "artifactSha256": "5f59b9bbaab0553c37ab418d1f6265404f3c223e676513725d906b597fb211c0",
+      "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
+      "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd",
+      "dataSourceCommit": "f257e92114afd1eb3384f7736dc01a1dd670ae0e",
       "purpose": "Upgrade and import compatibility across every schema version still declared by the current database implementation.",
       "expected": {
         "versionSource": "src/lib/db/schema.ts: every this.version(n) declaration",
@@ -157,7 +188,8 @@
         "artifactFormat": "REBUILDABLE_RECIPE_AND_ASSERTIONS",
         "forbiddenArtifactFormat": "BROWSER_PROFILE_OR_LEVELDB_SNAPSHOT",
         "artifactPerVersion": true,
-        "latestNormalizedHashMustMatch": true
+        "latestNormalizedHashMustMatch": true,
+        "latestNormalizedSha256": "75125e0950c5e1bfe7b3ee634585e0dd8c485e50b92666490a96e8f4ec571e57"
       }
     },
     {

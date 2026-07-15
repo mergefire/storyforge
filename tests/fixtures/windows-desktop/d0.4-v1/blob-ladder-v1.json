@@ -1,0 +1,39 @@
+{
+  "artifactKind": "streamed-blob-recipe-v1",
+  "chunkBytes": 1048576,
+  "fixtureId": "blob-ladder-v1",
+  "ordinaryCiIncludesOneGiB": false,
+  "peakGeneratedBytes": 1048576,
+  "schemaVersion": "1.0.0",
+  "seed": "storyforge-windows-d0.4-blob-ladder-v1",
+  "sizes": [
+    {
+      "bytes": 10485760,
+      "chunkCount": 10,
+      "explicitOptIn": false,
+      "id": "blob-10m",
+      "sha256": "d67229b9fb611bafc5d5d76c1876eb2dcf97d8ff0ecd1c3e1fa4fc20daf363a6"
+    },
+    {
+      "bytes": 104857600,
+      "chunkCount": 100,
+      "explicitOptIn": false,
+      "id": "blob-100m",
+      "sha256": "67a626e4d3e7910d7cdbaa586afc1b80451cef362bfc4d3d544f3f70abbc0f74"
+    },
+    {
+      "bytes": 524288000,
+      "chunkCount": 500,
+      "explicitOptIn": false,
+      "id": "blob-500m",
+      "sha256": "42d2e4c3356043bb931c490556eb64ccd65f9d5497a7642902971643cdf16e9d"
+    },
+    {
+      "bytes": 1073741824,
+      "chunkCount": 1024,
+      "explicitOptIn": true,
+      "id": "blob-1g",
+      "sha256": "a8a8bc69a2efdbfe810cf0c7d7528dde07ca885f745662fab30085b7975e77dc"
+    }
+  ]
+}

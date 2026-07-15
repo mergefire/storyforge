@@ -31,31 +31,31 @@
         "id": "empty-v1",
         "required": true,
         "artifactStatus": "GENERATED_VALID",
-        "manifestSha256": "a6ac6b88d6562ffa23d163187d0aea35e7648a3ac72da651bbe18a95e50db165"
+          "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd"
       },
       {
         "id": "small-v1",
         "required": true,
         "artifactStatus": "GENERATED_VALID",
-        "manifestSha256": "a6ac6b88d6562ffa23d163187d0aea35e7648a3ac72da651bbe18a95e50db165"
+          "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd"
       },
       {
         "id": "large-synthetic-v1",
         "required": true,
-        "artifactStatus": "NOT_GENERATED",
-        "manifestSha256": null
+          "artifactStatus": "GENERATED_VALID",
+          "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd"
       },
       {
         "id": "blob-ladder-v1",
         "required": true,
-        "artifactStatus": "NOT_GENERATED",
-        "manifestSha256": null
+          "artifactStatus": "GENERATED_VALID",
+          "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd"
       },
       {
         "id": "legacy-matrix-v1",
         "required": true,
-        "artifactStatus": "NOT_GENERATED",
-        "manifestSha256": null
+          "artifactStatus": "GENERATED_VALID",
+          "manifestSha256": "f6a87624b234800e5181058674deaeb43be5477a187a6e97a4b0c4da637a2afd"
       },
       {
         "id": "real-anonymized-v1",

@@ -8,6 +8,11 @@ import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 
 import {
+  buildBlobLadderRecipe,
+  materializeBlobLadder,
+  validateBlobLadderRecipe,
+} from './lib/windows-desktop-blob-fixture.mjs'
+import {
   buildFixtureManifest,
   validateFixtureManifest,
   verifyFixtureManifest,
@@ -26,12 +31,20 @@ const fixtureRoot = path.join(
 const artifactNames = Object.freeze([
   'empty-v1.json',
   'small-v1.storyforge.json',
+  'large-synthetic-v1.storyforge.json',
+  'blob-ladder-v1.json',
+  'legacy-matrix-v1.json',
   'fixture-manifest.json',
 ])
 const generatorSourceFiles = Object.freeze([
+  'scripts/lib/windows-desktop-blob-fixture.mjs',
   'scripts/lib/windows-desktop-fixture-manifest.mjs',
   'scripts/windows-desktop-fixtures-runtime.ts',
   'scripts/windows-desktop-fixtures.mjs',
+  'tests/helpers/d04-fixture-kit.ts',
+  'tests/helpers/d04-reference-integrity.ts',
+  'tests/helpers/seed-full-project.ts',
+  'tests/helpers/seed-large-synthetic-project.ts',
 ])
 
 function sha256Utf8(value) {
@@ -72,6 +85,7 @@ async function loadRuntime() {
     appType: 'custom',
     configFile: false,
     logLevel: 'error',
+    optimizeDeps: { noDiscovery: true },
     root: repoRoot,
     server: { middlewareMode: true },
   })
@@ -83,10 +97,16 @@ async function loadRuntime() {
   }
 }
 
-function buildFiles(runtime, dataSourceCommit) {
+function buildFiles(runtime, dataSourceCommit, { includeOneGiB, lockedOneGiBSha256 = null }) {
   const registry = readRegistryFacts()
-  const artifactEntries = [runtime.empty, runtime.small].map(artifact => ({
-    id: artifact.artifactPath === 'empty-v1.json' ? 'empty-v1' : 'small-v1',
+  const runtimeArtifacts = [
+    ['empty-v1', runtime.empty],
+    ['small-v1', runtime.small],
+    ['large-synthetic-v1', runtime.large],
+    ['legacy-matrix-v1', runtime.legacy],
+  ]
+  const artifactEntries = runtimeArtifacts.map(([id, artifact]) => ({
+    id,
     required: true,
     status: 'GENERATED_VALID',
     artifactKind: artifact.artifactKind,
@@ -97,6 +117,29 @@ function buildFiles(runtime, dataSourceCommit) {
     logicalCounts: artifact.logicalCounts,
     assertions: artifact.assertions,
   }))
+  const blobRecipe = buildBlobLadderRecipe({ includeOneGiB, lockedOneGiBSha256 })
+  validateBlobLadderRecipe(blobRecipe)
+  const blobText = canonicalJson(blobRecipe)
+  artifactEntries.splice(3, 0, {
+    id: 'blob-ladder-v1',
+    required: true,
+    status: 'GENERATED_VALID',
+    artifactKind: 'streamed-blob-recipe-v1',
+    artifactPath: 'blob-ladder-v1.json',
+    byteLength: Buffer.byteLength(blobText, 'utf8'),
+    sha256: sha256Utf8(blobText),
+    businessSha256: sha256Utf8(canonicalJson(blobRecipe.sizes)),
+    logicalCounts: {
+      sizes: blobRecipe.sizes.length,
+      chunks: blobRecipe.sizes.reduce((total, entry) => total + entry.chunkCount, 0),
+      totalBytes: blobRecipe.sizes.reduce((total, entry) => total + entry.bytes, 0),
+    },
+    assertions: [
+      { id: 'BLOB-ONE-MIB-STREAMING-CHUNKS', status: 'PASS' },
+      { id: 'BLOB-RAW-BYTE-HASHES-LOCKED', status: 'PASS' },
+      { id: 'BLOB-ONE-GIB-EXPLICIT-OPT-IN', status: 'PASS' },
+    ],
+  })
   const manifest = buildFixtureManifest({
     dataSourceCommit,
     generatorSourceSha256: generatorSourceSha256(),
@@ -107,6 +150,9 @@ function buildFiles(runtime, dataSourceCommit) {
   return new Map([
     ['empty-v1.json', runtime.empty.text],
     ['small-v1.storyforge.json', runtime.small.text],
+    ['large-synthetic-v1.storyforge.json', runtime.large.text],
+    ['blob-ladder-v1.json', blobText],
+    ['legacy-matrix-v1.json', runtime.legacy.text],
     ['fixture-manifest.json', canonicalJson(manifest)],
   ])
 }
@@ -135,27 +181,64 @@ function compareCommittedFiles(expected) {
 
 function parseArguments(argv) {
   const [command, ...rest] = argv
-  if (!['generate', 'check'].includes(command)) {
-    throw new Error('usage: windows-desktop-fixtures.mjs <generate --data-source-commit 40hex|check>')
-  }
   if (command === 'check') {
     if (rest.length !== 0) throw new Error('check does not accept arguments')
-    return { command, dataSourceCommit: null }
+    return { command }
   }
-  if (rest.length !== 2
-    || rest[0] !== '--data-source-commit'
-    || !/^[a-f0-9]{40}$/.test(rest[1])) {
-    throw new Error('generate requires --data-source-commit followed by a full lowercase Git SHA-1')
+  if (command === 'generate' || command === 'refresh') {
+    if (rest.length !== 3
+      || rest[0] !== '--data-source-commit'
+      || !/^[a-f0-9]{40}$/.test(rest[1])
+      || rest[2] !== '--include-1g') {
+      throw new Error(`${command} requires --data-source-commit 40hex --include-1g`)
+    }
+    return { command, dataSourceCommit: rest[1], includeOneGiB: true }
   }
-  return { command, dataSourceCommit: rest[1] }
+  if (command === 'verify-blobs') {
+    if (rest.length !== 1 || rest[0] !== '--include-1g') {
+      throw new Error('verify-blobs requires the explicit --include-1g opt-in')
+    }
+    return { command, includeOneGiB: true }
+  }
+  if (command === 'materialize-blobs') {
+    if ((rest.length !== 2 && rest.length !== 3)
+      || rest[0] !== '--output'
+      || (rest.length === 3 && rest[2] !== '--include-1g')) {
+      throw new Error('materialize-blobs requires --output ABSOLUTE_PATH [--include-1g]')
+    }
+    return { command, outputDirectory: rest[1], includeOneGiB: rest.length === 3 }
+  }
+  throw new Error(
+    'usage: windows-desktop-fixtures.mjs <check|generate|refresh|verify-blobs|materialize-blobs>',
+  )
 }
 
-async function generate(dataSourceCommit) {
-  if (fs.existsSync(fixtureRoot)) {
+function committedBlobRecipe() {
+  const value = JSON.parse(fs.readFileSync(path.join(fixtureRoot, 'blob-ladder-v1.json'), 'utf8'))
+  return validateBlobLadderRecipe(value)
+}
+
+function committedOneGiBSha256() {
+  const entry = committedBlobRecipe().sizes.find(size => size.id === 'blob-1g')
+  if (!entry) throw new Error('blob-ladder-v1 is missing the 1 GiB entry')
+  return entry.sha256
+}
+
+async function writeFixtureSet(dataSourceCommit, { refresh }) {
+  if (!refresh && fs.existsSync(fixtureRoot)) {
     throw new Error(`refusing to overwrite existing fixture version: ${fixtureRoot}`)
   }
+  if (refresh) {
+    const current = fs.readdirSync(fixtureRoot).sort()
+    const prior = ['empty-v1.json', 'fixture-manifest.json', 'small-v1.storyforge.json'].sort()
+    const complete = [...artifactNames].sort()
+    if (JSON.stringify(current) !== JSON.stringify(prior)
+      && JSON.stringify(current) !== JSON.stringify(complete)) {
+      throw new Error('refusing to refresh an unexpected fixture directory file set')
+    }
+  }
   const runtime = await loadRuntime()
-  const files = buildFiles(runtime, dataSourceCommit)
+  const files = buildFiles(runtime, dataSourceCommit, { includeOneGiB: true })
   const parent = path.dirname(fixtureRoot)
   fs.mkdirSync(parent, { recursive: true })
   const temporary = fs.mkdtempSync(path.join(parent, '.d0.4-v1-'))
@@ -166,12 +249,20 @@ async function generate(dataSourceCommit) {
     assertExactFiles(temporary, artifactNames)
     const manifest = JSON.parse(fs.readFileSync(path.join(temporary, 'fixture-manifest.json'), 'utf8'))
     verifyFixtureManifest({ manifest, fixtureRoot: temporary })
-    fs.renameSync(temporary, fixtureRoot)
+    if (refresh) {
+      for (const name of artifactNames) {
+        fs.copyFileSync(path.join(temporary, name), path.join(fixtureRoot, name))
+      }
+      assertExactFiles(fixtureRoot, artifactNames)
+      fs.rmSync(temporary, { recursive: true, force: true })
+    } else {
+      fs.renameSync(temporary, fixtureRoot)
+    }
   } catch (error) {
     fs.rmSync(temporary, { recursive: true, force: true })
     throw error
   }
-  console.log(`Generated deterministic D0.4 fixtures at ${fixtureRoot}`)
+  console.log(`${refresh ? 'Refreshed' : 'Generated'} deterministic D0.4 fixtures at ${fixtureRoot}`)
 }
 
 async function check() {
@@ -180,11 +271,47 @@ async function check() {
   validateFixtureManifest(manifest)
   verifyFixtureManifest({ manifest, fixtureRoot })
   const runtime = await loadRuntime()
-  const expected = buildFiles(runtime, manifest.dataSourceCommit)
+  const expected = buildFiles(runtime, manifest.dataSourceCommit, {
+    includeOneGiB: false,
+    lockedOneGiBSha256: committedOneGiBSha256(),
+  })
   compareCommittedFiles(expected)
   console.log('D0.4 committed fixture artifacts are valid and reproducible')
 }
 
-const { command, dataSourceCommit } = parseArguments(process.argv.slice(2))
-if (command === 'generate') await generate(dataSourceCommit)
-else await check()
+function verifyBlobs() {
+  const committed = committedBlobRecipe()
+  const rebuilt = buildBlobLadderRecipe({ includeOneGiB: true })
+  if (canonicalJson(committed) !== canonicalJson(rebuilt)) {
+    throw new Error('blob-ladder-v1 differs from explicit full-ladder reconstruction')
+  }
+  console.log('D0.4 full blob ladder, including 1 GiB, is reproducible')
+}
+
+function materializeBlobs(outputDirectory, includeOneGiB) {
+  const committed = committedBlobRecipe()
+  const expected = new Map(committed.sizes.map(size => [size.id, size.sha256]))
+  const results = materializeBlobLadder({
+    outputDirectory: path.resolve(outputDirectory),
+    includeOneGiB,
+  })
+  for (const result of results) {
+    if (result.sha256 !== expected.get(result.id)) {
+      throw new Error(`${result.id} materialized hash differs from blob-ladder-v1`)
+    }
+  }
+  console.log(JSON.stringify(results, null, 2))
+}
+
+const parsed = parseArguments(process.argv.slice(2))
+if (parsed.command === 'generate') {
+  await writeFixtureSet(parsed.dataSourceCommit, { refresh: false })
+} else if (parsed.command === 'refresh') {
+  await writeFixtureSet(parsed.dataSourceCommit, { refresh: true })
+} else if (parsed.command === 'check') {
+  await check()
+} else if (parsed.command === 'verify-blobs') {
+  verifyBlobs()
+} else {
+  materializeBlobs(parsed.outputDirectory, parsed.includeOneGiB)
+}
