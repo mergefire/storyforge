@@ -332,6 +332,27 @@ impl AppState {
             .map(|_| record.credential_id)
     }
 
+    pub fn reveal_secret(&self, key: &str) -> RuntimeResult<Option<String>> {
+        if let Some(record) = self
+            .session_secrets
+            .lock()
+            .expect("session secret mutex poisoned")
+            .get(key)
+        {
+            return Ok(Some(record.value.clone()));
+        }
+        let exists = self
+            .metadata
+            .lock()
+            .expect("metadata mutex poisoned")
+            .device_secrets
+            .contains_key(key);
+        if !exists {
+            return Ok(None);
+        }
+        platform::credential_read(&credential_target(key))
+    }
+
     pub fn resolve_secret(&self, credential_id: &str) -> RuntimeResult<ResolvedSecret> {
         if let Some(record) = self
             .session_secrets
@@ -473,6 +494,19 @@ pub fn validate_secret_key(key: &str) -> RuntimeResult<()> {
     }
 }
 
+pub fn validate_ai_secret_key(key: &str) -> RuntimeResult<()> {
+    validate_secret_key(key)?;
+    if key.starts_with("storyforge.ai.") {
+        Ok(())
+    } else {
+        Err(RuntimeError::new(
+            RuntimeErrorCode::InvalidInput,
+            "仅允许读取 AI 凭据",
+            "secrets.reveal",
+        ))
+    }
+}
+
 fn validate_secret_descriptor(descriptor: &SecretDescriptor) -> RuntimeResult<()> {
     let key_is_valid = descriptor.key == "storyforge.github.gist"
         || descriptor.key == "storyforge.ai.primary"
@@ -538,7 +572,14 @@ pub fn validate_binding_id(binding_id: &str) -> RuntimeResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{credential_target, validate_binding_id};
+    use super::{credential_target, validate_ai_secret_key, validate_binding_id};
+
+    #[test]
+    fn ai_secret_reveal_rejects_non_ai_credentials() {
+        assert!(validate_ai_secret_key("storyforge.ai.primary").is_ok());
+        assert!(validate_ai_secret_key("storyforge.ai.preset.local").is_ok());
+        assert!(validate_ai_secret_key("storyforge.github.gist").is_err());
+    }
 
     #[test]
     fn binding_ids_are_opaque_and_path_free() {

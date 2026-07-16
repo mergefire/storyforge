@@ -580,7 +580,7 @@ interface RuntimeAdapter {
 - 业务组件不得直接访问 Tauri 插件。
 - Rust 不访问 Dexie 业务数据；需要项目数据时由注册表派生的 TypeScript 层提供最小 DTO。
 - Prompt/body 构造、SSE 解析、业务重试、usage 记账和 adopt 留在共享 TypeScript；Tauri Channel 只传原始字节，AbortSignal 必须能取消真实底层请求。
-- SecretStore 只提供 set/delete/exists，网络请求只传 credentialId，不提供读取明文 secret 的接口；preset/Gist 删除时同步删除对应凭据。
+- SecretStore 的网络请求只传 credentialId；AI 配置界面允许通过专用 AI-key reveal 接口恢复本机 Key，Gist 等其它 secret 不开放回显；preset/Gist 删除时同步删除对应凭据。
 - 文件公开接口使用 purpose union；目录持久授权只向业务层暴露 bindingId，禁止 `readFile(path)` / `writeFile(path)` 这类绝对路径万能接口。
 
 **验证**

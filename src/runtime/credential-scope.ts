@@ -9,7 +9,7 @@ import { RuntimeError } from './errors'
 const AI_PROVIDERS = new Set([
   'deepseek', 'openai', 'qwen', 'doubao', 'minimax', 'glm', 'wenxin',
   'gemini', 'poe', 'kimi', 'claude', 'modelscope', 'nvidia', 'agnes',
-  'longcat', 'ollama', 'custom',
+  'longcat', 'opencode', 'ollama', 'custom',
 ])
 const PRESET_KEY_PREFIX = 'storyforge.ai.preset.'
 const SAFE_PROFILE = /^[a-zA-Z0-9._:-]{1,160}$/
@@ -23,7 +23,9 @@ export function aiCredentialScope(
     kind: 'ai',
     provider: endpoint.provider,
     profileId: endpoint.profileId,
-    operation: endpoint.operation,
+    // Model listing authenticates with the chat credential instead of
+    // creating a second stored copy of the same API key.
+    operation: endpoint.operation === 'models' ? 'chat-completions' : endpoint.operation,
     configuredBaseUrl: endpoint.configuredBaseUrl,
   }
 }

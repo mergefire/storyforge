@@ -439,6 +439,10 @@ export function createTauriRuntime(options: TauriRuntimeOptions = {}): RuntimeAd
           .then(value => value as CredentialId | null)
           .catch(error => { throw ipcError(error, 'secrets.reference') })
       },
+      async reveal(key) {
+        return ipc.invoke<string | null>('runtime_ai_secret_reveal', { key })
+          .catch(error => { throw ipcError(error, 'secrets.reveal') })
+      },
       async delete(key) {
         await ipc.invoke('runtime_secret_delete', { key })
           .catch(error => { throw ipcError(error, 'secrets.delete') })

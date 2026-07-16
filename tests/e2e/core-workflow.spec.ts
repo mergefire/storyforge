@@ -233,7 +233,7 @@ test('本地 OpenAI 兼容服务可刷新并保存模型列表', async ({ page }
 
   const modelList = page.getByLabel('服务返回的模型列表')
   await expect(modelList).toBeVisible()
-  await expect(modelList.locator('option')).toHaveCount(3)
+  await expect(modelList.locator('option')).toHaveCount(2)
   await modelList.selectOption('qwen-local')
   await expect(baseUrl).toHaveValue('http://localhost:1234/v1')
 

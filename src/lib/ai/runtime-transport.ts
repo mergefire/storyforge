@@ -11,6 +11,17 @@ import {
 import type { AIProvider } from '../types'
 import { normalizeOpenAIBaseUrl } from './openai-endpoint'
 
+export interface AiCredentialTarget {
+  key: Extract<SecretKey, `storyforge.ai.${string}`>
+  profileId: string
+}
+
+export function aiCredentialTarget(presetId?: string | null): AiCredentialTarget {
+  return presetId
+    ? { key: `storyforge.ai.preset.${presetId}`, profileId: presetId }
+    : { key: 'storyforge.ai.primary', profileId: 'primary' }
+}
+
 export interface BindAiCredentialOptions {
   key: Extract<SecretKey, `storyforge.ai.${string}`>
   apiKey: string
@@ -31,21 +42,6 @@ export interface ExecuteAiRequestOptions {
   signal?: AbortSignal
 }
 
-const ACTIVE_AI_PRESET_KEY = 'storyforge-ai-active-preset'
-
-function activeCredentialKey(
-  key: Extract<SecretKey, `storyforge.ai.${string}`>,
-): Extract<SecretKey, `storyforge.ai.${string}`> {
-  if (key !== 'storyforge.ai.primary' || typeof localStorage === 'undefined') return key
-  const activePreset = localStorage.getItem(ACTIVE_AI_PRESET_KEY)
-  return activePreset ? `storyforge.ai.preset.${activePreset}` : key
-}
-
-function activeProfileId(profileId: string): string {
-  if (profileId !== 'primary' || typeof localStorage === 'undefined') return profileId
-  return localStorage.getItem(ACTIVE_AI_PRESET_KEY) || profileId
-}
-
 /**
  * Plaintext credentials cross the runtime boundary only through SecretStore.put.
  * An empty key means this request uses an anonymous OpenAI-compatible endpoint.
@@ -62,20 +58,19 @@ export async function bindAiCredential({
   configuredBaseUrl,
   persistence = 'session',
 }: BindAiCredentialOptions): Promise<CredentialId | undefined> {
-  const targetKey = activeCredentialKey(key)
   if (!apiKey) {
     if (!getRuntime().secrets.policy.reuseReferenceWhenPlaintextOmitted) return undefined
-    const activeReference = await getRuntime().secrets.reference(targetKey)
+    const activeReference = await getRuntime().secrets.reference(key)
     if (activeReference) return activeReference
     return undefined
   }
   return await getRuntime().secrets.put({
-    key: targetKey,
+    key,
     persistence,
     scope: {
       kind: 'ai',
       provider,
-      profileId: activeProfileId(profileId),
+      profileId,
       operation,
       configuredBaseUrl: normalizeOpenAIBaseUrl(configuredBaseUrl).baseUrl,
     },
@@ -86,12 +81,7 @@ export async function bindAiCredential({
 export function deleteAiCredential(
   key: Extract<SecretKey, `storyforge.ai.${string}`>,
 ): Promise<void> {
-  const targetKey = activeCredentialKey(key)
-  if (targetKey === key) return getRuntime().secrets.delete(key)
-  return Promise.all([
-    getRuntime().secrets.delete(targetKey),
-    getRuntime().secrets.delete(key),
-  ]).then(() => undefined)
+  return getRuntime().secrets.delete(key)
 }
 
 /** Performs one transport attempt. Retry policy belongs to the TypeScript caller. */
@@ -108,7 +98,7 @@ export async function executeAiRequest({
     return await getRuntime().ai.execute({
       endpoint: {
         provider,
-        profileId: activeProfileId(profileId),
+        profileId,
         operation,
         configuredBaseUrl: normalizeOpenAIBaseUrl(configuredBaseUrl).baseUrl,
       },

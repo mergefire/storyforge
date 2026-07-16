@@ -15,6 +15,7 @@ import { initializeRuntimeCapabilities } from './runtime/bootstrap'
 import { desktopPlaintextCredentialCanaries, migrateLegacyRuntimeCredentials } from './runtime/credential-migration'
 import { RuntimeRouter } from './runtime/router'
 import { useGistStore } from './stores/gist'
+import { useAIConfigStore } from './stores/ai-config'
 import './index.css'
 
 // 从 localStorage 恢复主题（兼容旧主题名迁移）
@@ -53,6 +54,7 @@ async function bootstrap() {
 
   try {
     await migrateLegacyRuntimeCredentials(getRuntime())
+    await useAIConfigStore.getState().refreshCredentialAvailability()
     await useGistStore.getState().initializeCredential()
     const canaries = getRuntime().secrets.policy.migrateLegacyPlaintext
       ? desktopPlaintextCredentialCanaries()

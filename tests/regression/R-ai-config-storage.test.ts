@@ -72,7 +72,7 @@ describe('R-AI-CONFIG · API Key 存储策略', () => {
   it('session-only 模式保存预设时不把当前 API Key 写进预设 localStorage', async () => {
     const useAIConfigStore = await freshStore()
     await useAIConfigStore.getState().setConfig({ apiKey: 'sk-session' })
-    useAIConfigStore.getState().saveAsPreset('会话预设')
+    await useAIConfigStore.getState().saveAsPreset('会话预设')
 
     const presets = JSON.parse(localStorage.getItem('storyforge-ai-presets') || '[]')
     expect(presets[0].config.apiKey).toBe('')
@@ -80,14 +80,14 @@ describe('R-AI-CONFIG · API Key 存储策略', () => {
 
   it('应用预设后修改配置仍保留可覆盖的来源预设', async () => {
     const useAIConfigStore = await freshStore()
-    const id = useAIConfigStore.getState().saveAsPreset('主力配置')
-    useAIConfigStore.getState().applyPreset(id)
+    const id = await useAIConfigStore.getState().saveAsPreset('主力配置')
+    await useAIConfigStore.getState().applyPreset(id)
     useAIConfigStore.getState().setConfig({ baseUrl: 'https://example.com/v1', model: 'new-model' })
 
     expect(useAIConfigStore.getState().activePresetId).toBeNull()
     expect(useAIConfigStore.getState().editingPresetId).toBe(id)
 
-    useAIConfigStore.getState().updatePresetFromCurrent(id)
+    await useAIConfigStore.getState().updatePresetFromCurrent(id)
     const preset = useAIConfigStore.getState().presets.find(p => p.id === id)
     expect(preset?.config.baseUrl).toBe('https://example.com/v1')
     expect(preset?.config.model).toBe('new-model')
@@ -110,9 +110,9 @@ describe('R-AI-CONFIG · API Key 存储策略', () => {
   it('保存和应用预设时明确采用预设中的上下文窗口', async () => {
     const useAIConfigStore = await freshStore()
     useAIConfigStore.getState().setConfig({ contextWindow: 131_072 })
-    const id = useAIConfigStore.getState().saveAsPreset('128K 本地模型')
+    const id = await useAIConfigStore.getState().saveAsPreset('128K 本地模型')
     useAIConfigStore.getState().setConfig({ contextWindow: 2_100_000 })
-    useAIConfigStore.getState().applyPreset(id)
+    await useAIConfigStore.getState().applyPreset(id)
 
     expect(useAIConfigStore.getState().config.contextWindow).toBe(131_072)
     expect(useAIConfigStore.getState().presets.find(preset => preset.id === id)?.config.contextWindow).toBe(131_072)
@@ -211,5 +211,40 @@ describe('R-AI-CONFIG · API Key 存储策略', () => {
     })
     await useAIConfigStore.getState().applyPreset('openai-preset')
     expect(useAIConfigStore.getState().config.apiKey).toBe('')
+  })
+
+  it('A→B→A 切换预设会保留各自凭据，并把真实 Key 恢复到输入配置', async () => {
+    const { runtime, useAIConfigStore } = await freshStoreWithFakeRuntime()
+
+    await useAIConfigStore.getState().setApiKey('sk-preset-a')
+    const presetA = await useAIConfigStore.getState().saveAsPreset('预设 A')
+
+    await useAIConfigStore.getState().switchProvider('openai')
+    await useAIConfigStore.getState().setApiKey('sk-preset-b')
+    const presetB = await useAIConfigStore.getState().saveAsPreset('预设 B')
+
+    await useAIConfigStore.getState().applyPreset(presetA)
+    expect(useAIConfigStore.getState().config.apiKey).toBe('sk-preset-a')
+    await useAIConfigStore.getState().applyPreset(presetB)
+    expect(useAIConfigStore.getState().config.apiKey).toBe('sk-preset-b')
+    await useAIConfigStore.getState().applyPreset(presetA)
+    expect(useAIConfigStore.getState().config.apiKey).toBe('sk-preset-a')
+
+    expect(await runtime.secrets.has(`storyforge.ai.preset.${presetA}`)).toBe(true)
+    expect(await runtime.secrets.has(`storyforge.ai.preset.${presetB}`)).toBe(true)
+
+    // Simulate desktop config reload: plaintext is gone from configuration,
+    // then startup restores the actual value from the runtime vault.
+    useAIConfigStore.setState({
+      config: {
+        ...useAIConfigStore.getState().config,
+        apiKey: '',
+        credentialAvailable: false,
+      },
+      credentialAvailability: {},
+    })
+    await useAIConfigStore.getState().refreshCredentialAvailability()
+    expect(useAIConfigStore.getState().config.apiKey).toBe('sk-preset-a')
+    expect(useAIConfigStore.getState().config.credentialAvailable).toBe(true)
   })
 })

@@ -128,6 +128,7 @@ const commonCommands = [
   'commands::secrets::runtime_secret_put',
   'commands::secrets::runtime_secret_has',
   'commands::secrets::runtime_secret_reference',
+  'commands::secrets::runtime_ai_secret_reveal',
   'commands::secrets::runtime_secret_delete',
   'commands::files::runtime_file_begin_save',
   'commands::files::runtime_file_write_chunk',

@@ -34,9 +34,14 @@ fn validate_credential_scope(scope: &CredentialScope, endpoint: &AiEndpointDescr
             operation,
             configured_base_url,
         } => {
+            let expected_operation = if endpoint.operation == "models" {
+                "chat-completions"
+            } else {
+                endpoint.operation.as_str()
+            };
             provider == &endpoint.provider
                 && profile_id == &endpoint.profile_id
-                && operation == &endpoint.operation
+                && operation == expected_operation
                 && endpoint_policy::normalize_base_url(configured_base_url).ok()
                     == endpoint_policy::normalize_base_url(&endpoint.configured_base_url).ok()
         }
@@ -155,10 +160,14 @@ async fn execute_inner(
     } else {
         &state.client
     };
-    let mut builder = client
-        .post(url)
-        .header(reqwest::header::CONTENT_TYPE, "application/json")
-        .body(body);
+    let mut builder = if request.endpoint.operation == "models" {
+        client.get(url)
+    } else {
+        client
+            .post(url)
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .body(body)
+    };
     if let Some(credential_id) = request.credential_id.as_deref() {
         let credential = state.resolve_secret(credential_id)?;
         if !validate_credential_scope(&credential.descriptor.scope, &request.endpoint) {
@@ -260,4 +269,29 @@ async fn execute_inner(
         "responseBytes": received,
     }));
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_credential_scope;
+    use crate::dto::{AiEndpointDescriptor, CredentialScope};
+
+    #[test]
+    fn models_reuses_the_chat_completion_credential_scope() {
+        let endpoint = AiEndpointDescriptor {
+            provider: "custom".into(),
+            profile_id: "preset-a".into(),
+            operation: "models".into(),
+            configured_base_url: "https://models.example.test/v1".into(),
+            approval_id: None,
+        };
+        let scope = CredentialScope::Ai {
+            provider: "custom".into(),
+            profile_id: "preset-a".into(),
+            operation: "chat-completions".into(),
+            configured_base_url: "https://models.example.test/v1".into(),
+        };
+
+        assert!(validate_credential_scope(&scope, &endpoint));
+    }
 }

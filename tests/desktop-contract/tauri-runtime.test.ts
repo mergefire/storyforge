@@ -8,6 +8,7 @@ class SyntheticM1Bridge implements TauriIpcBridge {
   readonly calls: Array<{ command: string; args: Record<string, unknown> }> = []
   readonly fileChunks: number[][] = []
   private credential: string | null = null
+  private credentialValue: string | null = null
 
   createChannel<T>(onmessage: (message: T) => void): { onmessage: (message: T) => void } {
     return { onmessage }
@@ -22,13 +23,17 @@ class SyntheticM1Bridge implements TauriIpcBridge {
         return [] as T
       case 'runtime_secret_put':
         this.credential = 'cred_synthetic'
+        this.credentialValue = (args.request as { value?: string }).value ?? null
         return this.credential as T
       case 'runtime_secret_has':
         return (this.credential !== null) as T
       case 'runtime_secret_reference':
         return this.credential as T
+      case 'runtime_ai_secret_reveal':
+        return this.credentialValue as T
       case 'runtime_secret_delete':
         this.credential = null
+        this.credentialValue = null
         return undefined as T
       case 'runtime_ai_approve_endpoint':
         return null as T
@@ -103,7 +108,7 @@ describe('M1 native Tauri runtime', () => {
     await expect(runtime.durability.inspect()).resolves.toEqual({ persisted: true })
   })
 
-  it('returns opaque credential references and never exposes a plaintext read API', async () => {
+  it('keeps references opaque and exposes only an explicit AI-key reveal path', async () => {
     const { runtime, bridge } = createRuntime()
     const credential = await runtime.secrets.put({
       key: 'storyforge.github.gist',
@@ -113,7 +118,7 @@ describe('M1 native Tauri runtime', () => {
 
     expect(credential).toBe('cred_synthetic')
     await expect(runtime.secrets.reference('storyforge.github.gist')).resolves.toBe(credential)
-    expect(Object.keys(runtime.secrets).sort()).toEqual(['delete', 'has', 'policy', 'put', 'reference'])
+    expect(Object.keys(runtime.secrets).sort()).toEqual(['delete', 'has', 'policy', 'put', 'reference', 'reveal'])
     expect(runtime.secrets.policy).toMatchObject({
       storesPlaintextConfiguration: false,
       reuseReferenceWhenPlaintextOmitted: true,
@@ -121,6 +126,21 @@ describe('M1 native Tauri runtime', () => {
       storageLabel: 'Windows 凭据管理器',
     })
     expect(bridge.calls.some(call => call.command === 'runtime_secret_put')).toBe(true)
+
+    await runtime.secrets.put({
+      key: 'storyforge.ai.primary',
+      persistence: 'device',
+      scope: {
+        kind: 'ai',
+        provider: 'openai',
+        profileId: 'primary',
+        operation: 'chat-completions',
+        configuredBaseUrl: 'https://api.openai.com/v1',
+      },
+    }, 'sk-visible-after-confirmation')
+    await expect(runtime.secrets.reveal('storyforge.ai.primary'))
+      .resolves.toBe('sk-visible-after-confirmation')
+    expect(bridge.calls.some(call => call.command === 'runtime_ai_secret_reveal')).toBe(true)
   })
 
   it('preserves split UTF-8 bytes across the native AI channel', async () => {

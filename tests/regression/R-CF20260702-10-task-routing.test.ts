@@ -124,6 +124,27 @@ describe('R-CF20260702-10 · task classification and resolution', () => {
     expect(missingKey.config).toBe(globalConfig)
     expect(missingKey.fallbackReason).toBe('missing-api-key')
   })
+
+  it('keeps a desktop cloud route when its key exists in the runtime vault', () => {
+    const cloud = preset('cloud', {
+      provider: 'gemini',
+      apiKey: '',
+      baseUrl: 'https://gemini.example/v1',
+    })
+    const resolved = resolveAIConfigForTask({
+      category: 'reference.summary',
+      requestedConfig: globalConfig,
+      globalConfig,
+      presets: [cloud],
+      routes: { analysis: 'cloud' },
+      credentialAvailable: presetId => presetId === 'cloud',
+    })
+
+    expect(resolved.presetId).toBe('cloud')
+    expect(resolved.config.provider).toBe('gemini')
+    expect(resolved.config.credentialAvailable).toBe(true)
+    expect(resolved.fallbackReason).toBeUndefined()
+  })
 })
 
 describe('R-CF20260702-10 · route storage and client boundary', () => {
@@ -142,7 +163,7 @@ describe('R-CF20260702-10 · route storage and client boundary', () => {
 
   it('persists route bindings and removes bindings when their preset is deleted', async () => {
     const { useAIConfigStore, TASK_ROUTES_KEY } = await import('../../src/stores/ai-config')
-    const id = useAIConfigStore.getState().saveAsPreset('写作模型')
+    const id = await useAIConfigStore.getState().saveAsPreset('写作模型')
     useAIConfigStore.getState().setTaskRoute('creation', id)
 
     expect(JSON.parse(localStorage.getItem(TASK_ROUTES_KEY) || '{}')).toEqual({ creation: id })
@@ -151,7 +172,7 @@ describe('R-CF20260702-10 · route storage and client boundary', () => {
     const fresh = await import('../../src/stores/ai-config')
     expect(fresh.useAIConfigStore.getState().taskRoutes).toEqual({ creation: id })
 
-    fresh.useAIConfigStore.getState().deletePreset(id)
+    await fresh.useAIConfigStore.getState().deletePreset(id)
     expect(fresh.useAIConfigStore.getState().taskRoutes).toEqual({})
     expect(JSON.parse(localStorage.getItem(TASK_ROUTES_KEY) || '{}')).toEqual({})
   })

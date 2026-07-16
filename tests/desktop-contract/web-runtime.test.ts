@@ -110,6 +110,23 @@ describe('D0.3 Web RuntimeAdapter', () => {
       body: { model: 'embedding-3', input: ['text'] },
     })
     expect(fetchMock.mock.calls[1][0]).toBe('/glm-proxy/api/paas/v4/embeddings')
+    await runtime.ai.execute({
+      endpoint: {
+        provider: 'deepseek',
+        profileId: 'primary',
+        operation: 'models',
+        configuredBaseUrl: '/deepseek-proxy/v1',
+      },
+      credentialId,
+      body: null,
+    })
+    expect(fetchMock.mock.calls[2][0]).toBe('/deepseek-proxy/v1/models')
+    expect(fetchMock.mock.calls[2][1]).toMatchObject({
+      method: 'GET',
+      headers: { Authorization: 'Bearer sk-private' },
+    })
+    expect(fetchMock.mock.calls[2][1]?.body).toBeUndefined()
+    await expect(runtime.secrets.reveal('storyforge.ai.primary')).resolves.toBe('sk-private')
     expect('get' in runtime.secrets).toBe(false)
   })
 
@@ -207,6 +224,8 @@ describe('D0.3 Web RuntimeAdapter', () => {
     ['chat-completions', '/doubao-proxy/api/v3'],
     ['chat-completions', '/agnes-proxy/v1'],
     ['chat-completions', '/longcat-proxy/openai/v1'],
+    ['chat-completions', '/opencode-proxy/v1'],
+    ['models', '/deepseek-proxy/v1'],
     ['embeddings', '/siliconflow-proxy/v1'],
     ['embeddings', '/qwen-proxy/compatible-mode/v1'],
     ['embeddings', '/glm-proxy/api/paas/v4'],
@@ -223,7 +242,7 @@ describe('D0.3 Web RuntimeAdapter', () => {
       },
       body: {},
     })
-    const suffix = operation === 'chat-completions' ? 'chat/completions' : 'embeddings'
+    const suffix = operation === 'chat-completions' ? 'chat/completions' : operation
     expect(fetchMock.mock.calls[0][0]).toBe(`${configuredBaseUrl}/${suffix}`)
   })
 

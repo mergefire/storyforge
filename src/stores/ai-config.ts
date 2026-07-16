@@ -10,6 +10,7 @@ import {
   type AITaskRoutes,
 } from '../lib/ai/task-routing'
 import {
+  aiCredentialTarget,
   bindAiCredential,
   deleteAiCredential,
   executeAiRequest,
@@ -80,9 +81,15 @@ function loadPresets(): AIConfigPreset[] {
 }
 
 function savePresets(presets: AIConfigPreset[]) {
-  const safePresets = !storesPlaintextConfiguration()
-    ? presets.map(preset => ({ ...preset, config: { ...preset.config, apiKey: '' } }))
-    : presets
+  const safePresets = presets.map(preset => {
+    const { credentialAvailable: _credentialAvailable, ...persistable } = preset.config
+    return {
+      ...preset,
+      config: !storesPlaintextConfiguration()
+        ? { ...persistable, apiKey: '' }
+        : persistable,
+    }
+  })
   localStorage.setItem(PRESETS_KEY, JSON.stringify(safePresets))
 }
 
@@ -172,7 +179,10 @@ function loadInitialConfig(): { config: AIConfig; rememberApiKey: boolean } {
 }
 
 function persistConfig(config: AIConfig, rememberApiKey: boolean): void {
-  const persisted: AIConfig = storesPlaintextConfiguration() && rememberApiKey ? config : { ...config, apiKey: '' }
+  const { credentialAvailable: _credentialAvailable, ...persistable } = config
+  const persisted: AIConfig = storesPlaintextConfiguration() && rememberApiKey
+    ? persistable
+    : { ...persistable, apiKey: '' }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted))
   localStorage.setItem(REMEMBER_API_KEY, String(rememberApiKey))
   if (!storesPlaintextConfiguration() || rememberApiKey) {
@@ -185,7 +195,10 @@ function persistConfig(config: AIConfig, rememberApiKey: boolean): void {
 }
 
 function presetConfig(config: AIConfig, rememberApiKey: boolean): AIConfig {
-  return storesPlaintextConfiguration() && rememberApiKey ? { ...config } : { ...config, apiKey: '' }
+  const { credentialAvailable: _credentialAvailable, ...persistable } = config
+  return storesPlaintextConfiguration() && rememberApiKey
+    ? { ...persistable }
+    : { ...persistable, apiKey: '' }
 }
 
 function setActivePreset(id: string | null): void {
@@ -210,6 +223,7 @@ export interface TestResult {
 
 interface AIConfigStore {
   config: AIConfig
+  credentialAvailability: Record<string, boolean>
   rememberApiKey: boolean
   presets: AIConfigPreset[]
   taskRoutes: AITaskRoutes
@@ -221,13 +235,15 @@ interface AIConfigStore {
   embedding: EmbeddingConfig
   setEmbeddingConfig: (partial: Partial<EmbeddingConfig>) => Promise<void>
   setConfig: (config: Partial<AIConfig>) => Promise<void>
+  setApiKey: (apiKey: string) => Promise<void>
+  refreshCredentialAvailability: () => Promise<void>
   setRememberApiKey: (remember: boolean) => Promise<void>
   switchProvider: (provider: AIProvider) => Promise<void>
   testConnection: () => Promise<TestResult>
   // ── 预设管理 ──
-  saveAsPreset: (name: string) => string
+  saveAsPreset: (name: string) => Promise<string>
   applyPreset: (id: string) => Promise<void>
-  updatePresetFromCurrent: (id: string) => void
+  updatePresetFromCurrent: (id: string) => Promise<void>
   renamePreset: (id: string, name: string) => void
   deletePreset: (id: string) => Promise<void>
   setTaskRoute: (taskKind: AITaskKind, presetId: string | null) => void
@@ -244,6 +260,7 @@ if (!initialActivePresetId) setActivePreset(null)
 
 export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   config: initial.config,
+  credentialAvailability: {},
   rememberApiKey: initial.rememberApiKey,
   presets: initialPresets,
   taskRoutes: loadTaskRoutes(),
@@ -276,24 +293,99 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     set({ embedding: storedNext })
   },
 
+  refreshCredentialAvailability: async () => {
+    const targets = [
+      aiCredentialTarget(null),
+      ...get().presets.map(preset => aiCredentialTarget(preset.id)),
+    ]
+    const entries = await Promise.all(targets.map(async target => [
+      target.key,
+      await getRuntime().secrets.has(target.key),
+    ] as const))
+    const credentialAvailability = Object.fromEntries(entries)
+    const currentTarget = aiCredentialTarget(get().activePresetId)
+    const revealedApiKey = credentialAvailability[currentTarget.key]
+      ? await getRuntime().secrets.reveal(currentTarget.key)
+      : null
+    const credentialAvailable = Boolean(
+      get().config.apiKey || revealedApiKey || credentialAvailability[currentTarget.key],
+    )
+    set({
+      credentialAvailability,
+      config: {
+        ...get().config,
+        ...(revealedApiKey !== null ? { apiKey: revealedApiKey } : {}),
+        credentialAvailable,
+      },
+    })
+  },
+
+  setApiKey: async (apiKey: string) => {
+    const { config, activePresetId, rememberApiKey } = get()
+    const target = aiCredentialTarget(activePresetId)
+    if (apiKey) {
+      await bindAiCredential({
+        key: target.key,
+        apiKey,
+        provider: config.provider,
+        profileId: target.profileId,
+        operation: 'chat-completions',
+        configuredBaseUrl: config.baseUrl,
+        persistence: rememberApiKey ? 'device' : 'session',
+      })
+    } else {
+      await deleteAiCredential(target.key)
+    }
+
+    const nextConfig = {
+      ...config,
+      apiKey,
+      credentialAvailable: Boolean(apiKey),
+    }
+    const presets = activePresetId
+      ? get().presets.map(preset => preset.id === activePresetId
+          ? { ...preset, config: { ...preset.config, apiKey, credentialAvailable: Boolean(apiKey) } }
+          : preset)
+      : get().presets
+    if (activePresetId) savePresets(presets)
+    persistConfig(nextConfig, rememberApiKey)
+    set({
+      config: nextConfig,
+      presets,
+      credentialAvailability: {
+        ...get().credentialAvailability,
+        [target.key]: Boolean(apiKey),
+      },
+    })
+  },
+
   setConfig: async (partial: Partial<AIConfig>) => {
+    if (Object.keys(partial).length === 1 && partial.apiKey !== undefined) {
+      await get().setApiKey(partial.apiKey)
+      return
+    }
     const current = get().config
+    const activePresetId = get().activePresetId
     const candidate = { ...current, ...partial }
     const identityChanged = aiIdentityChanged(current, candidate)
     const clearCredential = partial.apiKey === ''
       || (identityChanged && partial.apiKey === undefined)
-    if (clearCredential) await deleteAiCredential('storyforge.ai.primary')
+    if (clearCredential && !activePresetId) {
+      await deleteAiCredential('storyforge.ai.primary')
+    }
     setActivePreset(null)
     const newConfig = {
       ...candidate,
       ...(identityChanged && partial.apiKey === undefined ? { apiKey: '' } : {}),
+      ...(identityChanged ? { credentialAvailable: false } : {}),
     }
     if (partial.apiKey) {
+      const target = aiCredentialTarget(activePresetId)
       await bindAiCredential({
-        key: 'storyforge.ai.primary',
+        key: target.key,
         apiKey: partial.apiKey,
         provider: newConfig.provider,
-        profileId: 'primary',
+        profileId: target.profileId,
         operation: 'chat-completions',
         configuredBaseUrl: newConfig.baseUrl,
         persistence: get().rememberApiKey ? 'device' : 'session',
@@ -301,23 +393,33 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     }
     persistConfig(newConfig, get().rememberApiKey)
     // 手动改动配置后，与已选预设脱钩（除非改动等于该预设）
-    set({ config: newConfig, activePresetId: null })
+    set({
+      config: newConfig,
+      activePresetId: null,
+      ...(clearCredential && !activePresetId ? {
+        credentialAvailability: {
+          ...get().credentialAvailability,
+          'storyforge.ai.primary': false,
+        },
+      } : {}),
+    })
   },
 
   setRememberApiKey: async (remember: boolean) => {
     if (remember === get().rememberApiKey) return
+    const target = aiCredentialTarget(get().activePresetId)
     if (!remember) {
-      await deleteAiCredential('storyforge.ai.primary')
+      await deleteAiCredential(target.key)
       await deleteAiCredential('storyforge.ai.embedding')
     }
     const config = get().config
     const embedding = get().embedding
     if (config.apiKey) {
       await bindAiCredential({
-        key: 'storyforge.ai.primary',
+        key: target.key,
         apiKey: config.apiKey,
         provider: config.provider,
-        profileId: 'primary',
+        profileId: target.profileId,
         operation: 'chat-completions',
         configuredBaseUrl: config.baseUrl,
         persistence: remember ? 'device' : 'session',
@@ -339,42 +441,108 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
     set({ rememberApiKey: remember })
   },
 
-  saveAsPreset: (name: string) => {
+  saveAsPreset: async (name: string) => {
     const id = nanoid()
+    const config = get().config
+    const target = aiCredentialTarget(id)
+    if (config.apiKey) {
+      await bindAiCredential({
+        key: target.key,
+        apiKey: config.apiKey,
+        provider: config.provider,
+        profileId: target.profileId,
+        operation: 'chat-completions',
+        configuredBaseUrl: config.baseUrl,
+        persistence: get().rememberApiKey ? 'device' : 'session',
+      })
+    }
     const preset: AIConfigPreset = {
       id,
       name: name.trim() || '未命名配置',
-      config: presetConfig(get().config, get().rememberApiKey),
+      config: {
+        ...presetConfig(config, get().rememberApiKey),
+        credentialAvailable: Boolean(config.apiKey),
+      },
     }
     const presets = [...get().presets, preset]
     savePresets(presets)
-    set({ presets, activePresetId: id, editingPresetId: id })
+    setActivePreset(id)
+    persistConfig(config, get().rememberApiKey)
+    set({
+      presets,
+      activePresetId: id,
+      editingPresetId: id,
+      config: { ...config, credentialAvailable: Boolean(config.apiKey) },
+      credentialAvailability: {
+        ...get().credentialAvailability,
+        [target.key]: Boolean(config.apiKey),
+      },
+    })
     return id
   },
 
   applyPreset: async (id: string) => {
     const preset = get().presets.find(p => p.id === id)
     if (!preset) return
-    const current = get().config
-    const sameCredentialIdentity = preset.config.provider === current.provider
-      && normalizeOpenAIBaseUrl(preset.config.baseUrl).baseUrl === normalizeOpenAIBaseUrl(current.baseUrl).baseUrl
-    if (!sameCredentialIdentity) await deleteAiCredential('storyforge.ai.primary')
+    const target = aiCredentialTarget(id)
+    const credentialAvailable = Boolean(
+      preset.config.apiKey || get().credentialAvailability[target.key],
+    )
+    const revealedApiKey = credentialAvailable
+      ? await getRuntime().secrets.reveal(target.key)
+      : null
     const newConfig = {
       ...preset.config,
-      apiKey: preset.config.apiKey || (sameCredentialIdentity ? current.apiKey : ''),
+      apiKey: revealedApiKey ?? preset.config.apiKey,
+      credentialAvailable,
     }
     setActivePreset(id)
     persistConfig(newConfig, get().rememberApiKey)
     set({ config: newConfig, activePresetId: id, editingPresetId: id })
   },
 
-  updatePresetFromCurrent: (id: string) => {
+  updatePresetFromCurrent: async (id: string) => {
+    const previous = get().presets.find(preset => preset.id === id)
+    if (!previous) return
+    const config = get().config
+    const target = aiCredentialTarget(id)
+    const identityChanged = aiIdentityChanged(previous.config, config)
+    if (config.apiKey) {
+      await bindAiCredential({
+        key: target.key,
+        apiKey: config.apiKey,
+        provider: config.provider,
+        profileId: target.profileId,
+        operation: 'chat-completions',
+        configuredBaseUrl: config.baseUrl,
+        persistence: get().rememberApiKey ? 'device' : 'session',
+      })
+    } else if (identityChanged) {
+      await deleteAiCredential(target.key)
+    }
+    const credentialAvailable = Boolean(
+      config.apiKey || (!identityChanged && get().credentialAvailability[target.key]),
+    )
     const presets = get().presets.map(p => p.id === id ? {
       ...p,
-      config: presetConfig(get().config, get().rememberApiKey),
+      config: {
+        ...presetConfig(config, get().rememberApiKey),
+        credentialAvailable,
+      },
     } : p)
     savePresets(presets)
-    set({ presets, activePresetId: id, editingPresetId: id })
+    setActivePreset(id)
+    persistConfig({ ...config, credentialAvailable }, get().rememberApiKey)
+    set({
+      presets,
+      activePresetId: id,
+      editingPresetId: id,
+      config: { ...config, credentialAvailable },
+      credentialAvailability: {
+        ...get().credentialAvailability,
+        [target.key]: credentialAvailable,
+      },
+    })
   },
 
   renamePreset: (id: string, name: string) => {
@@ -384,18 +552,27 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   },
 
   deletePreset: async (id: string) => {
-    await deleteAiCredential(`storyforge.ai.preset.${id}`)
+    const target = aiCredentialTarget(id)
+    await deleteAiCredential(target.key)
     const presets = get().presets.filter(p => p.id !== id)
     const taskRoutes = Object.fromEntries(
       Object.entries(get().taskRoutes).filter(([, presetId]) => presetId !== id),
     ) as AITaskRoutes
     savePresets(presets)
     saveTaskRoutes(taskRoutes)
+    const deletingActive = get().activePresetId === id
+    if (deletingActive) setActivePreset(null)
+    const credentialAvailability = { ...get().credentialAvailability }
+    delete credentialAvailability[target.key]
     set({
       presets,
       taskRoutes,
-      activePresetId: get().activePresetId === id ? null : get().activePresetId,
+      credentialAvailability,
+      activePresetId: deletingActive ? null : get().activePresetId,
       editingPresetId: get().editingPresetId === id ? null : get().editingPresetId,
+      ...(deletingActive ? {
+        config: { ...get().config, apiKey: '', credentialAvailable: false },
+      } : {}),
     })
   },
 
@@ -411,13 +588,19 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   },
 
   switchProvider: async (provider: AIProvider) => {
-    if (provider !== get().config.provider) await deleteAiCredential('storyforge.ai.primary')
+    const wasPreset = Boolean(get().activePresetId)
+    if (provider !== get().config.provider && !wasPreset) {
+      await deleteAiCredential('storyforge.ai.primary')
+    }
     const preset = PROVIDER_PRESETS[provider] || {}
     const newConfig: AIConfig = {
       ...get().config,
       provider,
       ...preset,
       apiKey: provider === get().config.provider ? get().config.apiKey : (preset.apiKey || ''),
+      credentialAvailable: provider === get().config.provider
+        ? get().config.credentialAvailable
+        : Boolean(preset.apiKey),
     }
     setActivePreset(null)
     persistConfig(newConfig, get().rememberApiKey)
@@ -425,12 +608,13 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
   },
 
   testConnection: async (): Promise<TestResult> => {
-    const { config, rememberApiKey } = get()
+    const { config, rememberApiKey, activePresetId } = get()
+    const target = aiCredentialTarget(activePresetId)
     const normalized = normalizeOpenAIBaseUrl(config.baseUrl)
     if (normalized.changed) {
       const newConfig = { ...config, baseUrl: normalized.baseUrl }
       persistConfig(newConfig, get().rememberApiKey)
-      set({ config: newConfig, activePresetId: null })
+      set({ config: newConfig })
     }
     const url = buildOpenAIEndpoint(normalized.baseUrl, 'chat/completions')
     const startTime = Date.now()
@@ -448,17 +632,17 @@ export const useAIConfigStore = create<AIConfigStore>((set, get) => ({
 
     try {
       const credentialId = await bindAiCredential({
-        key: 'storyforge.ai.primary',
+        key: target.key,
         apiKey: config.apiKey,
         provider: config.provider,
-        profileId: 'primary',
+        profileId: target.profileId,
         operation: 'chat-completions',
         configuredBaseUrl: normalized.baseUrl,
         persistence: rememberApiKey ? 'device' : 'session',
       })
       const response = await executeAiRequest({
         provider: config.provider,
-        profileId: 'primary',
+        profileId: target.profileId,
         operation: 'chat-completions',
         configuredBaseUrl: normalized.baseUrl,
         credentialId,

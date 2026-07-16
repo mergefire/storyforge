@@ -9,9 +9,15 @@ import { getLogs, subscribeLogs, clearLogs, formatLog } from '../../lib/ai/logge
 import { applyStoryForgeTheme, resolveStoryForgeTheme, THEME_OPTIONS, type StoryForgeTheme } from '../../lib/theme'
 import { useDialog } from '../shared/Dialog'
 import { parseContextWindowInput } from '../../lib/ai/context-window-input'
-import { fetchOpenAIModels } from '../../lib/ai/model-list'
+import {
+  fetchOpenAIModels,
+  loadCachedOpenAIModels,
+  saveCachedOpenAIModels,
+} from '../../lib/ai/model-list'
 import { normalizeOpenAIBaseUrl } from '../../lib/ai/openai-endpoint'
 import { AI_TASK_KINDS, type AITaskKind } from '../../lib/ai/task-routing'
+import { aiCredentialTarget, bindAiCredential } from '../../lib/ai/runtime-transport'
+import { getRuntime } from '../../runtime'
 
 const TASK_ROUTE_META: Record<AITaskKind, { label: string; description: string }> = {
   creation: { label: '创作生成', description: '正文、大纲、细纲、世界观与角色生成' },
@@ -43,10 +49,12 @@ export const PROVIDER_OPTIONS: { value: AIProvider; label: string; cors: boolean
 
 export default function AIConfigPanel() {
   const { config, setConfig, switchProvider, testConnection,
+    setApiKey,
     rememberApiKey, setRememberApiKey,
     presets, taskRoutes, setTaskRoute, activePresetId, editingPresetId, saveAsPreset, applyPreset, updatePresetFromCurrent, renamePreset, deletePreset } = useAIConfigStore()
   const dialog = useDialog()
   const [showKey, setShowKey] = useState(false)
+  const [apiKeyDraft, setApiKeyDraft] = useState(config.apiKey)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<TestResult | null>(null)
   const [showLogs, setShowLogs] = useState(false)
@@ -54,10 +62,15 @@ export default function AIConfigPanel() {
   const [presetName, setPresetName] = useState('')
   const [contextWindowDraft, setContextWindowDraft] = useState(() => config.contextWindow ? String(config.contextWindow) : '')
   const [contextWindowError, setContextWindowError] = useState('')
-  const [fetchedModels, setFetchedModels] = useState<string[]>([])
+  const [fetchedModels, setFetchedModels] = useState<string[]>(() => loadCachedOpenAIModels({
+    provider: config.provider,
+    baseUrl: config.baseUrl,
+  }))
   const [refreshingModels, setRefreshingModels] = useState(false)
   const [modelListError, setModelListError] = useState('')
   const submittedContextWindowRef = useRef(config.contextWindow)
+  const apiKeySaveTimerRef = useRef<number | null>(null)
+  const apiKeySaveQueueRef = useRef<Promise<void>>(Promise.resolve())
   const [currentTheme, setCurrentTheme] = useState<StoryForgeTheme>(() =>
     resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')),
   )
@@ -74,11 +87,16 @@ export default function AIConfigPanel() {
   }
   const updateConfig = (partial: Partial<AIConfig>) => runSettingsChange(setConfig(partial))
 
-  const handleSavePreset = () => {
+  const handleSavePreset = async () => {
     if (!presetName.trim()) return
-    saveAsPreset(presetName.trim())
-    setPresetName('')
-    setSavingPreset(false)
+    try {
+      await flushApiKeyDraft()
+      await saveAsPreset(presetName.trim())
+      setPresetName('')
+      setSavingPreset(false)
+    } catch (error) {
+      reportSettingsError(error)
+    }
   }
 
   // 订阅日志变化
@@ -86,6 +104,35 @@ export default function AIConfigPanel() {
 
   const currentProviderInfo = PROVIDER_OPTIONS.find((p) => p.value === config.provider)
   const editingPreset = editingPresetId ? presets.find(p => p.id === editingPresetId) : null
+  const secretPolicy = getRuntime().secrets.policy
+
+  const enqueueApiKeySave = (value: string): Promise<void> => {
+    const operation = apiKeySaveQueueRef.current
+      .catch(() => undefined)
+      .then(() => setApiKey(value))
+    apiKeySaveQueueRef.current = operation
+    void operation.catch(reportSettingsError)
+    return operation
+  }
+
+  const scheduleApiKeySave = (value: string) => {
+    setApiKeyDraft(value)
+    setTestResult(null)
+    if (apiKeySaveTimerRef.current !== null) window.clearTimeout(apiKeySaveTimerRef.current)
+    apiKeySaveTimerRef.current = window.setTimeout(() => {
+      apiKeySaveTimerRef.current = null
+      void enqueueApiKeySave(value)
+    }, 250)
+  }
+
+  const flushApiKeyDraft = (): Promise<void> => {
+    if (apiKeySaveTimerRef.current !== null) {
+      window.clearTimeout(apiKeySaveTimerRef.current)
+      apiKeySaveTimerRef.current = null
+      return enqueueApiKeySave(apiKeyDraft)
+    }
+    return apiKeySaveQueueRef.current
+  }
 
   useEffect(() => {
     if (config.contextWindow === submittedContextWindowRef.current) return
@@ -112,16 +159,32 @@ export default function AIConfigPanel() {
     setRefreshingModels(true)
     setModelListError('')
     try {
+      await flushApiKeyDraft()
       const normalized = normalizeOpenAIBaseUrl(config.baseUrl)
       if (normalized.changed) setConfig({ baseUrl: normalized.baseUrl })
+      const credentialTarget = aiCredentialTarget(activePresetId)
+      const credentialId = await bindAiCredential({
+        key: credentialTarget.key,
+        apiKey: config.apiKey,
+        provider: config.provider,
+        profileId: credentialTarget.profileId,
+        operation: 'chat-completions',
+        configuredBaseUrl: normalized.baseUrl,
+        persistence: rememberApiKey ? 'device' : 'session',
+      })
       const models = await fetchOpenAIModels({
         baseUrl: normalized.baseUrl,
-        apiKey: config.apiKey,
+        provider: config.provider,
+        profileId: credentialTarget.profileId,
+        credentialId,
       })
+      saveCachedOpenAIModels({
+        provider: config.provider,
+        baseUrl: normalized.baseUrl,
+      }, models)
       setFetchedModels(models)
       if (models.length === 0) setModelListError('服务返回了空模型列表；仍可手动填写模型名')
     } catch (error) {
-      setFetchedModels([])
       setModelListError(error instanceof Error ? error.message : '刷新模型列表失败')
     } finally {
       setRefreshingModels(false)
@@ -132,6 +195,7 @@ export default function AIConfigPanel() {
     setTesting(true)
     setTestResult(null)
     try {
+      await flushApiKeyDraft()
       const result = await testConnection()
       setTestResult(result)
     } finally {
@@ -175,9 +239,25 @@ export default function AIConfigPanel() {
   }, [config.provider])
 
   useEffect(() => {
-    setFetchedModels([])
+    setFetchedModels(loadCachedOpenAIModels({
+      provider: config.provider,
+      baseUrl: config.baseUrl,
+    }))
     setModelListError('')
   }, [config.baseUrl, config.provider])
+
+  useEffect(() => {
+    if (apiKeySaveTimerRef.current !== null) window.clearTimeout(apiKeySaveTimerRef.current)
+    apiKeySaveTimerRef.current = null
+    setApiKeyDraft(config.apiKey)
+    setShowKey(false)
+  // Sync the input whenever the selected credential identity changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePresetId, config.provider, config.baseUrl])
+
+  useEffect(() => () => {
+    if (apiKeySaveTimerRef.current !== null) window.clearTimeout(apiKeySaveTimerRef.current)
+  }, [])
 
   return (
     <div className="max-w-2xl">
@@ -187,7 +267,10 @@ export default function AIConfigPanel() {
       <div className="bg-bg-surface border border-border rounded-xl p-5 mb-6">
         <h3 className="text-base font-semibold text-text-primary mb-4">AI 模型配置</h3>
         <p className="text-[11px] text-text-muted mb-4 rounded-lg border border-border bg-bg-base px-3 py-2">
-          API Key 默认仅保存在本次浏览器会话；勾选“记住在本机”才会写入 localStorage。发起 AI 生成、测试连接或使用自定义 baseUrl 时，相关提示词和上下文会发送到你配置的模型服务。
+          {secretPolicy.storesPlaintextConfiguration
+            ? 'API Key 默认仅保存在本次浏览器会话；勾选“记住在本机”后写入浏览器本机存储。'
+            : `API Key 由${secretPolicy.storageLabel}保存，配置和 localStorage 中不保留明文。`}
+          发起 AI 生成、测试连接或使用自定义 Base URL 时，相关提示词和上下文会发送到你配置的模型服务。
         </p>
 
         {/* ── API 配置预设（多套一键切换） ── */}
@@ -197,7 +280,9 @@ export default function AIConfigPanel() {
             {editingPreset && !savingPreset ? (
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => updatePresetFromCurrent(editingPreset.id)}
+                  onClick={() => runSettingsChange(
+                    flushApiKeyDraft().then(() => updatePresetFromCurrent(editingPreset.id)),
+                  )}
                   title={`用当前表单内容覆盖「${editingPreset.name}」`}
                   className="text-xs px-2.5 py-1 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors"
                 >
@@ -246,12 +331,17 @@ export default function AIConfigPanel() {
                       : 'bg-bg-base text-text-secondary border-border hover:border-accent/50'
                   }`}
                 >
-                  <button onClick={() => runSettingsChange(applyPreset(p.id))} title={`${p.config.provider} · ${p.config.model}`}>
+                  <button
+                    onClick={() => runSettingsChange(flushApiKeyDraft().then(() => applyPreset(p.id)))}
+                    title={`${p.config.provider} · ${p.config.model}`}
+                  >
                     {p.name}
                   </button>
                   {activePresetId === p.id && (
                     <button
-                      onClick={() => updatePresetFromCurrent(p.id)}
+                      onClick={() => runSettingsChange(
+                        flushApiKeyDraft().then(() => updatePresetFromCurrent(p.id)),
+                      )}
                       title="用当前配置覆盖此预设"
                       className="opacity-70 hover:opacity-100"
                     >保存</button>
@@ -319,7 +409,9 @@ export default function AIConfigPanel() {
             <label className="block text-sm text-text-secondary mb-1.5">提供商</label>
             <select
               value={config.provider}
-              onChange={(e) => runSettingsChange(switchProvider(e.target.value as AIProvider))}
+              onChange={(e) => runSettingsChange(
+                flushApiKeyDraft().then(() => switchProvider(e.target.value as AIProvider)),
+              )}
               className="w-full px-3 py-2 bg-bg-base border border-border rounded-lg text-text-primary focus:outline-none focus:border-accent transition-colors"
             >
               {PROVIDER_OPTIONS.map((opt) => (
@@ -341,14 +433,19 @@ export default function AIConfigPanel() {
             <div className="relative">
               <input
                 type={showKey ? 'text' : 'password'}
-                value={config.apiKey}
-                onChange={(e) => updateConfig({ apiKey: e.target.value })}
+                value={apiKeyDraft}
+                onChange={(e) => scheduleApiKeySave(e.target.value)}
                 placeholder={config.provider === 'ollama' ? '不需要 Key' : '输入 API Key...'}
-                className="w-full px-3 py-2 pr-10 bg-bg-base border border-border rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+                aria-label="API Key"
+                className="w-full px-3 py-2 pr-10 bg-bg-base border border-border rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus:border-accent transition-colors"
               />
               <button
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-text-secondary"
+                type="button"
+                onClick={() => setShowKey(value => !value)}
+                disabled={!apiKeyDraft}
+                aria-label={showKey ? '隐藏 API Key' : '显示 API Key'}
+                title={showKey ? '隐藏 API Key' : '显示 API Key'}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-text-muted hover:bg-bg-hover hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -357,11 +454,15 @@ export default function AIConfigPanel() {
               <input
                 type="checkbox"
                 checked={rememberApiKey}
-                onChange={e => runSettingsChange(setRememberApiKey(e.target.checked))}
+                onChange={e => runSettingsChange(
+                  setRememberApiKey(e.target.checked).then(() => flushApiKeyDraft()),
+                )}
                 className="mt-0.5 accent-accent"
               />
               <span>
-                在本机记住 API Key（写入 localStorage）。不勾选时仅本次浏览器会话有效。
+                {secretPolicy.storesPlaintextConfiguration
+                  ? '在本机记住 API Key；输入后自动保存，不勾选时仅本次浏览器会话有效。'
+                  : `在本机记住 API Key（写入${secretPolicy.storageLabel}）；输入后自动保存，不勾选时仅本次应用会话有效。`}
               </span>
             </label>
           </div>
@@ -456,7 +557,6 @@ export default function AIConfigPanel() {
                   aria-label="服务返回的模型列表"
                   className="mb-1.5 w-full rounded-lg border border-border bg-bg-base px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
                 >
-                  <option value="">选择服务返回的模型（{fetchedModels.length}）</option>
                   {fetchedModels.map(model => <option key={model} value={model}>{model}</option>)}
                 </select>
               )}

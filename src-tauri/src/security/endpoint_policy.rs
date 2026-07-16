@@ -50,6 +50,7 @@ fn proxy_bases() -> HashMap<&'static str, &'static str> {
             "/longcat-proxy/openai/v1",
             "https://api.longcat.chat/openai/v1",
         ),
+        ("/opencode-proxy/v1", "https://opencode.ai/zen/go/v1"),
         ("/siliconflow-proxy/v1", "https://api.siliconflow.cn/v1"),
         (
             "/qwen-proxy/compatible-mode/v1",
@@ -109,6 +110,7 @@ pub fn operation_path(operation: &str) -> RuntimeResult<&'static str> {
     match operation {
         "chat-completions" => Ok("chat/completions"),
         "embeddings" => Ok("embeddings"),
+        "models" => Ok("models"),
         _ => Err(invalid_input("AI 操作类型无效")),
     }
 }
@@ -276,5 +278,15 @@ mod tests {
                 .is_err()
         );
         assert!(validate_network_destination(&endpoint("custom", "https://127.0.0.1/v1")).is_err());
+    }
+
+    #[test]
+    fn model_listing_is_a_fixed_models_path() {
+        let mut model_endpoint = endpoint("custom", "https://models.example.test/v1/models");
+        model_endpoint.operation = "models".into();
+        assert_eq!(
+            request_url(&model_endpoint).unwrap().as_str(),
+            "https://models.example.test/v1/models"
+        );
     }
 }

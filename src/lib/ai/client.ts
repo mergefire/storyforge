@@ -8,6 +8,7 @@ import { buildOpenAIEndpoint } from './openai-endpoint'
 import { useAIConfigStore } from '../../stores/ai-config'
 import { resolveAIConfigForTask, type AITaskKind } from './task-routing'
 import {
+  aiCredentialTarget,
   bindAiCredential,
   executeAiRequest,
   isSuccessfulAiResponse,
@@ -27,14 +28,23 @@ export interface AICallMeta {
 
 export function resolveRequestConfig(config: AIConfig, meta?: AICallMeta) {
   const state = useAIConfigStore.getState()
-  return resolveAIConfigForTask({
+  const resolved = resolveAIConfigForTask({
     category: meta?.category,
     requestedConfig: config,
     globalConfig: state.config,
     presets: state.presets,
     routes: state.taskRoutes,
     explicitOverrides: meta?.configOverrides,
+    credentialAvailable: presetId => Boolean(
+      state.credentialAvailability[aiCredentialTarget(presetId).key],
+    ),
   })
+  const usesActiveConnection = config.provider === state.config.provider
+    && config.baseUrl.replace(/\/+$/, '') === state.config.baseUrl.replace(/\/+$/, '')
+  if (!resolved.presetId && usesActiveConnection && state.activePresetId) {
+    return { ...resolved, presetId: state.activePresetId }
+  }
+  return resolved
 }
 
 function warnRouteFallback(resolved: ReturnType<typeof resolveRequestConfig>, meta?: AICallMeta): void {
@@ -301,11 +311,12 @@ export async function* streamChat(
   const startTime = Date.now()
 
   try {
+    const credentialTarget = aiCredentialTarget(resolved.presetId)
     const credentialId = await bindAiCredential({
-      key: 'storyforge.ai.primary',
+      key: credentialTarget.key,
       apiKey: config.apiKey,
       provider: config.provider,
-      profileId: 'primary',
+      profileId: credentialTarget.profileId,
       operation: 'chat-completions',
       configuredBaseUrl: req.configuredBaseUrl,
     })
@@ -316,7 +327,7 @@ export async function* streamChat(
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       response = await executeAiRequest({
         provider: config.provider,
-        profileId: 'primary',
+        profileId: credentialTarget.profileId,
         operation: 'chat-completions',
         configuredBaseUrl: req.configuredBaseUrl,
         credentialId,
@@ -474,18 +485,19 @@ export async function chat(
     throw new Error('当前模型上下文窗口无法容纳最低连续性保护块；请降低输出长度或改用更大上下文模型。')
   }
   const req = buildRequest(config, trimmed.messages, false)
+  const credentialTarget = aiCredentialTarget(resolved.presetId)
 
   const credentialId = await bindAiCredential({
-    key: 'storyforge.ai.primary',
+    key: credentialTarget.key,
     apiKey: config.apiKey,
     provider: config.provider,
-    profileId: 'primary',
+    profileId: credentialTarget.profileId,
     operation: 'chat-completions',
     configuredBaseUrl: req.configuredBaseUrl,
   })
   const response = await executeAiRequest({
     provider: config.provider,
-    profileId: 'primary',
+    profileId: credentialTarget.profileId,
     operation: 'chat-completions',
     configuredBaseUrl: req.configuredBaseUrl,
     credentialId,

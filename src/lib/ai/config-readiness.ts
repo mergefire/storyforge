@@ -6,8 +6,10 @@ export function aiProviderAllowsEmptyKey(provider: AIProvider): boolean {
   return EMPTY_KEY_COMPATIBLE_PROVIDERS.has(provider)
 }
 
-export function isAIConfigReady(config: Pick<AIConfig, 'apiKey' | 'provider'>): boolean {
-  return Boolean(config.apiKey || aiProviderAllowsEmptyKey(config.provider))
+export function isAIConfigReady(
+  config: Pick<AIConfig, 'apiKey' | 'provider' | 'credentialAvailable'>,
+): boolean {
+  return Boolean(config.apiKey || config.credentialAvailable || aiProviderAllowsEmptyKey(config.provider))
 }
 
 export function getAIConfigRequiredMessage(config: Pick<AIConfig, 'provider'>): string {

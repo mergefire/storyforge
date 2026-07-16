@@ -45,6 +45,7 @@ export type FakeRuntimeOperation =
   | 'files.clearBackupBinding'
   | 'secrets.put'
   | 'secrets.has'
+  | 'secrets.reveal'
   | 'secrets.delete'
   | 'clipboard.writeText'
   | 'external.open'
@@ -366,6 +367,10 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
       this.assertNoFailure('secrets.has')
       const secret = this.secretValues.get(key)
       return secret === undefined ? null : this.credentialId(secret.descriptor, secret.value)
+    },
+    reveal: async key => {
+      this.assertNoFailure('secrets.reveal')
+      return this.secretValues.get(key)?.value ?? null
     },
     delete: async key => {
       this.assertNoFailure('secrets.delete')

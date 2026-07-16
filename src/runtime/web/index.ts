@@ -7,6 +7,7 @@ import {
 } from '../../lib/storage/folder-handle-store'
 import type {
   AiEndpointDescriptor,
+  AiSecretKey,
   AiTransportResponse,
   BackupBinding,
   BackupFile,
@@ -113,12 +114,24 @@ const ALLOWED_PROXY_BASE_URLS: Readonly<
     '/doubao-proxy/api/v3',
     '/agnes-proxy/v1',
     '/longcat-proxy/openai/v1',
+    '/opencode-proxy/v1',
   ]),
   embeddings: new Set([
     '/siliconflow-proxy/v1',
     '/qwen-proxy/compatible-mode/v1',
     '/glm-proxy/api/paas/v4',
     '/openai-proxy/v1',
+  ]),
+  models: new Set([
+    '/deepseek-proxy/v1',
+    '/openai-proxy/v1',
+    '/kimi-proxy/v1',
+    '/claude-proxy/v1',
+    '/nvidia-proxy/v1',
+    '/doubao-proxy/api/v3',
+    '/agnes-proxy/v1',
+    '/longcat-proxy/openai/v1',
+    '/opencode-proxy/v1',
   ]),
 }
 
@@ -209,6 +222,7 @@ class WebSecretVault {
       put: (descriptor, value) => this.put(descriptor, value),
       has: key => this.has(key),
       reference: key => this.reference(key),
+      reveal: key => this.reveal(key),
       delete: key => this.delete(key),
     }
   }
@@ -248,6 +262,10 @@ class WebSecretVault {
   private async reference(key: SecretKey): Promise<CredentialId | null> {
     const stored = this.readStoredSecret(key)
     return stored === null ? null : this.credentialId(stored.descriptor, stored.value)
+  }
+
+  private async reveal(key: AiSecretKey): Promise<string | null> {
+    return this.readStoredSecret(key)?.value ?? null
   }
 
   private readStoredSecret(key: SecretKey): { descriptor: SecretDescriptor; value: string } | null {
@@ -784,7 +802,7 @@ function assertDiagnosticEvent(event: DiagnosticEvent): void {
     case 'network-attempt':
       assertDiagnosticEnum(record, 'service', new Set(['ai', 'github-gist']), operation)
       assertDiagnosticEnum(record, 'operation', new Set([
-        'chat-completions', 'embeddings', 'validate', 'write', 'list', 'read', 'revisions',
+        'chat-completions', 'embeddings', 'models', 'validate', 'write', 'list', 'read', 'revisions',
       ]), operation)
       assertDiagnosticEnum(record, 'outcome', new Set(['completed', 'failed', 'aborted']), operation)
       break
@@ -846,23 +864,24 @@ export function createWebRuntime(options: WebRuntimeOptions = {}): RuntimeAdapte
       throwIfAborted(request.signal, operation)
       try {
         const baseUrl = checkedAiBaseUrl(request.endpoint)
-        const endpoint = buildOpenAIEndpoint(
-          baseUrl,
-          request.endpoint.operation === 'chat-completions' ? 'chat/completions' : 'embeddings',
-        )
+        const endpointPath = request.endpoint.operation === 'chat-completions'
+          ? 'chat/completions'
+          : request.endpoint.operation
+        const endpoint = buildOpenAIEndpoint(baseUrl, endpointPath)
         const credential = vault.resolve(
           request.credentialId,
           operation,
           aiCredentialScope(request.endpoint),
         )
+        const isModelList = request.endpoint.operation === 'models'
         const response = await fetchImpl(endpoint, {
-          method: 'POST',
+          method: isModelList ? 'GET' : 'POST',
           redirect: 'error',
           headers: {
-            'Content-Type': 'application/json',
+            ...(!isModelList ? { 'Content-Type': 'application/json' } : {}),
             ...(credential ? { Authorization: `Bearer ${credential}` } : {}),
           },
-          body: JSON.stringify(request.body),
+          ...(!isModelList ? { body: JSON.stringify(request.body) } : {}),
           signal: request.signal,
         })
         return {

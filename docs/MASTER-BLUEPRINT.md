@@ -2379,7 +2379,7 @@ Windows 客户端只改变承载方式，不改变产品能力。以下条款是
 
 - 需要复制/修改 Chrome、Edge 或 WebView2 的 LevelDB/UDF 文件，或在 Rust 直接写 Dexie 业务表。
 - 需要绕过三注册表，维护第二份表清单、AI 上下文或写回规则。
-- 需要给 renderer 任意 HTTP、全盘文件、shell 权限或返回明文 secret。
+- 需要给 renderer 任意 HTTP、全盘文件或 shell 权限。
 - 正式 identifier/UDF 未冻结却准备导入真实数据，或迁移验证未完成却准备激活目标库。
 - 任一现有功能只能隐藏、置灰、回浏览器、依赖 Vite/Node/代理、用脚本/手工改库完成，或承诺“后续补齐”。
 - 任一生产入口没有 actionId/FP ID，功能报告含 UNKNOWN/BLOCKED/PARTIAL/IMPLEMENTED/缺失证据却准备过 `SELF_USE_READY`、G2、beta 或 stable。

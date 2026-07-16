@@ -121,6 +121,7 @@ export function resolveAIConfigForTask(args: {
   presets: readonly AIConfigPreset[]
   routes: AITaskRoutes
   explicitOverrides?: Partial<AIConfig>
+  credentialAvailable?: (presetId: string) => boolean
 }): ResolvedAITaskConfig {
   const taskKind = classifyAITask(args.category)
   if (!taskKind) {
@@ -142,9 +143,14 @@ export function resolveAIConfigForTask(args: {
     }
   }
 
-  let routed = { ...preset.config }
+  const storedCredentialAvailable = args.credentialAvailable?.(preset.id) ?? false
+  let routed = {
+    ...preset.config,
+    credentialAvailable: Boolean(preset.config.apiKey || storedCredentialAvailable),
+  }
   if (!routed.apiKey && !aiProviderAllowsEmptyKey(routed.provider)) {
-    if (!args.globalConfig.apiKey || !isSameConnection(routed, args.globalConfig)) {
+    if (!storedCredentialAvailable
+      && (!args.globalConfig.apiKey || !isSameConnection(routed, args.globalConfig))) {
       return {
         config: args.requestedConfig,
         taskKind,

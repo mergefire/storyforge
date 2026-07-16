@@ -32,7 +32,7 @@ export type CredentialId = string & { readonly [credentialIdBrand]: true }
 declare const endpointApprovalIdBrand: unique symbol
 export type EndpointApprovalId = string & { readonly [endpointApprovalIdBrand]: true }
 
-export type AiOperation = 'chat-completions' | 'embeddings'
+export type AiOperation = 'chat-completions' | 'embeddings' | 'models'
 
 /**
  * A credential is usable only for the exact capability request it was bound
@@ -65,7 +65,7 @@ export interface SecretStore {
   readonly policy: {
     /** Web keeps its existing storage semantics; native vaults scrub config plaintext. */
     readonly storesPlaintextConfiguration: boolean
-    /** Native config can recover an opaque reference after restart without plaintext in JS. */
+    /** Native requests can reuse an opaque reference when the UI omits a key after restart. */
     readonly reuseReferenceWhenPlaintextOmitted: boolean
     readonly migrateLegacyPlaintext: boolean
     readonly storageLabel: string
@@ -75,6 +75,8 @@ export interface SecretStore {
   has(key: SecretKey): Promise<boolean>
   /** Returns an opaque vault reference, never the underlying plaintext. */
   reference(key: SecretKey): Promise<CredentialId | null>
+  /** Restores a locally stored AI key for the confirmed configuration UI. */
+  reveal(key: AiSecretKey): Promise<string | null>
   /** Deletes the logical secret and invalidates every reference issued for it. */
   delete(key: SecretKey): Promise<void>
 }
