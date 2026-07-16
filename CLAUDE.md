@@ -135,6 +135,15 @@
 
 ---
 
+## 📦 桌面打包交付规则
+
+- 所有 Windows 桌面最终可交付包必须放在仓库根目录下的相对路径 `release/`。
+- `src-tauri/target/release/`、备用 Cargo target 目录及其他构建目录只允许作为编译中间目录，不得把其中的文件路径作为最终交付路径提供给用户。
+- 未明确要求安装器时，默认生成 stable release EXE，不生成 NSIS；默认交付名为 `release/storyforge-desktop.exe`。如果该文件正被运行中的程序占用，可改用 `release/storyforge-desktop-latest.exe`，但仍必须位于 `release/`。
+- 交付前必须确认文件存在，并报告文件大小与 SHA-256。
+
+---
+
 ## ✅ 完成定义（Definition of Done · 交付前必逐条勾选）
 
 > **为什么有这条**：词条化等历史返工的根因不是技术难，而是"加功能不收口、半成品单列出来留着不管"。不立规矩，屎山会以"半成品堆积"的形态再长出来。本条是**流程防线**，与三注册表（数据防线）、ESLint（代码防线）互补。
