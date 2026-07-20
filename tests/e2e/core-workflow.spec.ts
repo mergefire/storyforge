@@ -93,6 +93,12 @@ test('建卷建章、保存正文、刷新恢复并导出正文与隐私诊断',
 })
 
 test('完整 JSON 导出后可重新导入且正文不丢', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'showOpenFilePicker', {
+      configurable: true,
+      value: undefined,
+    })
+  })
   const projectName = 'E2E JSON 往返'
   const chapterText = '这段正文必须跟随完整 JSON 备份恢复。'
   await createBookWithSavedChapter(page, projectName, chapterText)

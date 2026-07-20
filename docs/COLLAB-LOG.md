@@ -1570,8 +1570,8 @@ ROADMAP 已同步真实范围：`AUDIT-6` 仍未达到所有大面板 `<500` 行
 
 按作者确认的 1—3 范围选择性同步：① 118 条小说 Prompt 进入现有模板/工作流主链，并补齐声明式变量绑定；所有项目事实仍只经 `CONTEXT_SOURCES + assembleContext()` 读取，不引入实验版独立运行器或额外写回入口。② 导航和工作区标题新增「设定 / 创作 / 产物 / AI 工具 / 系统」内容流标记，只读模块元数据。③ 只移植与 optimize 当前编辑器主链无冲突的 `AIConfigPanel` 子区和 `WorldviewOriginSidebar` 纯视图拆分；上游旧版 `ChapterEditor` / `RichEditor` 拆分明确不合入，避免覆盖 optimize 已完成的正文 AI 协作闭环。
 
-本次未改 DB schema、required tables、项目表生命周期或既有 AI 采纳入口。Prompt 数量断言改为由 seed 集合动态计算，以兼容 optimize 已有的 `chapter.assistant` 模板；内容流徽标采用中性视觉，仅「创作」使用主强调色，章节沉浸背景保持纯色。验证时另发现并修复 optimize 既有的 provider 切换竞态：不再于异步凭据刷新完成后读取已被受控表单还原的 `event.target.value`，而是在 change 事件内立即保存目标 provider；本地模型刷新 E2E 修后通过。
+本次未改 DB schema、required tables、项目表生命周期或既有 AI 采纳入口。Prompt 数量断言改为由 seed 集合动态计算，以兼容 optimize 已有的 `chapter.assistant` 模板；内容流徽标采用中性视觉，仅「创作」使用主强调色，章节沉浸背景保持纯色。验证时另发现并修复 optimize 既有的 provider 切换竞态：不再于异步凭据刷新完成后读取已被受控表单还原的 `event.target.value`，而是在 change 事件内立即保存目标 provider；E2E 同步等待切换完成。JSON 往返用例显式屏蔽系统 Chrome 原生 picker，固定验证项目的文件输入回退路径。
 
-六项强制闸门全绿：TypeScript、生产 build、188 files / 800 tests、architecture、42 required tables、AI manual check 均通过；额外 ESLint、430 个生产源码可达性与 bundle budget 通过（entry 224.3 KiB gzip，小说 Prompt 为 48.1 KiB 独立异步块）。Playwright 自带 Chromium 在本机缺失且下载 5 分钟无进度，改用系统 Chrome 后 7/8 用例通过；唯一未执行到底的 JSON 导入用例因系统 Chrome 走原生文件选择器、测试却等待 DOM `filechooser` 而超时，导出/导入数据逻辑已有全量 Vitest 往返回归覆盖。测试启动的 4178 Vite 服务与浏览器进程均已清理。
+六项强制闸门全绿：TypeScript、生产 build、188 files / 800 tests、architecture、42 required tables、AI manual check 均通过；额外 ESLint、430 个生产源码可达性与 bundle budget 通过（entry 224.3 KiB gzip，小说 Prompt 为 48.1 KiB 独立异步块）。Playwright 自带 Chromium 在本机缺失且下载 5 分钟无进度，临时改用系统 Chrome 完成同一套 E2E，最终 8/8 通过。临时配置、4178 Vite 服务与浏览器进程均已清理。未改 Rust/Tauri IPC、能力或打包配置，因此未跑 Cargo/桌面打包。
 
 👉 球在 Claude：重点审查声明式绑定是否完全受三注册表约束、内容类型映射边界，以及 AI 设置拆分是否完整保留 optimize 的运行时凭据刷新语义。
