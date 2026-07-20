@@ -43,6 +43,14 @@ export const PREVIEW_VARS: PromptVariableContext = {
   // 编辑/润色
   text: '林玄拔剑，剑光闪过，敌人倒下。',
   instruction: '增加画面感和心理描写',
+  editContract: '只输出本轮可写目标的替换正文，不要附加解释。',
+  readOnlyContext: '【角色设定】林玄受伤后右手无力；【已确认事实】断剑仍在斗篷内。',
+  recipeContext: '保持原意与人物口吻，避免堆砌形容词。',
+  conversationHistory: '作者：动作再克制一点。\nAI：已缩短动作并保留受伤状态。',
+  currentCandidate: '林玄按住剑柄，没有立刻出剑。',
+  beforeText: '雨声压住了廊下的脚步。',
+  targetText: '林玄拔剑，剑光闪过，敌人倒下。',
+  afterText: '血沿着青砖缝慢慢散开。',
   // 伏笔
   existingForeshadows: '【已有】神秘玉佩 — 在第三章主角无意中得到，回收点未定。',
   hasNoForeshadows: '',

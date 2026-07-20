@@ -258,13 +258,40 @@ async function readDetailedOutline(projectId: number, outlineNodeId?: number | n
     nodeId = chapter?.outlineNodeId ?? null
   }
   if (nodeId == null) return ''
+  const linkedNode = await db.outlineNodes.get(nodeId)
+  if (!linkedNode || linkedNode.projectId !== projectId || linkedNode.type !== 'chapter') return ''
   const rows = await db.detailedOutlines.where('projectId').equals(projectId).toArray()
   const detail = rows.find(d => d.outlineNodeId === nodeId)
   if (!detail || !Array.isArray(detail.scenes) || detail.scenes.length === 0) return ''
+  const characterIds = [...new Set([
+    ...(detail.appearingCharacterIds ?? []),
+    ...detail.scenes.flatMap(scene => scene.characterIds ?? []),
+  ])]
+  const characters = characterIds.length ? await db.characters.bulkGet(characterIds) : []
+  const characterNames = new Map(characterIds.map((id, index) => [id, characters[index]?.name || `角色#${id}（关联缺失）`]))
+  const foreshadowIds = [...new Set(detail.foreshadowIds ?? [])]
+  const foreshadows = foreshadowIds.length ? await db.foreshadows.bulkGet(foreshadowIds) : []
+  const foreshadowNames = foreshadowIds.map((id, index) => foreshadows[index]?.name || `伏笔#${id}（关联缺失）`)
+  const paceLabels: Record<string, string> = { slow: '慢', medium: '中', fast: '快', climax: '高潮' }
+  const emotionLabels: Record<string, string> = { rising: '上升', falling: '下降', flat: '平稳', wave: '波动', climax: '高潮' }
   const parts: string[] = ['【本章细纲(场景拆解)】']
   if (detail.openingHook) parts.push(`开头衔接:${detail.openingHook}`)
+  if (detail.sceneLocation) parts.push(`主要地点:${detail.sceneLocation}`)
+  if (detail.appearingCharacterIds?.length) {
+    parts.push(`本章人物:${detail.appearingCharacterIds.map(id => characterNames.get(id) || `角色#${id}`).join('、')}`)
+  }
+  if (detail.emotionArc) parts.push(`情绪走向:${emotionLabels[detail.emotionArc] || detail.emotionArc}`)
+  if (foreshadowNames.length) parts.push(`关联伏笔:${foreshadowNames.join('、')}`)
   detail.scenes.forEach((s, i) => {
-    const bits = [s.summary, s.conflict ? `冲突:${s.conflict}` : '', s.location ? `地点:${s.location}` : '']
+    const bits = [
+      s.summary,
+      s.characterIds?.length ? `人物:${s.characterIds.map(id => characterNames.get(id) || `角色#${id}`).join('、')}` : '',
+      s.location ? `地点:${s.location}` : '',
+      s.conflict ? `冲突:${s.conflict}` : '',
+      s.pace ? `节奏:${paceLabels[s.pace] || s.pace}` : '',
+      s.estimatedWords ? `预计:${s.estimatedWords}字` : '',
+      s.notes ? `作者备注:${s.notes}` : '',
+    ]
       .filter(Boolean).join(' / ')
     parts.push(`场景${i + 1} ${s.title || ''}: ${bits}`)
   })
@@ -584,7 +611,9 @@ export const CONTEXT_SOURCES: ContextSource[] = [
     layer: 'L2',
     budgetTokens: 6000, // 放宽:容下更多设定词条
     requiresWorldGroupId: true,
-    read: input => buildCodexContext(input.projectId, input.worldGroupId),
+    read: input => buildCodexContext(input.projectId, input.worldGroupId, {
+      complete: input.protectedSourceKeys?.includes('codex') || input.requiredSourceKeys?.includes('codex'),
+    }),
   },
   {
     key: 'characters',

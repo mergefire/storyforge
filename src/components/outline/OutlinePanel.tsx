@@ -28,6 +28,7 @@ import { useOutlineGenerationController } from './useOutlineGenerationController
 import { useOutlineChapterCountEstimate } from './useOutlineChapterCountEstimate'
 import { useOutlineChapterDrag } from './useOutlineChapterDrag'
 import { decodeGenerationOperation } from '../../lib/outline/generation-request'
+import { resolveRequestConfig } from '../../lib/ai/client'
 
 interface Props {
   project: Project
@@ -175,13 +176,24 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
     } : undefined,
   }), [parameterValues, systemOverride, userOverride])
 
-  const buildOutlineAssembledContext = useCallback(async (worldGroupId: number | null, outlineNodeId?: number | null) => {
+  const buildOutlineAssembledContext = useCallback(async (
+    worldGroupId: number | null,
+    outlineNodeId?: number | null,
+    contentBudgetTokens?: number,
+    sourceContentOverrides?: Record<string, string>,
+  ) => {
+    const budgetConfig = resolveRequestConfig(aiConfig, { category: 'outline.volume' }).config
     return await assembleContext({
       projectId: project.id!,
       worldGroupId,
       outlineNodeId: outlineNodeId ?? null,
-      provider: aiConfig.provider,
-      model: aiConfig.model,
+      provider: budgetConfig.provider,
+      model: budgetConfig.model,
+      contextWindowTokens: budgetConfig.contextWindow,
+      maxOutputTokens: budgetConfig.maxTokens,
+      contentBudgetTokens,
+      sourceContentOverrides,
+      requiredSourceKeys: ['codex'],
       sourceKeys: [
         'worldview',
         'storyCore',
@@ -197,7 +209,7 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
         'writtenChapterProgress',
       ],
     })
-  }, [project.id, aiConfig.provider, aiConfig.model])
+  }, [project.id, aiConfig])
 
   const generation = useOutlineGenerationController({
     project,

@@ -5,7 +5,7 @@
 > 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
 > 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — M0～M3 当前施工步骤；授权、状态和闸门只看 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-13（v3.8.0 收口 QUICKWIN-4 已写正文参与卷纲/章纲生成、QUICKWIN-6 跨卷拖拽、EDITOR-1 全书查找替换与版本号单一事实源；此前追加透明生成管线 PIPELINE-1~3、认知账本 CONSISTENCY-2/3、一致性覆盖地图 CONSISTENCY-0；施工权威见 MASTER-BLUEPRINT）
+> **最后更新**: 2026-07-19（EDITOR-6 正文 AI 安全协作闭环完成实现与自动回归；Windows Desktop 真实交互签字受 WebView2 CDP 自动化通道阻塞，状态与证据见本条及设计文档 §15）
 > **说明**: 本文档是唯一的功能规划文档。旧文档已迁移到 WPS 云文档 `storyforge故事熔炉 / 仓库文档迁移_20260708`，仓库内只保留当前施工所需文档。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
@@ -560,6 +560,32 @@
 **用户故事**:作为作者,我改一个角色名时,想一次把注册表里的角色档案 + 全书所有章节里的名字**一起**改,而不是分两处手动。
 
 **功能说明**:选中一个**实体**(角色/物品/地点)改名 → 同时更新注册表该实体 + 全书正文出现处;区别于纯文本全局替换:它知道"这是实体",可精准(结合实体边界避免误伤同名子串)。**开发方案**:在 EDITOR-1 全书替换之上加"实体感知"入口(改角色名走 `updateCharacter` + 全书替换),共用 EDITOR-1 的预览/快照/撤销安全阀。**验证**:改名后注册表 + 全书一致、快照可恢复;`R-EDITOR5`。
+
+## 🟡 EDITOR-6 · 正文 AI 安全协作闭环（2026-07-19 实现与自动回归完成）
+
+> **需求与施工权威**：作者 2026-07-18～19 确认的正文 AI 六个施工包；完整任务模型、范围规则、验收和 `CAE-*` 追踪见 [`CHAPTER-AI-EDITOR-DESIGN.md`](CHAPTER-AI-EDITOR-DESIGN.md)。本条授权该设计在编辑器轨道施工，不以散落按钮替代闭环。
+
+**四问结论**
+- 读：编辑器当前正文通过 `sourceContentOverrides.chapterContent` 进入 `CONTEXT_SOURCES + assembleContext()`；先解析实际任务路由，再以同一 provider/model/窗口装配和发送。
+- 写：三类正文候选统一经快照、版本校验和 `adopt()`；长期事实候选字段补入 `FIELD_REGISTRY + AdoptionSchema`，确认/否决仍由 fact-ledger 状态机负责。
+- 表：只复用既有 `chapters`、`snapshots`、`temporalFacts` 等项目表；无新表、无 IndexedDB schema 迁移，`PROJECT_TABLES` 仍为 42 表唯一事实源。
+- 边界：讨论不可采纳；整章只能替换、续写只能追加、选区只能替换原范围；失败、停止、冲突和守卫阻断都保留候选与会话。
+
+**实现记录**
+- 稿件安全：未保存正文进入上下文；任务保存正文 hash/续写尾锚/选区坐标原文；采纳前项目快照和 CAS；写回异常恢复编辑器 HTML 与 React state；成功后清会话并给出受版本保护的独立撤销。
+- 上下文：实际创作模型、上下文窗口和输出上限共同参与预算；区分来源限额、总窗口裁剪和语义压缩；章纲硬前置、细纲可选且存在时注入完整场景字段。
+- 协作：`generating/completed/stopped/failed/blocked/applied/discarded` 状态完整；选区 Decoration 持续高亮，讨论可直接转润色/扩写/缩写/重写；超长选区明确反馈；候选全文不再复制进聊天。
+- 审阅与布局：选区侧栏字词级 diff；整章中央稿纸审阅、原文/候选/行内/并排、变更导航和大幅修改警告；AI 面板鼠标/键盘调宽、双击复位、宽度与开关偏好持久化、智能滚动和宽/中/窄/极窄布局。Tauri 最小宽度由 1080 调整为 420。
+- 长期事实：章节内候选可编辑、勾选、批量确认/放弃，证据保存时逐字回查正文；组件不直接写 `db.temporalFacts`。
+- 输出安全与格式：通用候选守卫拦截空输出、Markdown/Prompt/分析/拒答/上下文回显及明显非正文；场景空行保留，单段选区采用 inline HTML 并继承原 TipTap marks。
+
+**验证证据**
+- `npx vitest run`：184 个文件、770 项全部通过；EDITOR-6 新增真实 React/TipTap/IndexedDB 回归覆盖采纳安全、任务状态、事实候选、选区范围、面板 UX、中央 diff 和格式守卫。
+- `tsc --noEmit`、ESLint 零 warning、architecture、42 required tables、AI manual、Web/PWA build、bundle budget、desktop shell/build/parity/baseline/fixture/stable-boundary 均通过。
+- Tauri dev/stable 两套 release 实际编译成功，stable 身份边界通过；Web、desktop、desktop-stable 共用同一正文业务实现。
+
+**唯一未签字项**
+- Windows Desktop 真实自动化烟测两次均在等待 WebView2 CDP target 时超时，未获得可采信 run record；失败后已按绝对路径清理本仓库 exe，未触碰其它进程。因此代码与自动回归完成，但合 `main` 前仍需在可用的 Windows/CDP 环境补做框选、讨论转改写、停止、采纳、失败回滚、撤销、切章和 420px 窄窗的最终人工签字，不能把构建成功冒充该项已通过。
 ---
 
 # ═══ 待开发 · 透明生成管线(执行模型层 · 缝合 agent + 一致性 + 章纲方法论) ═══

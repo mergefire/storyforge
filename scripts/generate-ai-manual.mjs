@@ -18,7 +18,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = path.join(root, 'docs/AI-FUNCTIONS-MANUAL.generated.md')
@@ -268,7 +268,8 @@ function buildMarkdown() {
 
 function gitHash() {
   try {
-    return execSync('git rev-parse --short HEAD', { cwd: root }).toString().trim()
+    const safeRoot = root.replaceAll('\\', '/')
+    return execFileSync('git', ['-c', `safe.directory=${safeRoot}`, 'rev-parse', '--short', 'HEAD'], { cwd: root }).toString().trim()
   } catch {
     return 'unknown'
   }

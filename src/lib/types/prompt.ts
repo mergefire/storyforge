@@ -18,6 +18,7 @@ export type PromptModuleKey =
   // 章节正文
   | 'chapter.content'
   | 'chapter.continue'
+  | 'chapter.assistant'
   | 'chapter.memory'
   | 'chapter.polish'
   | 'chapter.expand'

@@ -31,31 +31,31 @@
         "id": "empty-v1",
         "required": true,
         "artifactStatus": "GENERATED_VALID",
-          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+        "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401"
       },
       {
         "id": "small-v1",
         "required": true,
         "artifactStatus": "GENERATED_VALID",
-          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+        "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401"
       },
       {
         "id": "large-synthetic-v1",
         "required": true,
           "artifactStatus": "GENERATED_VALID",
-          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+        "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401"
       },
       {
         "id": "blob-ladder-v1",
         "required": true,
           "artifactStatus": "GENERATED_VALID",
-          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+        "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401"
       },
       {
         "id": "legacy-matrix-v1",
         "required": true,
           "artifactStatus": "GENERATED_VALID",
-          "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd"
+        "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401"
       },
       {
         "id": "real-anonymized-v1",

@@ -7,6 +7,9 @@ import type { ParsedChapter } from '../../lib/ai/parse-outline-output'
 import { adoptGeneratedOutlineItems } from '../../lib/outline/adopt-generation'
 import type { AssembleContextResult } from '../../lib/registry/types'
 import type { OutlineNode } from '../../lib/types'
+import { compressCodexContextWithAI } from '../../lib/ai/codex-semantic-compression'
+import { useAIConfigStore } from '../../stores/ai-config'
+import { estimateTokens } from '../../lib/ai/context-budget'
 
 interface Options {
   projectId: number
@@ -14,7 +17,12 @@ interface Options {
   volumes: OutlineNode[]
   nodes: OutlineNode[]
   hint: string
-  assembleContext: (worldGroupId: number | null, outlineNodeId?: number | null) => Promise<AssembleContextResult>
+  assembleContext: (
+    worldGroupId: number | null,
+    outlineNodeId?: number | null,
+    contentBudgetTokens?: number,
+    sourceContentOverrides?: Record<string, string>,
+  ) => Promise<AssembleContextResult>
   reloadOutline: () => Promise<void>
   onError: (message: string) => void
 }
@@ -60,6 +68,31 @@ export function useOutlineBatchGeneration({
             return resolved.text
           }
           : undefined,
+        worldContextCompressor: async (volumeId, targetTokens) => {
+          const volume = nodes.find(node => node.id === volumeId)
+          const full = await assembleContext(
+            volume?.worldGroupId ?? null,
+            volumeId,
+          )
+          const codex = contextPart(full, 'codex')
+          if (!codex) return full.text
+          const overflow = Math.max(0, full.totalInputTokens - targetTokens)
+          const codexTargetTokens = Math.max(1, estimateTokens(codex) - overflow - 128)
+          const compressedCodex = await compressCodexContextWithAI({
+            content: codex,
+            targetTokens: codexTargetTokens,
+            config: useAIConfigStore.getState().config,
+            projectId,
+            signal: controller.signal,
+          })
+          const resolved = await assembleContext(
+            volume?.worldGroupId ?? null,
+            volumeId,
+            targetTokens,
+            { codex: compressedCodex },
+          )
+          return resolved.text
+        },
         worldRulesContextResolver: multiWorldEnabled
           ? async volumeId => {
             const volume = nodes.find(node => node.id === volumeId)
@@ -81,7 +114,7 @@ export function useOutlineBatchGeneration({
       if (abortRef.current === controller) abortRef.current = null
       setRunning(false)
     }
-  }, [volumes, nodes, multiWorldEnabled, hint, assembleContext, onError])
+  }, [volumes, nodes, multiWorldEnabled, hint, assembleContext, onError, projectId])
 
   const cancel = useCallback(() => {
     abortRef.current?.abort()

@@ -8,7 +8,7 @@
 
 ## 一、Prompt 模板清单（PromptModuleKey 事实源）
 
-共 40 个 moduleKey。
+共 41 个 moduleKey。
 
 | moduleKey | 名称 | 说明 | 读取变量 |
 |---|---|---|---|
@@ -19,6 +19,7 @@
 | `outline.chapter` | — | — | — |
 | `chapter.content` | — | — | — |
 | `chapter.continue` | — | — | — |
+| `chapter.assistant` | — | — | — |
 | `chapter.memory` | — | — | — |
 | `chapter.polish` | — | — | — |
 | `chapter.expand` | — | — | — |
@@ -118,24 +119,19 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `storyArcs` | `description` `name` `stages` `type` |
 | `storyCores` | `centralConflict` `concept` `logline` `mainPlot` `plotPattern` `subPlots` `theme` |
 | `storyTimelineEvents` | `chapterId` `chapterTitle` `description` `importance` `order` `storyTime` `title` |
+| `temporalFacts` | `characterId` `codexEntryId` `confidence` `factKind` `locationId` `locked` `objectCharacterId` `objectCodexEntryId` `objectLocationId` `predicate` `sourceChapterId` `sourceQuote` `sourceRecordId` `sourceRecordTable` `sourceType` `status` `storyArcId` `subjectName` `subjectWorldGroupId` `supersedesFactId` `validFromChapterId` `validToChapterId` `value` `worldGroupId` |
 | `worldviews` | `climateByRegion` `continentLayout` `culture` `divineDesign` `economy` `factionLayout` `geography` `history` `historyLine` `internalConflicts` `itemDesign` `mountainsRivers` `naturalResourceOverview` `naturalResources` `politicsEconomyCulture` `powerHierarchy` `races` `regionDimensions` `rules` `society` `worldDimensions` `worldEvents` `worldOrigin` `worldStructure` |
 
 ## 四、AI 调用点（消耗统计 category · 在哪触发)
 
-共 47 个 category。
+共 40 个 category。
 未分类调用: 0 个。动态 category 调用: 3 个。
 
 | category | 触发文件 |
 |---|---|
 | `ai.restructure` | `src/lib/ai/restructure.ts:54` |
-| `chapter.content` | `src/components/editor/ChapterEditor.tsx:489` |
 | `chapter.content.batch` | `src/lib/ai/batch-detail-runner.ts:256` |
-| `chapter.continue` | `src/components/editor/ChapterEditor.tsx:507` |
-| `chapter.deai` | `src/components/editor/ChapterEditor.tsx:544` |
-| `chapter.expand` | `src/components/editor/ChapterEditor.tsx:524` |
-| `chapter.memory` | `src/components/editor/ChapterEditor.tsx:321` |
-| `chapter.polish` | `src/components/editor/ChapterEditor.tsx:516` |
-| `chapter.toolbar` | `src/components/editor/FloatingToolbar.tsx:105` |
+| `chapter.memory` | `src/components/editor/ChapterEditor.tsx:435` |
 | `character.dimension` | `src/components/character/CharacterDimensionFields.tsx:166` |
 | `character.generate` | `src/components/character/CharacterPanel.tsx:163` |
 | `character.structure` | `src/lib/ai/parse-character-output.ts:80` |
@@ -152,9 +148,9 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `inspiration.reverse` | `src/components/project/InspirationPanel.tsx:110` |
 | `inventory.extract` | `src/components/items/InventoryPanel.tsx:86` |
 | `location.extract` | `src/components/location/LocationPanel.tsx:106` |
-| `outline.chapter` | `src/components/outline/useOutlineGenerationController.ts:106`<br/>`src/lib/ai/batch-outline-runner.ts:123` |
+| `outline.chapter` | `src/components/outline/useOutlineGenerationController.ts:180`<br/>`src/lib/ai/batch-outline-runner.ts:138` |
 | `outline.character-driven` | `src/components/outline/CharacterDrivenPlotPanel.tsx:113` |
-| `outline.volume` | `src/components/outline/useOutlineGenerationController.ts:104` |
+| `outline.volume` | `src/components/outline/useOutlineGenerationController.ts:178` |
 | `prompt.examples` | `src/components/settings/prompt/PromptExamplesEditor.tsx:108` |
 | `reference.characters` | `src/components/project/AnalysisReportViewer.tsx:143` |
 | `reference.summary` | `src/components/project/AnalysisReportViewer.tsx:112` |
@@ -162,7 +158,6 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `review.anti-ai` | `src/components/editor/ReviewPanel.tsx:87` |
 | `review.quality` | `src/components/editor/ReviewPanel.tsx:79` |
 | `review.readability` | `src/components/editor/ReviewPanel.tsx:96` |
-| `review.revise` | `src/components/editor/ChapterEditor.tsx:559` |
 | `rules.generate` | `src/components/rules/CreativeRulesPanel.tsx:80` |
 | `scene.verify` | `src/components/scene/SceneVerifyPanel.tsx:81` |
 | `story-arc.generate` | `src/components/outline/StoryArcPanel.tsx:84` |
@@ -183,4 +178,4 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 
 ---
 
-生成时间基准:commit `unknown`
+生成时间基准:commit `6fbc7a6`

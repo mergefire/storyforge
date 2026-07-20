@@ -16,6 +16,10 @@ interface Props {
   sidebarTitle?: string
   /** 额外的 className */
   className?: string
+  /** 匹配窄屏时自动收起侧栏；不会在窗口变宽时擅自重新展开 */
+  autoCollapse?: boolean
+  /** 自动收起使用的媒体查询 */
+  autoCollapseQuery?: string
 }
 
 /**
@@ -33,11 +37,24 @@ export default function PanelLayout({
   maxWidth = 400,
   sidebarTitle,
   className = '',
+  autoCollapse = false,
+  autoCollapseQuery = '(max-width: 1279px)',
 }: Props) {
   const [sidebarWidth, setSidebarWidth] = useState(defaultWidth)
   const [collapsed, setCollapsed] = useState(false)
   const [dragging, setDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!autoCollapse || typeof window === 'undefined' || !window.matchMedia) return
+    const query = window.matchMedia(autoCollapseQuery)
+    const collapseWhenMatched = () => {
+      if (query.matches) setCollapsed(true)
+    }
+    collapseWhenMatched()
+    query.addEventListener?.('change', collapseWhenMatched)
+    return () => query.removeEventListener?.('change', collapseWhenMatched)
+  }, [autoCollapse, autoCollapseQuery])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()

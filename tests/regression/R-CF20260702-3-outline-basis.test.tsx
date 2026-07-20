@@ -91,4 +91,33 @@ describe('CF-20260702-3 · 大纲生成依据面板', () => {
     expect(host.textContent).toContain('无可用内容：故事核心、角色档案')
     expect(host.textContent).toContain('因模型上下文预算未发送：历史时间线')
   })
+
+  it('故事核心已读取但被预算裁掉时不误报为未填写故事主线', async () => {
+    const host = await renderBasis(makeContext({
+      trimmed: ['storyCore', 'worldview'],
+      overBudgetBeforeTrim: true,
+      inputBudget: 3_504,
+    }))
+
+    expect(host.textContent).toContain('已读取作品资料，但因模型上下文预算未发送')
+    expect(host.textContent).toContain('故事核心已读取，但因模型上下文预算未发送')
+    expect(host.textContent).not.toContain('未填写故事主线')
+    expect(host.textContent).not.toContain('没有读取到已登记的作品资料')
+  })
+
+  it('显示词条全量压缩状态，不把压缩误报成来源未发送', async () => {
+    const host = await renderBasis(makeContext({
+      included: ['codex'],
+      compressed: ['codex'],
+      segments: [
+        { label: '设定词条', layer: 'L2', content: '【设定词条 · 全量 40/40 条】', tokens: 20, trimmable: false },
+      ],
+      totalInputTokens: 20,
+      overBudgetBeforeTrim: true,
+    }))
+
+    expect(host.textContent).toContain('AI 语义摘要')
+    expect(host.textContent).toContain('设定词条')
+    expect(host.textContent).not.toContain('因模型上下文预算未发送：设定词条')
+  })
 })

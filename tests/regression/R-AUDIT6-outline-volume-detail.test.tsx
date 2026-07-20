@@ -154,8 +154,31 @@ describe('AUDIT-6 · 卷详情视图拆分', () => {
     ))
 
     expect(host.textContent).toContain('故事结构（2 章）')
+    expect(host.textContent).toContain('其中 1 章待编排')
+    expect(host.textContent).toContain('待编排章节')
+    expect(host.textContent).toContain('这些章节属于本卷，但尚未放入故事块')
+    expect(host.querySelector('[data-outline-unassigned-chapters]')).not.toBeNull()
+    expect(Array.from(host.querySelectorAll('input')).some(input => input.value === '直挂章')).toBe(true)
     expect(Array.from(host.querySelectorAll('input')).some(input => input.value === '第一幕')).toBe(true)
     await act(async () => Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes('+ 添加故事块'))!.click())
     expect(onAddStructure).toHaveBeenCalledWith('custom')
+  })
+
+  it('所有故事块为 0 章时明确展示卷直属章节，不再出现凭空多一章', async () => {
+    const volume = outlineNode(1, 'volume', null, '第一卷', { summary: '卷纲' })
+    const block = outlineNode(10, 'storyBlock', 1, '本卷主任务')
+    const directChapter = outlineNode(11, 'chapter', 1, '第1章')
+    const host = await mount(createElement(DialogProvider, null,
+      createElement(OutlineVolumeDetail, detailProps({
+        volume,
+        nodes: [volume, block, directChapter],
+      })),
+    ))
+
+    expect(host.textContent).toContain('故事结构（1 章）')
+    expect(host.textContent).toContain('其中 1 章待编排')
+    expect(host.textContent).toContain('0 章')
+    expect(Array.from(host.querySelectorAll('input')).some(input => input.value === '第1章')).toBe(true)
+    expect(Array.from(host.querySelectorAll('button')).some(button => button.textContent?.trim() === '添加章节')).toBe(false)
   })
 })

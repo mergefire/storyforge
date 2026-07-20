@@ -247,7 +247,7 @@ export interface ClipboardTransport {
   writeText(purpose: ClipboardPurpose, text: string): Promise<void>
 }
 
-export type ClipboardPurpose = 'ai-image-prompt' | 'workflow-output'
+export type ClipboardPurpose = 'ai-image-prompt' | 'workflow-output' | 'chapter-ai-output'
 
 export type ExternalDestination =
   | { kind: 'github-gist-token' }

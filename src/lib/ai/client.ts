@@ -6,7 +6,7 @@ import { recordUsage } from './usage-log'
 import { trimMessagesToFit } from './context-budget'
 import { buildOpenAIEndpoint } from './openai-endpoint'
 import { useAIConfigStore } from '../../stores/ai-config'
-import { resolveAIConfigForTask, type AITaskKind } from './task-routing'
+import { resolveAIConfigForTask, type AITaskKind, type ResolvedAITaskConfig } from './task-routing'
 import {
   aiCredentialTarget,
   bindAiCredential,
@@ -26,7 +26,9 @@ export interface AICallMeta {
   configOverrides?: Partial<AIConfig>
 }
 
-export function resolveRequestConfig(config: AIConfig, meta?: AICallMeta) {
+export type ResolvedRequestConfig = ResolvedAITaskConfig
+
+export function resolveRequestConfig(config: AIConfig, meta?: AICallMeta): ResolvedRequestConfig {
   const state = useAIConfigStore.getState()
   const resolved = resolveAIConfigForTask({
     category: meta?.category,
@@ -287,8 +289,9 @@ export async function* streamChat(
   signal?: AbortSignal,
   result?: StreamResult,
   meta?: AICallMeta,
+  preparedRequest?: ResolvedRequestConfig,
 ): AsyncGenerator<AIStreamChunk> {
-  const resolved = resolveRequestConfig(config, meta)
+  const resolved = preparedRequest ?? resolveRequestConfig(config, meta)
   warnRouteFallback(resolved, meta)
   config = resolved.config
   const trimmed = trimMessagesToFit(messages, config.provider, config.model, config.maxTokens, config.contextWindow)

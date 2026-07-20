@@ -17,6 +17,15 @@ coverage/
 test-results/
 playwright-report/
 
+# 本机 IDE / AI 工具与隔离构建缓存
+.idea/
+.omo/
+.playwright-mcp/
+.codex-build-home/
+
+# 本地作品导出（真实用户内容不得进入仓库）
+data/*-StoryForge-*.json
+
 # Release packaging outputs
 release/
 src-tauri/target/

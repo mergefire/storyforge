@@ -21,6 +21,10 @@ const entrypoints = [
   'src/main.tsx',
   // Product-approved i18n scaffold: retained until the English milestone is decided.
   'src/i18n/index.ts',
+  // Contract-test entrypoint: deterministic RuntimeAdapter used by desktop/web boundary tests.
+  'src/runtime/fake.ts',
+  // Backward-compatibility contract: tests preserve the pre-RuntimeAdapter PWA export surface.
+  'src/lib/pwa/register-service-worker.ts',
 ].map(file => path.resolve(root, file))
 
 const graph = new Map()

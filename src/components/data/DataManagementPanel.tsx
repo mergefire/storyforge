@@ -148,10 +148,11 @@ function ExportTab({ project, onImported }: Props) {
     try {
       show('loading', '正在整理本地诊断信息...')
       const report = await buildLocalDiagnosticReport()
-      downloadTextFile(
+      await downloadTextFile(
         JSON.stringify(report, null, 2),
         `storyforge-diagnostics-${new Date().toISOString().slice(0, 10)}.json`,
         'application/json',
+        'diagnostic-bundle',
       )
       show('success', '诊断信息已下载，不含作品内容与 API Key。')
     } catch (e) {

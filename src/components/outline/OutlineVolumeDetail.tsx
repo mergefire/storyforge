@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
-import { Plus, Sparkles, Trash2 } from 'lucide-react'
+import { Inbox, Plus, Sparkles, Trash2 } from 'lucide-react'
 import type { OutlineNode, StoryStructure, WorldGroup } from '../../lib/types'
+import { getVolumeChapterNodes } from '../../lib/outline/selectors'
 import AutoResizeTextarea from '../shared/AutoResizeTextarea'
 import { CInput } from '../shared/CompositionInput'
 import { useDragReorder } from './useDragReorder'
@@ -65,9 +66,19 @@ export default function OutlineVolumeDetail({
       ? nodes.filter(node => node.parentId === volume.id && node.type === 'chapter').sort((a, b) => a.order - b.order)
       : []
   ), [nodes, volume])
-  const blockChapterCount = useMemo(() => nodes.filter(node => (
-    node.type === 'chapter' && storyBlocks.some(block => block.id === node.parentId)
-  )).length, [nodes, storyBlocks])
+  const volumeChapters = useMemo(
+    () => volume?.id == null ? [] : getVolumeChapterNodes(nodes, volume.id),
+    [nodes, volume?.id],
+  )
+  const storyBlockIds = useMemo(
+    () => new Set(storyBlocks.flatMap(block => block.id == null ? [] : [block.id])),
+    [storyBlocks],
+  )
+  const unassignedChapters = useMemo(
+    () => volumeChapters.filter(chapter => !storyBlockIds.has(chapter.parentId ?? -1)),
+    [storyBlockIds, volumeChapters],
+  )
+  const volumeChapterCount = volumeChapters.length
   const directChaptersDnD = useDragReorder(directChapters.map(chapter => chapter.id), onReorderNodes)
   const hasBlocks = storyBlocks.length > 0
 
@@ -105,12 +116,14 @@ export default function OutlineVolumeDetail({
           >
             <Sparkles className="w-3.5 h-3.5" /> 生成本卷所有章节
           </button>
-          <button
-            onClick={() => onAddChapter()}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs bg-bg-elevated text-text-secondary rounded-md hover:text-text-primary border border-border transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" /> 添加章节
-          </button>
+          {!hasBlocks && (
+            <button
+              onClick={() => onAddChapter()}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs bg-bg-elevated text-text-secondary rounded-md hover:text-text-primary border border-border transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> 添加章节
+            </button>
+          )}
           <button onClick={onDeleteVolume} title="删除当前卷" className="p-1.5 text-text-muted hover:text-error rounded transition-colors">
             <Trash2 className="w-4 h-4" />
           </button>
@@ -149,13 +162,62 @@ export default function OutlineVolumeDetail({
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-medium text-text-primary">
             {hasBlocks ? '故事结构' : '章节列表'}
-            <span className="text-text-muted font-normal ml-1">（{directChapters.length + blockChapterCount} 章）</span>
+            <span className="text-text-muted font-normal ml-1">（{volumeChapterCount} 章）</span>
+            {hasBlocks && unassignedChapters.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-warning">
+                其中 {unassignedChapters.length} 章待编排
+              </span>
+            )}
           </h3>
           {!hasBlocks && <OutlineStructureMenu onSelect={onAddStructure} />}
         </div>
 
         {hasBlocks && (
           <div className="space-y-3 mb-3">
+            {unassignedChapters.length > 0 && (
+              <section
+                data-outline-unassigned-chapters
+                aria-label="待编排章节"
+                className="overflow-hidden rounded-lg border border-warning/30"
+              >
+                <div className="flex items-center gap-2 bg-warning/5 px-3 py-2">
+                  <Inbox className="h-3.5 w-3.5 shrink-0 text-warning" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-text-primary">待编排章节</span>
+                      <span className="text-[10px] text-warning">{unassignedChapters.length} 章</span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-text-muted">
+                      这些章节属于本卷，但尚未放入故事块。可直接编辑，或拖到下方对应的故事块。
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-1 p-2">
+                  {unassignedChapters.map((chapter, index) => {
+                    const parentId = chapter.parentId ?? volume.id!
+                    return (
+                      <OutlineChapterRow
+                        key={chapter.id}
+                        ch={chapter}
+                        idx={index}
+                        onUpdate={onUpdateNode}
+                        onDelete={onDeleteNode}
+                        onOpen={onOpenChapter}
+                        dnd={chapter.parentId === volume.id ? directChaptersDnD.itemDnD(chapter.id) : undefined}
+                        onInsertAfter={() => onInsertChapterAfter(chapter.id!, parentId)}
+                        onGenerate={() => onGenerateChapter(chapter.id!)}
+                        parentId={parentId}
+                        onMoveChapter={onMoveChapter}
+                        activeChapterDrag={activeChapterDrag}
+                        getActiveChapterDrag={getActiveChapterDrag}
+                        onChapterDragStart={onChapterDragStart}
+                        onChapterDragEnd={onChapterDragEnd}
+                      />
+                    )
+                  })}
+                </div>
+              </section>
+            )}
             {storyBlocks.map(block => {
               const blockChapters = nodes
                 .filter(node => node.parentId === block.id && node.type === 'chapter')

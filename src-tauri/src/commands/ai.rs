@@ -158,7 +158,7 @@ async fn execute_inner(
     let client = if endpoint_policy::is_loopback_endpoint(&request.endpoint)? {
         &state.loopback_client
     } else {
-        &state.client
+        &state.ai_client
     };
     let mut builder = if request.endpoint.operation == "models" {
         client.get(url)

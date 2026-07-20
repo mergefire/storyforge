@@ -248,7 +248,7 @@ export interface AdoptInput {
    * adopt() 必须在写 summary/handoff 的同一事务中重算当前正文 hash。
    */
   compareAndSet?: {
-    kind: 'chapter-source-text-hash'
+    kind: 'chapter-source-text-hash' | 'chapter-content-hash'
     expectedHash: string
     textNormalizationVersion: string
   }
@@ -276,10 +276,24 @@ export interface AssembleContextInput {
   chapterId?: number | null
   currentChapterOrder?: number
   sourceKeys?: string[]
+  /** @deprecated 使用 protectedSourceKeys；保留以兼容旧调用方。 */
+  requiredSourceKeys?: string[]
+  /** 来源存在时必须完整保留；业务层仍需单独验证真正的硬前置。 */
+  protectedSourceKeys?: string[]
   provider?: AIProvider
   model?: string
+  /** 用户/路由配置的真实上下文窗口；优先于内置模型预设。 */
+  contextWindowTokens?: number
+  /** 本次请求预留的最大输出 token；与请求发送前的预算算法保持一致。 */
+  maxOutputTokens?: number
   /** Test/override hook. When set, this is the real input budget used for trimming. */
   inputBudgetTokens?: number
+  /** 在真实窗口内为最终 prompt 指令预留空间；仅限制来源内容，不改变显示的真实输入预算。 */
+  contentBudgetTokens?: number
+  /** 已经由受控派生流程生成的来源文本；仍通过装配器参与统一预算和分层裁剪。 */
+  sourceContentOverrides?: Record<string, string>
+  /** 已经由受控 AI 语义摘要流程处理的来源；只用于呈现，不可由普通覆盖冒充。 */
+  semanticCompressedSourceKeys?: string[]
   citedReferenceIds?: number[]
   previousChapterEnding?: string
   stateReferenceText?: string
@@ -314,6 +328,15 @@ export interface AssembleContextResult {
   included: string[]
   omitted: string[]
   trimmed: string[]
+  /** 未删除实体、仅压缩详情的来源。 */
+  compressed?: string[]
+  /** 来源自身软上限及本轮是否触发，与模型总窗口裁剪分开呈现。 */
+  sourceLimits?: Array<{
+    key: string
+    configuredTokens: number
+    effectiveTokens: number
+    applied: boolean
+  }>
   totalInputTokens: number
   inputBudget: number
   overBudgetBeforeTrim: boolean

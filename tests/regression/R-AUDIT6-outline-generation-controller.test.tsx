@@ -190,4 +190,63 @@ describe('AUDIT-6 · 大纲生成 controller', () => {
     })
     expect(controller.preparedContext).toBeNull()
   })
+
+  it('最终请求仍超出物理窗口时不调用 API，避免客户端二次裁掉完整词条', async () => {
+    const ai = createAI()
+    const onError = vi.fn()
+    await mount({
+      ai,
+      onError,
+      assembleContext: vi.fn(async () => assembled(`【设定词条 · 全量】${'不可遗漏词条'.repeat(100_000)}`)),
+    })
+
+    await act(async () => { await controller.prepare({ kind: 'volumes' }) })
+    await act(async () => { await controller.confirm() })
+
+    expect(ai.start).not.toHaveBeenCalled()
+    expect(ai.reset).toHaveBeenCalled()
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('本次未调用 API'))
+  })
+
+  it('确认后先用 AI 语义压缩 codex，再用完整编号摘要生成大纲', async () => {
+    const ai = createAI()
+    const rawCodex = `【设定词条 · 全量 2/2 条】\n${'原始详情'.repeat(80_000)}`
+    const semanticCodex = '【设定词条 · AI语义压缩 2/2 条】\n- [词条#1] 甲：关键约束\n- [词条#2] 乙：关键约束'
+    const initial: AssembleContextResult = {
+      text: rawCodex,
+      included: ['codex'],
+      segments: [{ label: '设定词条', layer: 'L2', content: rawCodex, tokens: 120_000, trimmable: false }],
+      omitted: [],
+      trimmed: [],
+      totalInputTokens: 120_000,
+      inputBudget: 48_000,
+      overBudgetBeforeTrim: true,
+      overBudgetAfterTrim: true,
+    }
+    const compressed: AssembleContextResult = {
+      ...initial,
+      text: semanticCodex,
+      segments: [{ label: '设定词条', layer: 'L2', content: semanticCodex, tokens: 50, trimmable: false }],
+      compressed: ['codex'],
+      totalInputTokens: 50,
+      overBudgetAfterTrim: false,
+    }
+    const assembleContext = vi.fn(async (
+      _worldGroupId: number | null,
+      _volumeId?: number | null,
+      _budget?: number,
+      overrides?: Record<string, string>,
+    ) => overrides?.codex ? compressed : initial)
+    const compressCodexContext = vi.fn(async () => semanticCodex)
+    await mount({ ai, assembleContext, compressCodexContext })
+
+    await act(async () => { await controller.prepare({ kind: 'volumes' }) })
+    await act(async () => { await controller.confirm() })
+
+    expect(compressCodexContext).toHaveBeenCalledOnce()
+    expect(assembleContext).toHaveBeenCalledTimes(2)
+    expect(assembleContext.mock.calls[1][3]).toEqual({ codex: semanticCodex })
+    expect(ai.start).toHaveBeenCalledOnce()
+    expect(ai.start.mock.calls[0][0].some(message => message.content.includes('词条#2'))).toBe(true)
+  })
 })

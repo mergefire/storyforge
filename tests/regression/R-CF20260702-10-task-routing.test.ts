@@ -226,4 +226,67 @@ describe('R-CF20260702-10 · route storage and client boundary', () => {
     })
     expect(fetchMock).toHaveBeenCalledOnce()
   })
+
+  it('reuses one prepared creation route for budgeting and streaming even if routes change mid-request', async () => {
+    const longContextWriter = preset('long-context-writer', {
+      provider: 'ollama',
+      model: 'longcat-2.0',
+      baseUrl: 'http://localhost:11434/v1',
+      apiKey: '',
+      maxTokens: 32_000,
+      contextWindow: 1_000_000,
+    })
+    const shortContextWriter = preset('short-context-writer', {
+      provider: 'ollama',
+      model: 'short-model',
+      baseUrl: 'http://localhost:11435/v1',
+      apiKey: '',
+      maxTokens: 2_000,
+      contextWindow: 8_192,
+    })
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      expect(url).toBe('http://localhost:11434/v1/chat/completions')
+      const body = JSON.parse(String(init?.body))
+      expect(body.model).toBe('longcat-2.0')
+      expect(body.max_tokens).toBe(32_000)
+      return new Response([
+        'data: {"choices":[{"delta":{"content":"ok"}}]}',
+        '',
+        'data: [DONE]',
+        '',
+      ].join('\n'), { status: 200, headers: { 'content-type': 'text/event-stream' } })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { useAIConfigStore } = await import('../../src/stores/ai-config')
+    useAIConfigStore.setState({
+      config: globalConfig,
+      presets: [longContextWriter, shortContextWriter],
+      taskRoutes: { creation: longContextWriter.id },
+    })
+    const { resolveRequestConfig, streamChat } = await import('../../src/lib/ai/client')
+    const meta = { category: 'chapter.content', projectId: 7 }
+    const prepared = resolveRequestConfig(globalConfig, meta)
+    expect(prepared.config).toMatchObject({
+      model: 'longcat-2.0',
+      contextWindow: 1_000_000,
+      maxTokens: 32_000,
+    })
+
+    useAIConfigStore.getState().setTaskRoute('creation', shortContextWriter.id)
+    let output = ''
+    for await (const chunk of streamChat(
+      [{ role: 'user', content: 'write' }],
+      globalConfig,
+      undefined,
+      undefined,
+      meta,
+      prepared,
+    )) {
+      if (chunk.kind === 'content') output += chunk.text
+    }
+
+    expect(output).toBe('ok')
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
 })

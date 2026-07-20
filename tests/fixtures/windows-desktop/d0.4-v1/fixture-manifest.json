@@ -1,5 +1,5 @@
 {
-  "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+  "dataSourceCommit": "6fbc7a6240e8efe50f1c389fb92133f4a28da089",
   "fixtureSpecVersion": "d0.4-fixtures-v1",
   "fixtures": [
     {
@@ -264,7 +264,7 @@
   "generatedAt": "2026-01-01T00:00:00.000Z",
   "generator": {
     "id": "storyforge-d04-fixtures",
-    "sourceSha256": "b7d94b30145d030a2fb8b2cb6878a1b29745d6670d529ae11e8e20f0827b14c8",
+    "sourceSha256": "36de7f37c8f9414a51105d122ec5b6078beb20c24c02b6374d62685abeb1797e",
     "version": "2.0.0"
   },
   "protocolVersion": "d0.4-v2",

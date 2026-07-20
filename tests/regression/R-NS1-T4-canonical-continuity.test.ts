@@ -55,7 +55,7 @@ describe('NS-1 T4/T5 · canonical sequence and continuity sources', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/components/editor/ChapterEditor.tsx'), 'utf8')
     const generationFlow = source.slice(
       source.indexOf('const buildFullWorldCtx = async'),
-      source.indexOf('const handlePolish = () => {'),
+      source.indexOf('type FullWorldContext = Awaited<ReturnType<typeof buildFullWorldCtx>>'),
     )
     expect(generationFlow).toContain("'chapterContinuityHandoff'")
     expect(generationFlow).toContain("'previousChapterEnding'")

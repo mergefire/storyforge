@@ -23,8 +23,10 @@ pub fn runtime_cancel_request(request_id: String, state: State<'_, AppState>) ->
 
 #[tauri::command]
 pub async fn runtime_clipboard_write(purpose: String, text: String) -> RuntimeResult<()> {
-    if !matches!(purpose.as_str(), "ai-image-prompt" | "workflow-output")
-        || text.len() > MAX_CLIPBOARD_BYTES
+    if !matches!(
+        purpose.as_str(),
+        "ai-image-prompt" | "workflow-output" | "chapter-ai-output"
+    ) || text.len() > MAX_CLIPBOARD_BYTES
     {
         return Err(RuntimeError::new(
             RuntimeErrorCode::InvalidInput,

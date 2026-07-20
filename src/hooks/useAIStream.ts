@@ -1,5 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { resolveRequestConfig, streamChat, type StreamResult, type AICallMeta } from '../lib/ai/client'
+import {
+  resolveRequestConfig,
+  streamChat,
+  type StreamResult,
+  type AICallMeta,
+  type ResolvedRequestConfig,
+} from '../lib/ai/client'
 import { getAIConfigRequiredMessage, isAIConfigReady } from '../lib/ai/config-readiness'
 import { useAIConfigStore } from '../stores/ai-config'
 import {
@@ -29,13 +35,33 @@ export interface UseAIStreamReturn {
    * @param messages 聊天消息
    * @param overrideConfig 临时覆盖的配置片段（例如导入面板需要 maxTokens=16384）
    */
-  start: (messages: ChatMessage[], overrideConfig?: Partial<AIConfig>, meta?: AICallMeta) => Promise<string>
+  start: (
+    messages: ChatMessage[],
+    overrideConfig?: Partial<AIConfig>,
+    meta?: AICallMeta,
+    preparedRequest?: ResolvedRequestConfig,
+  ) => Promise<string>
+  /** 开始流式生成并返回明确的完成原因；正文候选任务必须使用此入口。 */
+  startWithOutcome: (
+    messages: ChatMessage[],
+    overrideConfig?: Partial<AIConfig>,
+    meta?: AICallMeta,
+    preparedRequest?: ResolvedRequestConfig,
+  ) => Promise<AIStreamOutcome>
   /** 停止生成 */
   stop: () => void
   /** 重置状态 */
   reset: () => void
   /** 设置当前会话的操作类型。 */
   setOperation: (operation: string | null) => void
+}
+
+export type AIStreamFinishStatus = 'completed' | 'stopped' | 'failed'
+
+export interface AIStreamOutcome {
+  output: string
+  status: AIStreamFinishStatus
+  error?: string
 }
 
 const sharedAbortControllers = new Map<string, AbortController>()
@@ -101,11 +127,12 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
     }
   }, [sessionKey, patchShared])
 
-  const start = useCallback(async (
+  const startWithOutcome = useCallback(async (
     messages: ChatMessage[],
     overrideConfig?: Partial<AIConfig>,
     meta?: AICallMeta,
-  ): Promise<string> => {
+    preparedRequest?: ResolvedRequestConfig,
+  ): Promise<AIStreamOutcome> => {
     // 重置状态
     if (sessionKey) {
       sharedAbortControllers.get(sessionKey)?.abort()
@@ -127,7 +154,8 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
       ? { ...baseConfig, ...overrideConfig }
       : baseConfig
     meta = overrideConfig ? { ...meta, configOverrides: overrideConfig } : meta
-    const effectiveConfig = resolveRequestConfig(config, meta).config
+    const effectiveRequest = preparedRequest ?? resolveRequestConfig(config, meta)
+    const effectiveConfig = effectiveRequest.config
 
     if (!isAIConfigReady(effectiveConfig)) {
       const errMsg = getAIConfigRequiredMessage(effectiveConfig)
@@ -139,15 +167,17 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
         setError(errMsg)
         setIsStreaming(false)
       }
-      return ''
+      return { output: '', status: 'failed', error: errMsg }
     }
 
     let accumulated = ''
     let accumulatedReasoning = ''
+    let finishStatus: AIStreamFinishStatus = 'completed'
+    let finishError: string | undefined
     const streamResult: StreamResult = {}
 
     try {
-      const stream = streamChat(messages, config, controller.signal, streamResult, meta)
+      const stream = streamChat(messages, config, controller.signal, streamResult, meta, effectiveRequest)
       for await (const chunk of stream) {
         if (controller.signal.aborted) break
         if (chunk.kind === 'content') {
@@ -170,13 +200,16 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
       }
     } catch (err: unknown) {
       if (isAiAbortError(err)) {
-        // 用户主动停止，不算错误
+        finishStatus = 'stopped'
       } else {
         const errMsg = err instanceof Error ? err.message : '未知错误'
+        finishStatus = 'failed'
+        finishError = errMsg
         if (sessionKey) patchShared({ error: errMsg })
         else setError(errMsg)
       }
     } finally {
+      if (controller.signal.aborted && finishStatus === 'completed') finishStatus = 'stopped'
       if (sessionKey) {
         // 同一会话可能已被重试；旧请求不得覆盖新请求状态。
         if (sharedAbortControllers.get(sessionKey) === controller) {
@@ -196,8 +229,18 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
       }
     }
 
-    return accumulated
+    return { output: accumulated, status: finishStatus, error: finishError }
   }, [sessionKey, patchShared])
+
+  const start = useCallback(async (
+    messages: ChatMessage[],
+    overrideConfig?: Partial<AIConfig>,
+    meta?: AICallMeta,
+    preparedRequest?: ResolvedRequestConfig,
+  ): Promise<string> => {
+    const outcome = await startWithOutcome(messages, overrideConfig, meta, preparedRequest)
+    return outcome.output
+  }, [startWithOutcome])
 
   return useMemo(
     () => ({
@@ -208,6 +251,7 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
       tokenUsage: currentTokenUsage,
       operation: currentOperation,
       start,
+      startWithOutcome,
       stop,
       reset,
       setOperation,
@@ -220,6 +264,7 @@ export function useAIStream(sessionKey?: string): UseAIStreamReturn {
       currentTokenUsage,
       currentOperation,
       start,
+      startWithOutcome,
       stop,
       reset,
       setOperation,

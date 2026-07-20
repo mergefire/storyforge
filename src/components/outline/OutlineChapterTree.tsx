@@ -67,6 +67,7 @@ export function OutlineChapterRow({
   const baseDropProps = dnd?.dropProps
   const isCrossParentTarget = activeChapterDrag != null && activeChapterDrag.sourceParentId !== parentId
   const isOver = dnd?.isOver || isCrossParentTarget
+  const canMoveAcrossParents = ch.id != null && parentId != null && onMoveChapter != null
 
   return (
     <div
@@ -90,11 +91,12 @@ export function OutlineChapterRow({
         isOver ? 'border-accent ring-1 ring-accent/50' : 'border-border hover:border-accent/30'
       } ${dnd?.isDragging ? 'opacity-40' : ''}`}
     >
-      {dnd && (
+      {(dnd || canMoveAcrossParents) && (
         <span
-          {...dnd.dragHandleProps}
+          {...(dnd?.dragHandleProps ?? {})}
+          draggable
           onDragStart={(event) => {
-            dnd.dragHandleProps.onDragStart(event)
+            dnd?.dragHandleProps.onDragStart(event)
             if (ch.id != null) {
               const payload = {
                 chapterId: ch.id,
@@ -105,11 +107,11 @@ export function OutlineChapterRow({
             }
           }}
           onDragEnd={() => {
-            dnd.dragHandleProps.onDragEnd()
+            dnd?.dragHandleProps.onDragEnd()
             onChapterDragEnd()
           }}
           data-outline-chapter-id={ch.id}
-          title="拖动调整章节顺序"
+          title={dnd ? '拖动调整章节顺序或移入其它故事块' : '拖动到故事块中编排'}
           className="shrink-0 mt-1 cursor-grab active:cursor-grabbing text-text-muted/40 group-hover:text-text-muted"
         >
           <GripVertical className="w-3.5 h-3.5" />

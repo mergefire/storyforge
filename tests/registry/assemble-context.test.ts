@@ -249,4 +249,129 @@ describe('Phase 1.3a · 统一上下文装配层', () => {
     expect(assembled.text).toContain('旧王印记')
     expect(assembled.text).not.toContain('非常长的叙事手法分析')
   })
+
+  it('chapterContent 覆盖源使用编辑器当前正文，同时仍参与注册表预算', async () => {
+    const now = Date.now()
+    const projectId = await createProject()
+    const outlineNodeId = await db.outlineNodes.add({
+      projectId,
+      type: 'chapter',
+      title: '第一章',
+      summary: '开场',
+      order: 0,
+      createdAt: now,
+      updatedAt: now,
+    } as any) as number
+    const chapterId = await db.chapters.add({
+      projectId,
+      outlineNodeId,
+      title: '第一章',
+      content: '<p>数据库里的旧正文</p>',
+      order: 0,
+      status: 'draft',
+      createdAt: now,
+      updatedAt: now,
+    } as any) as number
+
+    const assembled = await assembleContext({
+      projectId,
+      chapterId,
+      outlineNodeId,
+      sourceKeys: ['chapterContent'],
+      sourceContentOverrides: { chapterContent: '编辑器里尚未保存的新正文' },
+      contextWindowTokens: 1_000_000,
+      maxOutputTokens: 32_000,
+    })
+
+    expect(assembled.included).toEqual(['chapterContent'])
+    expect(assembled.text).toContain('编辑器里尚未保存的新正文')
+    expect(assembled.text).not.toContain('数据库里的旧正文')
+    expect(assembled.segments[0]?.tokens).toBeGreaterThan(0)
+  })
+
+  it('有效细纲完整注入场景顺序、人物、节奏、字数、备注、情绪与伏笔', async () => {
+    const now = Date.now()
+    const projectId = await createProject()
+    const outlineNodeId = await db.outlineNodes.add({
+      projectId, type: 'chapter', title: '潜入', summary: '潜入王府取证', order: 0, createdAt: now, updatedAt: now,
+    } as any) as number
+    const characterId = await db.characters.add({
+      projectId, name: '沈砚', role: 'protagonist', shortDescription: '密探', createdAt: now, updatedAt: now,
+    } as any) as number
+    const foreshadowId = await db.foreshadows.add({
+      projectId, name: '缺角玉佩', type: 'chekhov', status: 'planned', description: '身份线索',
+      plantChapterId: null, echoChapterIds: '[]', resolveChapterId: null, notes: '', createdAt: now, updatedAt: now,
+    } as any) as number
+    await db.detailedOutlines.add({
+      projectId,
+      outlineNodeId,
+      openingHook: '承接上一章雨夜追踪',
+      endingCliffhanger: '门后传来熟悉的咳嗽声',
+      sceneLocation: '王府西院',
+      appearingCharacterIds: [characterId],
+      foreshadowIds: [foreshadowId],
+      emotionArc: 'rising',
+      scenes: [{
+        sceneId: 'scene-1',
+        title: '翻墙',
+        summary: '沈砚避开巡夜人',
+        characterIds: [characterId],
+        location: '西院墙下',
+        conflict: '巡夜路线突然改变',
+        pace: 'fast',
+        estimatedWords: 900,
+        notes: '不要让主角轻易成功',
+      }],
+      createdAt: now,
+      updatedAt: now,
+    } as any)
+
+    const assembled = await assembleContext({
+      projectId,
+      outlineNodeId,
+      sourceKeys: ['detailedOutline'],
+      protectedSourceKeys: ['detailedOutline'],
+      contextWindowTokens: 1_000_000,
+      maxOutputTokens: 32_000,
+    })
+
+    expect(assembled.text).toContain('开头衔接:承接上一章雨夜追踪')
+    expect(assembled.text).toContain('本章人物:沈砚')
+    expect(assembled.text).toContain('情绪走向:上升')
+    expect(assembled.text).toContain('关联伏笔:缺角玉佩')
+    expect(assembled.text).toContain('场景1 翻墙')
+    expect(assembled.text).toContain('人物:沈砚')
+    expect(assembled.text).toContain('节奏:快')
+    expect(assembled.text).toContain('预计:900字')
+    expect(assembled.text).toContain('作者备注:不要让主角轻易成功')
+    expect(assembled.text).toContain('结尾悬念:门后传来熟悉的咳嗽声')
+    expect(assembled.sourceLimits).toContainEqual(expect.objectContaining({ key: 'detailedOutline', applied: false }))
+  })
+
+  it('来源自身限额随真实模型窗口放宽，并与总窗口裁剪分别记录', async () => {
+    const projectId = await createProject()
+    const longReferenceText = '长上下文资料。'.repeat(12_000)
+    const small = await assembleContext({
+      projectId,
+      sourceKeys: ['references'],
+      citedReferenceIds: [1],
+      sourceContentOverrides: { references: longReferenceText },
+      inputBudgetTokens: 48_000,
+    })
+    const large = await assembleContext({
+      projectId,
+      sourceKeys: ['references'],
+      citedReferenceIds: [1],
+      sourceContentOverrides: { references: longReferenceText },
+      provider: 'openai',
+      model: 'long-context-test',
+      contextWindowTokens: 1_000_000,
+      maxOutputTokens: 32_000,
+    })
+
+    expect(small.sourceLimits?.[0]).toMatchObject({ key: 'references', effectiveTokens: 2_000, applied: true })
+    expect(large.sourceLimits?.[0]).toMatchObject({ key: 'references', effectiveTokens: 24_000 })
+    expect(large.segments[0].tokens).toBeGreaterThan(small.segments[0].tokens)
+    expect(large.trimmed).toEqual([])
+  })
 })

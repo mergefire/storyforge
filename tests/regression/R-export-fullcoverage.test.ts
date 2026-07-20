@@ -122,9 +122,6 @@ describe('R-export-fullcoverage · 全表多世界往返安全网', () => {
     expect(JSON.parse(newRules!.citedReferenceIds || '[]')).toEqual([newRef1.id])
     const newRca = await db.referenceChunkAnalysis.where('referenceId').equals(newRef1.id!).first()
     expect(newRca!.openingTechnique).toContain('天才陨落')
-    const newRule = await db.creativeRules.where('projectId').equals(newId).first()
-    expect(newRule!.citedReferenceIds as unknown).toEqual([newRef1.id])
-
     // worldNodes portalsJSON 自引用重映射
     const newWorldNodes = await db.worldNodes.where('projectId').equals(newId).toArray()
     const newRoot = newWorldNodes.find(n => n.name === '主世界')!

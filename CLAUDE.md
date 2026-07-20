@@ -139,7 +139,9 @@
 
 - 所有 Windows 桌面最终可交付包必须放在仓库根目录下的相对路径 `release/`。
 - `src-tauri/target/release/`、备用 Cargo target 目录及其他构建目录只允许作为编译中间目录，不得把其中的文件路径作为最终交付路径提供给用户。
-- 未明确要求安装器时，默认生成 stable release EXE，不生成 NSIS；默认交付名为 `release/storyforge-desktop.exe`。如果该文件正被运行中的程序占用，可改用 `release/storyforge-desktop-latest.exe`，但仍必须位于 `release/`。
+- 未明确要求安装器时，默认生成 stable release EXE，不生成 NSIS；唯一交付名固定为 `release/storyforge-desktop.exe`。
+- `release/` 中任何时刻只能保留这一个桌面 EXE；禁止创建 `-latest`、`-fix`、版本号、时间戳等后缀副本。新包验证成功后必须替换固定文件，并清理其他历史 EXE。
+- 如果 `release/storyforge-desktop.exe` 正被运行中的程序占用，必须暂停交付并提示用户关闭旧程序；不得通过更换文件名绕过占用。
 - 交付前必须确认文件存在，并报告文件大小与 SHA-256。
 
 ---

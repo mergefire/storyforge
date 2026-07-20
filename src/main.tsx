@@ -8,7 +8,6 @@ import { initializeApplicationSeeds, prepareApplicationData } from './lib/db/boo
 import { prepareMigrationStartup } from './lib/migration/profile-import'
 import { validateRegistry } from './lib/registry/validate'
 import { applyStoryForgeTheme, resolveStoryForgeTheme } from './lib/theme'
-import { registerStoryForgeServiceWorker } from './lib/pwa/register-service-worker'
 import { installRuntimeDiagnostics } from './lib/diagnostics/local-diagnostic-report'
 import { getRuntime } from './runtime'
 import { initializeRuntimeCapabilities } from './runtime/bootstrap'
@@ -20,7 +19,6 @@ import './index.css'
 
 // 从 localStorage 恢复主题（兼容旧主题名迁移）
 applyStoryForgeTheme(resolveStoryForgeTheme(localStorage.getItem('storyforge-theme')))
-registerStoryForgeServiceWorker()
 installRuntimeDiagnostics()
 
 if (import.meta.env.VITE_DESKTOP_CHANNEL === 'dev') {
@@ -29,29 +27,7 @@ if (import.meta.env.VITE_DESKTOP_CHANNEL === 'dev') {
   })
 }
 
-/**
- * FB-11 数据持久 · 启动期申请「持久化存储」。
- * 不申请时浏览器把 IndexedDB 当 best-effort,可在磁盘压力/关闭清理/隐私插件下
- * 直接驱逐整库 → 用户表现为"数据被重置"。persist() 在 Chrome 是静默授予(按使用度
- * 启发式,不弹窗),被拒或不支持都不影响主流程,故 fire-and-forget。
- */
-async function requestPersistentStorage() {
-  try {
-    if (navigator.storage?.persist) {
-      const already = await navigator.storage.persisted()
-      if (!already) {
-        const granted = await navigator.storage.persist()
-        console.info(`[bootstrap] persistent storage ${granted ? '已授予' : '未授予(浏览器启发式未满足,可稍后再试)'}`)
-      }
-    }
-  } catch (e) {
-    console.warn('[bootstrap] persist storage 申请失败(不影响运行):', e)
-  }
-}
-
 async function bootstrap() {
-  void requestPersistentStorage()
-
   try {
     await migrateLegacyRuntimeCredentials(getRuntime())
     await useAIConfigStore.getState().refreshCredentialAvailability()

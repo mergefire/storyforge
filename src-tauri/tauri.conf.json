@@ -16,7 +16,7 @@
         "title": "故事熔炉 StoryForge Dev（仅合成数据）",
         "width": 1440,
         "height": 900,
-        "minWidth": 1080,
+        "minWidth": 420,
         "minHeight": 720,
         "center": true,
         "resizable": true,

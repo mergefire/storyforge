@@ -40,4 +40,17 @@ describe('R-open-truncation · 放开内部截断', () => {
     } as any)
     expect(r.inputBudget).toBe(60)
   })
+
+  it('assembleContext 尊重用户配置的上下文窗口与输出长度', async () => {
+    const r = await assembleContext({
+      projectId: 999999,
+      provider: 'openai-compatible',
+      model: 'unknown-8k-model',
+      contextWindowTokens: 128_000,
+      maxOutputTokens: 8_000,
+      sourceKeys: [],
+    } as any)
+
+    expect(r.inputBudget).toBe(113_600)
+  })
 })

@@ -226,9 +226,9 @@ export default function WorkspacePage() {
       case 'detailed-outline':
         return <DetailedOutlinePanel project={project} />
       case 'chapters-list':
-        return <ChaptersListPanel project={project} initialNodeId={editorNodeId} />
+        return <ChaptersListPanel project={project} initialNodeId={editorNodeId} onOpenFactLibrary={() => setActiveModule('fact-library')} />
       case 'editor':
-        return <ChaptersListPanel project={project} initialNodeId={editorNodeId} />
+        return <ChaptersListPanel project={project} initialNodeId={editorNodeId} onOpenFactLibrary={() => setActiveModule('fact-library')} />
       case 'foreshadow':
         return <ForeshadowPanel project={project} />
       case 'style-learning':

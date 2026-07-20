@@ -9,6 +9,12 @@ import { buildChapterOutlinePrompt } from './adapters/outline-adapter'
 import { parseChapterOutlineSmart, type ParsedChapter } from './parse-outline-output'
 import { useAIConfigStore } from '../../stores/ai-config'
 import type { OutlineNode } from '../types'
+import {
+  formatOutlineBudgetError,
+  inspectOutlineMessageBudget,
+  nextOutlineContextBudget,
+} from '../outline/message-budget'
+import { estimateTokens } from './context-budget'
 
 export interface BatchOutlineProgress {
   /** 当前正在处理的卷索引（0-based） */
@@ -41,6 +47,8 @@ export interface BatchOutlineOptions {
   worldContext: string
   /** 多世界：按卷解析各自世界上下文（提供则逐卷覆盖 worldContext） */
   worldContextResolver?: (volumeId: number) => Promise<string>
+  /** 最终 prompt 仍超窗时，按目标 token 重新装配并压缩当前卷上下文。 */
+  worldContextCompressor?: (volumeId: number, targetTokens: number) => Promise<string>
   /** 用户补充说明 */
   userHint?: string
   /** 角色上下文 */
@@ -67,6 +75,7 @@ export async function runBatchOutlineGeneration(
     volumes,
     worldContext,
     worldContextResolver,
+    worldContextCompressor,
     userHint,
     characterContext,
     worldRulesContext,
@@ -103,21 +112,27 @@ export async function runBatchOutlineGeneration(
       || (i > 0 ? volumes[i - 1].summary : '')
 
     // 多世界：用本卷所属世界的上下文
-    const volWorldContext = worldContextResolver ? await worldContextResolver(volId) : worldContext
+    let volWorldContext = worldContextResolver ? await worldContextResolver(volId) : worldContext
     const volWorldRulesContext = worldRulesContextResolver
       ? await worldRulesContextResolver(volId)
       : worldRulesContext
 
-    const messages = buildChapterOutlinePrompt(
-      vol.title,
-      vol.summary,
-      volWorldContext,
-      prevSummary,
-      userHint,
-      undefined, // options
-      characterContext,
-      volWorldRulesContext,
+    const buildMessages = () => buildChapterOutlinePrompt(
+      vol.title, vol.summary, volWorldContext, prevSummary, userHint,
+      undefined, characterContext, volWorldRulesContext,
     )
+    let messages = buildMessages()
+    let messageBudget = inspectOutlineMessageBudget(messages, config, 'outline.chapter')
+    for (let attempt = 0; !messageBudget.fits && worldContextCompressor && attempt < 3; attempt++) {
+      const currentTokens = estimateTokens(volWorldContext)
+      const targetTokens = nextOutlineContextBudget(currentTokens, messageBudget)
+      const compressed = await worldContextCompressor(volId, targetTokens)
+      if (estimateTokens(compressed) >= currentTokens) break
+      volWorldContext = compressed
+      messages = buildMessages()
+      messageBudget = inspectOutlineMessageBudget(messages, config, 'outline.chapter')
+    }
+    if (!messageBudget.fits) throw new Error(formatOutlineBudgetError(messageBudget))
 
     try {
       const rawOutput = await chat(messages, config, { category: 'outline.chapter', projectId: vol.projectId })

@@ -2,28 +2,29 @@
  * 选中文本浮动工具栏 — Phase 24.3
  *
  * 用户选中编辑器中的文字后，弹出浮动工具栏：
- * 润色 / 扩写 / 缩写 / 改写 / 查漏
+ * 这里只选择“修改意图”，实际 AI 调用与采纳统一交给章节协作区。
  */
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Wand2, Expand, Minimize2, RefreshCw, Search, X, Loader2, Check } from 'lucide-react'
-import { useAIStream } from '../../hooks/useAIStream'
-import { buildPolishPrompt, buildExpandPrompt } from '../../lib/ai/adapters/chapter-adapter'
-import type { ChatMessage } from '../../lib/types'
+import { useState } from 'react'
+import { MessageSquareText, Wand2, Expand, Minimize2, RefreshCw, Search, X } from 'lucide-react'
+import type {
+  EditorSelectionPresentation,
+  EditorSelectionSnapshot,
+} from '../../lib/editor/selection-snapshot'
+
+export type SelectionAIAction = 'ask' | 'polish' | 'expand' | 'condense' | 'rewrite' | 'check'
 
 interface Props {
-  /** 获取当前选中文本 */
-  getSelectedText: () => string
-  /** 获取选中文本的位置（用于定位工具栏） */
-  getSelectionRect: () => DOMRect | null
-  /** 替换选中文本 */
-  replaceSelectedText: (text: string) => void
+  /** TipTap 直接上报的选区与位置，避免浏览器 selectionchange 瞬时折叠造成闪退。 */
+  selection: EditorSelectionPresentation | null
+  /** 把修改意图与选区交给统一 AI 协作区 */
+  onAction: (action: SelectionAIAction, snapshot: EditorSelectionSnapshot) => void
   /** 是否禁用（如正在 AI 生成时） */
   disabled?: boolean
+  onUseWholeChapterScope?: () => void
 }
 
-type ActionType = 'polish' | 'expand' | 'condense' | 'rewrite' | 'check'
-
-const ACTIONS: { type: ActionType; icon: typeof Wand2; label: string; desc: string }[] = [
+const ACTIONS: { type: SelectionAIAction; icon: typeof Wand2; label: string; desc: string }[] = [
+  { type: 'ask',      icon: MessageSquareText, label: '问 AI', desc: '围绕选区对话' },
   { type: 'polish',   icon: Wand2,      label: '润色', desc: '优化文笔' },
   { type: 'expand',   icon: Expand,     label: '扩写', desc: '丰富细节' },
   { type: 'condense', icon: Minimize2,  label: '缩写', desc: '精简内容' },
@@ -32,114 +33,50 @@ const ACTIONS: { type: ActionType; icon: typeof Wand2; label: string; desc: stri
 ]
 
 export default function FloatingToolbar({
-  getSelectedText, getSelectionRect, replaceSelectedText, disabled,
+  selection, onAction, disabled, onUseWholeChapterScope,
 }: Props) {
-  const [visible, setVisible] = useState(false)
-  const [position, setPosition] = useState({ top: 0, left: 0 })
-  const [result, setResult] = useState<string | null>(null)
-  const [selectedText, setSelectedText] = useState('')
-  const ai = useAIStream()
-  const toolbarRef = useRef<HTMLDivElement>(null)
+  const [dismissedKey, setDismissedKey] = useState('')
+  const selectionKey = selection
+    ? `${selection.snapshot.from}:${selection.snapshot.to}:${selection.revision}`
+    : ''
 
-  // 监听选区变化
-  const handleSelectionChange = useCallback(() => {
-    if (disabled || ai.isStreaming) return
-    const text = getSelectedText()
-    if (text && text.length > 5 && text.length < 5000) {
-      const rect = getSelectionRect()
-      if (rect) {
-        setPosition({
-          top: rect.top - 45, // 工具栏在选区上方
-          left: rect.left + rect.width / 2,
-        })
-        setSelectedText(text)
-        setVisible(true)
-        setResult(null)
-      }
-    } else {
-      // 延迟隐藏，避免点击工具栏时闪烁
-      setTimeout(() => {
-        if (!ai.isStreaming) {
-          setVisible(false)
-        }
-      }, 200)
-    }
-  }, [getSelectedText, getSelectionRect, disabled, ai.isStreaming])
-
-  useEffect(() => {
-    document.addEventListener('selectionchange', handleSelectionChange)
-    return () => document.removeEventListener('selectionchange', handleSelectionChange)
-  }, [handleSelectionChange])
-
-  const handleAction = async (action: ActionType) => {
-    if (!selectedText) return
-    let messages: ChatMessage[]
-
-    switch (action) {
-      case 'polish':
-        messages = buildPolishPrompt(selectedText, '优化文笔，使表达更生动优美')
-        break
-      case 'expand':
-        messages = buildExpandPrompt(selectedText)
-        break
-      case 'condense':
-        messages = [
-          { role: 'system', content: '你是一位精炼文字的编辑。请在保留核心意思的前提下，将以下文字压缩到原来的 60-70% 长度。直接输出结果。' },
-          { role: 'user', content: selectedText },
-        ]
-        break
-      case 'rewrite':
-        messages = [
-          { role: 'system', content: '你是一位创意写作者。请用完全不同的表达方式改写以下文字，保留核心意思但换种写法。直接输出结果。' },
-          { role: 'user', content: selectedText },
-        ]
-        break
-      case 'check':
-        messages = [
-          { role: 'system', content: '你是一位严谨的审稿编辑。请检查以下文字中的问题（逻辑矛盾、用词不当、语法错误、前后不一致等）。用简短的列表指出问题，如果没有问题就说"未发现问题"。' },
-          { role: 'user', content: selectedText },
-        ]
-        break
-    }
-
-    const output = await ai.start(messages, undefined, { category: 'chapter.toolbar' })
-    if (output) {
-      setResult(output)
-    }
-  }
-
-  const handleAccept = () => {
-    if (result) {
-      replaceSelectedText(result)
-      setResult(null)
-      setVisible(false)
-      ai.reset()
-    }
+  const handleAction = (action: SelectionAIAction) => {
+    if (!selection || disabled) return
+    setDismissedKey(selectionKey)
+    onAction(action, selection.snapshot)
   }
 
   const handleDismiss = () => {
-    setResult(null)
-    setVisible(false)
-    ai.reset()
+    setDismissedKey(selectionKey)
   }
 
-  if (!visible && !ai.isStreaming) return null
+  if (!selection || disabled || dismissedKey === selectionKey) return null
+
+  if (selection.tooLong) {
+    return (
+      <div className="fixed z-50 w-[min(420px,90vw)] -translate-x-1/2 border border-warning/40 bg-bg-elevated px-3 py-2 shadow-lg" style={{ top: `${selection.top - 64}px`, left: `${selection.left}px` }} onMouseDown={event => event.preventDefault()}>
+        <p className="text-xs leading-5 text-warning">当前选区 {selection.snapshot.text.length.toLocaleString()} 字，超过局部修改上限。请缩小范围或切换为整章修改。</p>
+        <div className="mt-2 flex justify-end gap-2">
+          {onUseWholeChapterScope && <button type="button" onClick={onUseWholeChapterScope} className="border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-hover">切换整章修改</button>}
+          <button type="button" onClick={handleDismiss} className="px-2 py-1 text-[11px] text-text-muted hover:text-text-primary">关闭</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
-      ref={toolbarRef}
       className="fixed z-50 transform -translate-x-1/2"
-      style={{ top: `${position.top}px`, left: `${position.left}px` }}
+      style={{ top: `${selection.top - 45}px`, left: `${selection.left}px` }}
+      onMouseDown={event => event.preventDefault()}
     >
-      {/* 工具栏按钮行 */}
-      {!result && !ai.isStreaming && (
-        <div className="flex items-center gap-0.5 bg-bg-elevated border border-border rounded-lg shadow-lg px-1 py-0.5">
+      <div className="flex items-center gap-0.5 rounded-lg border border-border bg-bg-elevated px-1 py-0.5 shadow-lg">
           {ACTIONS.map(({ type, icon: Icon, label }) => (
             <button
               key={type}
               onClick={() => handleAction(type)}
               className="flex items-center gap-1 px-2 py-1.5 text-xs text-text-secondary hover:text-accent hover:bg-accent/10 rounded transition-colors"
-              title={label}
+              title={`${label}（在 AI 协作区继续）`}
             >
               <Icon className="w-3 h-3" />
               {label}
@@ -151,47 +88,7 @@ export default function FloatingToolbar({
           >
             <X className="w-3 h-3" />
           </button>
-        </div>
-      )}
-
-      {/* AI 生成中 */}
-      {ai.isStreaming && (
-        <div className="bg-bg-elevated border border-accent/30 rounded-lg shadow-lg px-3 py-2 min-w-[200px]">
-          <div className="flex items-center gap-2 text-xs text-accent">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            AI 处理中...
-          </div>
-          {ai.output && (
-            <p className="mt-1 text-xs text-text-secondary max-h-20 overflow-y-auto whitespace-pre-wrap">
-              {ai.output.slice(0, 200)}{ai.output.length > 200 ? '...' : ''}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* 结果展示 */}
-      {result && !ai.isStreaming && (
-        <div className="bg-bg-elevated border border-border rounded-lg shadow-lg p-3 max-w-md">
-          <p className="text-xs text-text-primary whitespace-pre-wrap max-h-40 overflow-y-auto mb-2">
-            {result}
-          </p>
-          {ai.tokenUsage && (
-            <p className="text-[10px] text-text-muted mb-2">
-              Token: ↑{ai.tokenUsage.inputTokens.toLocaleString()} ↓{ai.tokenUsage.outputTokens.toLocaleString()}
-            </p>
-          )}
-          <div className="flex items-center gap-2">
-            <button onClick={handleAccept}
-              className="flex items-center gap-1 px-2 py-1 text-xs bg-accent text-white rounded hover:bg-accent-hover">
-              <Check className="w-3 h-3" /> 替换
-            </button>
-            <button onClick={handleDismiss}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-text-primary rounded hover:bg-bg-hover">
-              <X className="w-3 h-3" /> 取消
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

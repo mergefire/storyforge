@@ -85,11 +85,7 @@ async function adoptChapterMemoryRecordWithCas(
   result: AdoptResult,
 ): Promise<AdoptResult> {
   const cas = input.compareAndSet!
-  if (
-    input.target !== 'chapters'
-    || cas.kind !== 'chapter-source-text-hash'
-    || input.mode !== 'replace'
-  ) {
+  if (input.target !== 'chapters' || input.mode !== 'replace') {
     result.skipped.push({ reason: 'compareAndSet 仅支持 chapters recordId replace', data: input.data })
     return result
   }
@@ -100,7 +96,17 @@ async function adoptChapterMemoryRecordWithCas(
 
   const patch = normalizeAndValidate(input.data as Record<string, unknown>, fieldSpecs, result)
   if (!patch || Object.keys(patch).length === 0) return result
-  if (!validateChapterMemoryProvenance(input.recordId!, patch, cas.expectedHash, cas.textNormalizationVersion, result, input.data)) {
+  if (
+    cas.kind === 'chapter-source-text-hash'
+    && !validateChapterMemoryProvenance(
+      input.recordId!,
+      patch,
+      cas.expectedHash,
+      cas.textNormalizationVersion,
+      result,
+      input.data,
+    )
+  ) {
     return result
   }
 
@@ -112,7 +118,12 @@ async function adoptChapterMemoryRecordWithCas(
     }
     const currentHash = await Dexie.waitFor(hashChapterText(String(target.content ?? '')))
     if (currentHash !== cas.expectedHash) {
-      result.skipped.push({ reason: 'CAS 失败：章节正文已变化，丢弃旧派生记忆', data: input.data })
+      result.skipped.push({
+        reason: cas.kind === 'chapter-content-hash'
+          ? 'CAS 失败：章节正文已变化，拒绝覆盖当前稿件'
+          : 'CAS 失败：章节正文已变化，丢弃旧派生记忆',
+        data: input.data,
+      })
       return
     }
 

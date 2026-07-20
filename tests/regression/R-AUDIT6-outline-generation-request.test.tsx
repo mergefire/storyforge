@@ -123,4 +123,20 @@ describe('AUDIT-6 · 大纲生成请求边界', () => {
     await act(async () => confirm.click())
     expect(onConfirm).toHaveBeenCalledOnce()
   })
+
+  it('完整词条超预算时允许确认，并明确确认后先做 AI 语义压缩', async () => {
+    const request: OutlineGenerationRequest = { kind: 'volumes' }
+    const prepared = preparedContext(encodeGenerationOperation(request))
+    prepared.assembled.overBudgetAfterTrim = true
+    prepared.assembled.totalInputTokens = 50_000
+    prepared.assembled.inputBudget = 48_000
+    const onConfirm = vi.fn()
+    const host = await mount(request, { preparedContext: prepared, onConfirm })
+
+    const confirm = Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes('确认并压缩生成'))!
+    expect(confirm.disabled).toBe(false)
+    expect(host.textContent).toContain('先调用 AI 分批做语义摘要')
+    await act(async () => confirm.click())
+    expect(onConfirm).toHaveBeenCalledOnce()
+  })
 })

@@ -1,4 +1,8 @@
 import { forwardRef, useCallback, useImperativeHandle, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import type {
+  EditorSelectionPresentation,
+  EditorSelectionSnapshot,
+} from '../../lib/editor/selection-snapshot'
 import { Extension } from '@tiptap/core'
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import type { EditorView } from '@tiptap/pm/view'
@@ -204,6 +208,21 @@ export interface RichEditorHandle {
   replaceSelection: (html: string) => void
   /** 获取选中文字（纯文本） */
   getSelectedText: () => string
+  /** 获取可校验的选区快照；前后邻文只用于 AI 参考，不属于可写范围。 */
+  getSelectionSnapshot: () => EditorSelectionSnapshot | null
+  /** 仅当原选区仍未变化时，按快照位置替换。 */
+  replaceSelectionSnapshot: (snapshot: EditorSelectionSnapshot, html: string) => boolean
+  /** 聚焦并将锁定的 AI 选区滚动到视区中央；范围失效时返回 false。 */
+  revealSelectionSnapshot: (snapshot: EditorSelectionSnapshot) => boolean
+  /**
+   * 仅当原选区仍未变化时定点写入，并返回新写入文本的快照。
+   * 返回快照让后续 AI 指令能继续追改同一目标，无需作者重新框选。
+   */
+  applySelectionSnapshot: (
+    snapshot: EditorSelectionSnapshot,
+    html: string,
+    placement: 'replace' | 'before' | 'after',
+  ) => EditorSelectionSnapshot | null
   /** 获取全部 HTML */
   getHTML: () => string
   /** 获取全部纯文本 */
@@ -214,6 +233,8 @@ export interface RichEditorHandle {
   setContent: (content: string) => void
   /** 聚焦编辑器 */
   focus: () => void
+  /** 将当前选区折叠到末端，用于显式解除 AI 选区范围锁。 */
+  clearSelection: () => void
   /** 获取底层 editor 实例（高级用法） */
   getEditor: () => Editor | null
 }
@@ -235,6 +256,12 @@ interface Props {
   entityReferences?: readonly EditorEntityReference[]
   /** 工具栏与正文之间的内容（例如章节标题）；用于让格式工具栏固定在最上方 */
   contentHeader?: ReactNode
+  /** TipTap 选区变化；由编辑器直接上报，避免全局 selectionchange 的瞬时折叠闪烁。 */
+  onSelectionChange?: (selection: EditorSelectionPresentation | null) => void
+  /** AI 锁定范围只用 Decoration 展示，不写入正文 HTML。 */
+  aiSelection?: EditorSelectionSnapshot | null
+  aiSelectionState?: 'active' | 'generating' | 'invalid'
+  onAISelectionValidityChange?: (valid: boolean) => void
 }
 
 /**
@@ -243,12 +270,21 @@ interface Props {
  * - value 允许传入旧的纯文本（自动包装为 <p>），新内容以 HTML 保存
  */
 const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor(
-  { value, onChange, placeholder = '开始写作...', className = '', minHeight = 400, disabled = false, showToolbar = true, entityReferences = [], contentHeader },
+  { value, onChange, placeholder = '开始写作...', className = '', minHeight = 400, disabled = false, showToolbar = true, entityReferences = [], contentHeader, onSelectionChange, aiSelection = null, aiSelectionState = 'active', onAISelectionValidityChange },
   ref,
 ) {
   // 避免 onChange 引起 editor 重建
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
+  const onSelectionChangeRef = useRef(onSelectionChange)
+  onSelectionChangeRef.current = onSelectionChange
+  const onAISelectionValidityChangeRef = useRef(onAISelectionValidityChange)
+  onAISelectionValidityChangeRef.current = onAISelectionValidityChange
+  const aiSelectionRef = useRef(aiSelection)
+  aiSelectionRef.current = aiSelection
+  const aiSelectionStateRef = useRef(aiSelectionState)
+  aiSelectionStateRef.current = aiSelectionState
+  const selectionRevisionRef = useRef(0)
   const savedSelectionRef = useRef<{ from: number; to: number } | null>(null)
   const pendingTextStyleRef = useRef<PendingTextStyle>({})
   const [pendingTextStyle, setPendingTextStyle] = useState<PendingTextStyle>({})
@@ -308,6 +344,55 @@ const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor(
     return true
   }
 
+  const emitSelectionChange = (currentEditor: Editor) => {
+    const { from, to, empty } = currentEditor.state.selection
+    if (empty) {
+      onSelectionChangeRef.current?.(null)
+      return
+    }
+
+    const text = currentEditor.state.doc.textBetween(from, to, '\n')
+    if (text.length <= 5) {
+      onSelectionChangeRef.current?.(null)
+      return
+    }
+
+    const docSize = currentEditor.state.doc.content.size
+    const start = currentEditor.view.coordsAtPos(from)
+    const end = currentEditor.view.coordsAtPos(to)
+    let top = Math.min(start.top, end.top)
+    let left = (start.left + end.right) / 2
+    const domSelection = window.getSelection()
+    if (domSelection && !domSelection.isCollapsed && domSelection.rangeCount > 0) {
+      const rect = domSelection.getRangeAt(0).getBoundingClientRect()
+      if (rect.width > 0 || rect.height > 0) {
+        top = rect.top
+        left = rect.left + rect.width / 2
+      }
+    }
+
+    onSelectionChangeRef.current?.({
+      snapshot: {
+        from,
+        to,
+        text,
+        beforeText: currentEditor.state.doc.textBetween(Math.max(0, from - 1200), from, '\n'),
+        afterText: currentEditor.state.doc.textBetween(to, Math.min(docSize, to + 1200), '\n'),
+      },
+      top,
+      left,
+      revision: ++selectionRevisionRef.current,
+      tooLong: text.length >= 5000,
+    })
+  }
+
+  const isAISelectionValid = (currentEditor: Editor, snapshot: EditorSelectionSnapshot | null): boolean => {
+    if (!snapshot) return true
+    const docSize = currentEditor.state.doc.content.size
+    if (snapshot.from < 0 || snapshot.to > docSize || snapshot.from >= snapshot.to) return false
+    return currentEditor.state.doc.textBetween(snapshot.from, snapshot.to, '\n') === snapshot.text
+  }
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -347,12 +432,16 @@ const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor(
       const plain = editor.getText()
       onChangeRef.current(html, plain)
       updateEntityMenu(editor)
+      onAISelectionValidityChangeRef.current?.(isAISelectionValid(editor, aiSelectionRef.current))
     },
     onSelectionUpdate: ({ editor }) => {
       const { from, to } = editor.state.selection
       savedSelectionRef.current = { from, to }
       updateEntityMenu(editor)
+      emitSelectionChange(editor)
     },
+    onBlur: () => onSelectionChangeRef.current?.(null),
+    onFocus: ({ editor }) => emitSelectionChange(editor),
   })
 
   function updateEntityMenu(currentEditor: Editor) {
@@ -371,6 +460,36 @@ const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor(
     setEntityMenu({ query, from: start, to: from, x: coords.left, y: coords.bottom + 6 })
     setEntityMenuIndex(0)
   }
+
+  useEffect(() => {
+    if (!editor) return
+    const pluginKey = new PluginKey('storyforgeAiSelection')
+    const plugin = new Plugin({
+      key: pluginKey,
+      props: {
+        decorations(state) {
+          const snapshot = aiSelectionRef.current
+          if (!snapshot) return DecorationSet.empty
+          const docSize = state.doc.content.size
+          if (snapshot.from < 0 || snapshot.to > docSize || snapshot.from >= snapshot.to) return DecorationSet.empty
+          const valid = state.doc.textBetween(snapshot.from, snapshot.to, '\n') === snapshot.text
+          const visualState = valid ? aiSelectionStateRef.current : 'invalid'
+          return DecorationSet.create(state.doc, [Decoration.inline(snapshot.from, snapshot.to, {
+            class: `sf-ai-selection sf-ai-selection-${visualState}`,
+            'data-ai-selection': visualState,
+          })])
+        },
+      },
+    })
+    editor.registerPlugin(plugin)
+    return () => { editor.unregisterPlugin(pluginKey) }
+  }, [editor])
+
+  useEffect(() => {
+    if (!editor) return
+    onAISelectionValidityChangeRef.current?.(isAISelectionValid(editor, aiSelection))
+    editor.view.dispatch(editor.state.tr.setMeta('storyforgeAiSelectionRefresh', Date.now()))
+  }, [aiSelection, aiSelectionState, editor, value])
 
   useEffect(() => {
     if (!editor) return
@@ -513,6 +632,93 @@ const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor(
         if (empty) return ''
         return editor.state.doc.textBetween(from, to, '\n')
       },
+      getSelectionSnapshot: () => {
+        if (!editor) return null
+        const { from, to, empty } = editor.state.selection
+        if (empty) return null
+        const docSize = editor.state.doc.content.size
+        return {
+          from,
+          to,
+          text: editor.state.doc.textBetween(from, to, '\n'),
+          beforeText: editor.state.doc.textBetween(Math.max(0, from - 1200), from, '\n'),
+          afterText: editor.state.doc.textBetween(to, Math.min(docSize, to + 1200), '\n'),
+        }
+      },
+      replaceSelectionSnapshot: (snapshot, html) => {
+        if (!editor) return false
+        const docSize = editor.state.doc.content.size
+        if (snapshot.from < 0 || snapshot.to > docSize || snapshot.from >= snapshot.to) return false
+        const current = editor.state.doc.textBetween(snapshot.from, snapshot.to, '\n')
+        if (current !== snapshot.text) return false
+        return editor
+          .chain()
+          .focus()
+          .setTextSelection({ from: snapshot.from, to: snapshot.to })
+          .deleteSelection()
+          .insertContent(toHtml(html))
+          .run()
+      },
+      revealSelectionSnapshot: (snapshot) => {
+        if (!editor || !isAISelectionValid(editor, snapshot)) return false
+        const selected = editor
+          .chain()
+          .focus()
+          .setTextSelection({ from: snapshot.from, to: snapshot.to })
+          .scrollIntoView()
+          .run()
+        if (!selected) return false
+
+        const highlighted = editor.view.dom.querySelector('[data-ai-selection]') as HTMLElement | null
+        const reduceMotion = typeof window !== 'undefined'
+          && typeof window.matchMedia === 'function'
+          && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        highlighted?.scrollIntoView?.({
+          behavior: reduceMotion ? 'auto' : 'smooth',
+          block: 'center',
+          inline: 'nearest',
+        })
+        return true
+      },
+      applySelectionSnapshot: (snapshot, html, placement) => {
+        if (!editor) return null
+        const oldDocSize = editor.state.doc.content.size
+        if (snapshot.from < 0 || snapshot.to > oldDocSize || snapshot.from >= snapshot.to) return null
+        const current = editor.state.doc.textBetween(snapshot.from, snapshot.to, '\n')
+        if (current !== snapshot.text) return null
+
+        const inheritedMarks = placement === 'replace'
+          ? editor.state.doc.resolve(snapshot.from).marksAcross(editor.state.doc.resolve(snapshot.to))
+            ?? editor.state.doc.resolve(snapshot.from).marks()
+          : editor.state.doc.resolve(placement === 'after' ? snapshot.to : snapshot.from).marks()
+        const replaceSize = placement === 'replace' ? snapshot.to - snapshot.from : 0
+        const insertionPoint = placement === 'after' ? snapshot.to : snapshot.from
+        const target = placement === 'replace'
+          ? { from: snapshot.from, to: snapshot.to }
+          : insertionPoint
+        const applied = editor.chain().focus().insertContentAt(target, toHtml(html)).run()
+        if (!applied) return null
+
+        const nextDocSize = editor.state.doc.content.size
+        const insertedSize = Math.max(0, nextDocSize - oldDocSize + replaceSize)
+        const from = Math.min(insertionPoint, nextDocSize)
+        const to = Math.min(nextDocSize, from + insertedSize)
+        if (from >= to) return null
+
+        if (inheritedMarks.length > 0) {
+          const transaction = editor.state.tr
+          for (const mark of inheritedMarks) transaction.addMark(from, to, mark)
+          if (transaction.docChanged) editor.view.dispatch(transaction)
+        }
+
+        return {
+          from,
+          to,
+          text: editor.state.doc.textBetween(from, to, '\n'),
+          beforeText: editor.state.doc.textBetween(Math.max(0, from - 1200), from, '\n'),
+          afterText: editor.state.doc.textBetween(to, Math.min(nextDocSize, to + 1200), '\n'),
+        }
+      },
       getHTML: () => editor?.getHTML() ?? '',
       getPlainText: () => editor?.getText() ?? '',
       getWordCount: () => countWords(editor?.getText() ?? ''),
@@ -520,6 +726,10 @@ const RichEditor = forwardRef<RichEditorHandle, Props>(function RichEditor(
         editor?.commands.setContent(toHtml(content), { emitUpdate: false })
       },
       focus: () => editor?.commands.focus(),
+      clearSelection: () => {
+        if (!editor) return
+        editor.commands.setTextSelection(editor.state.selection.to)
+      },
       getEditor: () => editor,
     }),
     [editor],

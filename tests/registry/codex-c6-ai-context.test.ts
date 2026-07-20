@@ -62,6 +62,35 @@ describe('Codex C6 · 新分类词条进 AI 上下文', () => {
     expect(ctx).toContain('横贯东西三千里')
   })
 
+  it('完整模式不受每类 30 条和 2500 字限制，保留全部词条及原始详情供 AI 压缩', async () => {
+    const pid = await createProject()
+    const store = useCodexStore.getState()
+    await store.loadAll(pid)
+    const cid = await catId(pid, 'humEvent')
+    for (let index = 1; index <= 40; index++) {
+      await store.addEntry({
+        projectId: pid,
+        categoryId: cid,
+        name: `山河事件-${String(index).padStart(2, '0')}`,
+        summary: `第 ${index} 项必须参与大纲约束，不能因排序靠后被遗漏。`.repeat(8),
+        description: `这是第 ${index} 项的完整详情。`.repeat(20),
+        fields: JSON.stringify({ type: '变法', time: `景和${index}年`, impact: `影响第${index}条主线` }),
+        importance: index % 5,
+        order: index,
+        worldGroupId: null,
+      } as any)
+    }
+
+    const ctx = await buildCodexContext(pid, null, { complete: true })
+
+    expect(ctx).toContain('全量 40/40 条')
+    expect(ctx).toContain('山河事件-01')
+    expect(ctx).toContain('山河事件-40')
+    expect(ctx).toContain('第 40 项必须参与大纲约束')
+    expect(ctx).toContain('40/40 条及其原始详情均已完整载入')
+    expect(ctx).not.toContain('词条较多，已截断')
+  })
+
   it('全貌:naturalResourceOverview 进 worldview AI 上下文', () => {
     const block = formatWorldviewBlock({ naturalResourceOverview: '灵矿遍地，北寒铁、南火晶各据一方。' } as any)
     expect(block).toContain('自然资源')

@@ -21,6 +21,20 @@ export interface RunOptions {
   skipContinuityEnvelope?: boolean
 }
 
+export interface ChapterAssistantPromptArgs {
+  chapterTitle: string
+  chapterSummary: string
+  instruction: string
+  editContract: string
+  readOnlyContext: string
+  targetText: string
+  beforeText?: string
+  afterText?: string
+  currentCandidate?: string
+  conversationHistory?: string
+  recipeContext?: string
+}
+
 const QUARANTINED_GENERATION_MARKERS = ['未来计划', '尚未发生', '异世界档案']
 
 /**
@@ -163,6 +177,40 @@ export function buildContinuePrompt(
   return options?.skipContinuityEnvelope
     ? guarded
     : injectContinuityEnvelope(guarded, tpl.continuityMode, envelope)
+}
+
+/**
+ * 章节协作编辑统一入口。readOnlyContext 可包含完整项目上下文，但只有 targetText
+ * 被声明为可写目标；选区替换的安全校验由编辑器快照负责。
+ */
+export function buildChapterAssistantPrompt(args: ChapterAssistantPromptArgs, options?: RunOptions): ChatMessage[] {
+  const tpl = usePromptStore.getState().getActive('chapter.assistant')
+  const { messages } = renderPrompt(tpl, {
+    chapterTitle: args.chapterTitle,
+    chapterSummary: args.chapterSummary,
+    instruction: args.instruction,
+    editContract: args.editContract,
+    readOnlyContext: sanitizeProseGenerationContext(args.readOnlyContext) || '（暂无额外项目上下文）',
+    targetText: args.targetText || '（空白正文）',
+    beforeText: args.beforeText,
+    afterText: args.afterText,
+    currentCandidate: args.currentCandidate,
+    conversationHistory: args.conversationHistory,
+    recipeContext: args.recipeContext,
+  }, options)
+  return appendSimplifiedChineseOutputConstraint(messages)
+}
+
+export function buildChapterAssistantConversationHistory(
+  messages: ReadonlyArray<{ role: string; content: string }>,
+  maxChars = 6000,
+): string {
+  const recent = messages
+    .filter(message => message.content.trim())
+    .slice(-8)
+    .map(message => `${message.role === 'assistant' ? 'AI' : message.role === 'status' ? '系统' : '作者'}：${message.content.trim()}`)
+    .join('\n\n')
+  return recent.length <= maxChars ? recent : `…（更早对话已压缩）\n${recent.slice(-maxChars)}`
 }
 
 export function buildPolishPrompt(text: string, instruction: string, options?: RunOptions): ChatMessage[] {

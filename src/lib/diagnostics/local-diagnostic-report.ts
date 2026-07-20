@@ -2,6 +2,7 @@ import type { Table } from 'dexie'
 import { db } from '../db/schema'
 import { PROJECT_TABLES } from '../registry/project-tables'
 import { APP_VERSION } from '../version'
+import { getRuntime, type RuntimeAdapter } from '../../runtime'
 
 const MAX_RUNTIME_ERRORS = 20
 const MAX_STACK_FRAMES = 8
@@ -100,21 +101,20 @@ async function readTableCounts(
   return Object.fromEntries(counts)
 }
 
-async function readStorageMetadata(): Promise<LocalDiagnosticReport['storage']> {
-  let persisted: boolean | null = null
-  let usageBytes: number | null = null
-  let quotaBytes: number | null = null
-
+async function readStorageMetadata(
+  runtime: RuntimeAdapter,
+): Promise<LocalDiagnosticReport['storage']> {
   try {
-    persisted = navigator.storage?.persisted ? await navigator.storage.persisted() : null
-    const estimate = navigator.storage?.estimate ? await navigator.storage.estimate() : null
-    usageBytes = estimate?.usage ?? null
-    quotaBytes = estimate?.quota ?? null
+    const status = await runtime.durability.inspect()
+    return {
+      persisted: status.persisted,
+      usageBytes: status.usageBytes ?? null,
+      quotaBytes: status.quotaBytes ?? null,
+    }
   } catch {
     // Some privacy modes deny storage metadata. The report remains usable without it.
+    return { persisted: null, usageBytes: null, quotaBytes: null }
   }
-
-  return { persisted, usageBytes, quotaBytes }
 }
 
 function routePattern(): string {
@@ -122,7 +122,9 @@ function routePattern(): string {
   return location.pathname.replace(/\d+/g, ':id')
 }
 
-export async function buildLocalDiagnosticReport(): Promise<LocalDiagnosticReport> {
+export async function buildLocalDiagnosticReport(
+  runtime: RuntimeAdapter = getRuntime(),
+): Promise<LocalDiagnosticReport> {
   return {
     format: 'storyforge-local-diagnostics',
     formatVersion: 1,
@@ -138,7 +140,7 @@ export async function buildLocalDiagnosticReport(): Promise<LocalDiagnosticRepor
       online: navigator.onLine,
       viewport: { width: window.innerWidth, height: window.innerHeight },
     },
-    storage: await readStorageMetadata(),
+    storage: await readStorageMetadata(runtime),
     database: {
       schemaVersion: db.verno,
       tableCounts: await readTableCounts(PROJECT_TABLES),

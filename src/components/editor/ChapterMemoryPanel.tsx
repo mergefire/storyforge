@@ -10,6 +10,7 @@ interface Props {
   onGenerateMemory: () => void
   onConfirmActualProgress: () => void
   onApplyOutlineCandidate: () => void
+  compact?: boolean
 }
 
 export default function ChapterMemoryPanel({
@@ -21,6 +22,7 @@ export default function ChapterMemoryPanel({
   onGenerateMemory,
   onConfirmActualProgress,
   onApplyOutlineCandidate,
+  compact = false,
 }: Props) {
   const reconciliationStale = reconciliation
     && !reconciliationCurrent
@@ -29,7 +31,7 @@ export default function ChapterMemoryPanel({
   return (
     <>
       {(summary || hasText) && (
-        <div className="mb-3 p-3 bg-bg-elevated border border-border rounded-lg">
+        <div className={compact ? '' : 'mb-3 rounded-lg border border-border bg-bg-elevated p-3'}>
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs text-text-muted">📝 章节摘要</p>
             <button
@@ -50,13 +52,13 @@ export default function ChapterMemoryPanel({
       )}
 
       {reconciliationStale && (
-        <div className="mb-3 px-3 py-2 text-xs text-text-muted bg-bg-elevated border border-border rounded-lg">
+        <div className={compact ? 'mt-3 border-l-2 border-warning px-3 py-2 text-xs text-text-muted' : 'mb-3 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-xs text-text-muted'}>
           计划对账已因正文或章纲变化而失效；刷新章节记忆后再处理。
         </div>
       )}
 
       {reconciliation && reconciliationCurrent && (
-        <div className="mb-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+        <div className={compact ? 'mt-3 border-l-2 border-warning bg-warning/5 px-3 py-2' : 'mb-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3'}>
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs font-medium text-amber-300">计划—正文对账</p>
             <span className="text-[10px] text-text-muted">

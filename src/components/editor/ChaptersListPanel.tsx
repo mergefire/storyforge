@@ -14,12 +14,14 @@ import ScenePanel from '../outline/ScenePanel'
 import ChapterEditor from './ChapterEditor'
 import FindReplacePanel from './FindReplacePanel'
 import { buildBestChapterByOutlineMap } from '../../lib/chapters/selectors'
+import { getVolumeChapterGroups } from '../../lib/outline/selectors'
 import type { Project, ChapterStatus } from '../../lib/types'
 
 interface Props {
   project: Project
   /** 外部指定要打开的 outlineNodeId（从大纲跳转过来） */
   initialNodeId?: number | null
+  onOpenFactLibrary?: () => void
 }
 
 const STATUS_LABELS: Record<ChapterStatus, string> = {
@@ -38,13 +40,14 @@ const STATUS_DOT: Record<ChapterStatus, string> = {
   final:    'bg-success',
 }
 
-export default function ChaptersListPanel({ project, initialNodeId }: Props) {
+export default function ChaptersListPanel({ project, initialNodeId, onOpenFactLibrary }: Props) {
   const { nodes, loadAll: loadOutline } = useOutlineStore()
   const { chapters, loadAll: loadChapters } = useChapterStore()
   const loadCharacters = useCharacterStore(state => state.loadAll)
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(initialNodeId ?? null)
   const [expandedVols, setExpandedVols] = useState<Set<number>>(new Set())
   const [showFindReplace, setShowFindReplace] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
 
   useEffect(() => {
     loadOutline(project.id!)
@@ -69,15 +72,7 @@ export default function ChaptersListPanel({ project, initialNodeId }: Props) {
   }, [initialNodeId])
 
   // 按卷分组的章节列表（从 outlineNodes 读取）
-  const volumeGroups = useMemo(() => {
-    const volumes = nodes.filter(n => n.type === 'volume' && n.parentId === null).sort((a, b) => a.order - b.order)
-    return volumes.map(vol => ({
-      volume: vol,
-      chapters: nodes
-        .filter(n => n.parentId === vol.id && n.type === 'chapter')
-        .sort((a, b) => a.order - b.order),
-    }))
-  }, [nodes])
+  const volumeGroups = useMemo(() => getVolumeChapterGroups(nodes), [nodes])
   const chapterByOutline = useMemo(() => buildBestChapterByOutlineMap(chapters), [chapters])
 
   // 自动展开包含选中章节的卷
@@ -114,7 +109,11 @@ export default function ChaptersListPanel({ project, initialNodeId }: Props) {
   // 选中章节的信息
   const selectedNode = nodes.find(n => n.id === selectedNodeId)
   const totalChapters = volumeGroups.reduce((sum, g) => sum + g.chapters.length, 0)
-  const totalWords = chapters.reduce((sum, c) => sum + (c.wordCount || 0), 0)
+  const totalWords = volumeGroups.reduce((total, group) => (
+    total + group.chapters.reduce((sum, chapterNode) => (
+      sum + (chapterNode.id == null ? 0 : chapterByOutline.get(chapterNode.id)?.wordCount || 0)
+    ), 0)
+  ), 0)
 
   // ── 侧栏 ──
 
@@ -199,6 +198,7 @@ export default function ChaptersListPanel({ project, initialNodeId }: Props) {
       minWidth={150}
       maxWidth={320}
       className="h-[calc(100vh-8rem)]"
+      autoCollapse={assistantOpen}
     >
       {selectedNode ? (
         <div className="h-full flex flex-col">
@@ -239,7 +239,13 @@ export default function ChaptersListPanel({ project, initialNodeId }: Props) {
 
           {/* 正文编辑器 — key 按章节隔离：切章强制重挂载，AI 生成态/草稿不跨章串台（bug G5） */}
           <div className="flex-1 min-h-0">
-            <ChapterEditor key={selectedNode.id} project={project} outlineNodeId={selectedNode.id!} />
+            <ChapterEditor
+              key={selectedNode.id}
+              project={project}
+              outlineNodeId={selectedNode.id!}
+              onOpenFactLibrary={onOpenFactLibrary}
+              onAssistantOpenChange={setAssistantOpen}
+            />
           </div>
         </div>
       ) : (

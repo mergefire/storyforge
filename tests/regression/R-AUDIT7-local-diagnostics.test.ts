@@ -5,6 +5,7 @@ import {
   recordRuntimeDiagnosticError,
   resetRuntimeDiagnostics,
 } from '../../src/lib/diagnostics/local-diagnostic-report'
+import { createFakeRuntime } from '../../src/runtime/fake'
 
 afterEach(async () => {
   resetRuntimeDiagnostics()
@@ -57,5 +58,22 @@ describe('AUDIT-7 · 本地隐私诊断包', () => {
     expect(report.recentErrors[0]).toMatchObject({ source: 'react', name: 'TypeError' })
     expect(report.recentErrors[0].frames).toEqual(['at render (app.js:12:3)'])
     expect(serialized).not.toContain('用户正文-SENTINEL')
+  })
+
+  it('通过 RuntimeAdapter 读取存储元数据，不直接访问浏览器 storage API', async () => {
+    const runtime = createFakeRuntime()
+    runtime.durability.inspect = async () => ({
+      persisted: true,
+      usageBytes: 2048,
+      quotaBytes: 8192,
+    })
+
+    const report = await buildLocalDiagnosticReport(runtime)
+
+    expect(report.storage).toEqual({
+      persisted: true,
+      usageBytes: 2048,
+      quotaBytes: 8192,
+    })
   })
 })

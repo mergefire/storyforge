@@ -24,6 +24,20 @@ use crate::{
 const METADATA_FILE: &str = "runtime-metadata.json";
 const MAX_DIAGNOSTIC_EVENTS: usize = 200;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum NetworkClientPurpose {
+    General,
+    AiStreaming,
+}
+
+fn total_request_timeout(purpose: NetworkClientPurpose) -> Option<Duration> {
+    match purpose {
+        NetworkClientPurpose::General => Some(Duration::from_secs(120)),
+        // 正文生成可能稳定流式输出数分钟。这里只保留连接超时，完成时限由用户停止/取消控制。
+        NetworkClientPurpose::AiStreaming => None,
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StoredSecretMetadata {
@@ -73,6 +87,7 @@ pub struct WriteSession {
 
 pub struct AppState {
     pub client: reqwest::Client,
+    pub ai_client: reqwest::Client,
     pub loopback_client: reqwest::Client,
     pub network_slots: Semaphore,
     pub cancellations: Mutex<HashMap<String, CancellationToken>>,
@@ -104,36 +119,53 @@ impl AppState {
         fs::create_dir_all(&app_data)
             .map_err(|error| RuntimeError::io("runtime.initialize", &error))?;
         let metadata_path = app_data.join(METADATA_FILE);
-        let client = reqwest::Client::builder()
+        let mut client_builder = reqwest::Client::builder()
             .redirect(Policy::none())
             .connect_timeout(Duration::from_secs(15))
-            .timeout(Duration::from_secs(120))
-            .user_agent("StoryForge-Desktop/3.8.0")
-            .build()
-            .map_err(|_| {
-                RuntimeError::new(
-                    RuntimeErrorCode::Unavailable,
-                    "无法初始化受限网络客户端",
-                    "runtime.initialize",
-                )
-            })?;
-        let loopback_client = reqwest::Client::builder()
+            .user_agent("StoryForge-Desktop/3.8.0");
+        if let Some(timeout) = total_request_timeout(NetworkClientPurpose::General) {
+            client_builder = client_builder.timeout(timeout);
+        }
+        let client = client_builder.build().map_err(|_| {
+            RuntimeError::new(
+                RuntimeErrorCode::Unavailable,
+                "无法初始化受限网络客户端",
+                "runtime.initialize",
+            )
+        })?;
+        let mut ai_client_builder = reqwest::Client::builder()
+            .redirect(Policy::none())
+            .connect_timeout(Duration::from_secs(15))
+            .user_agent("StoryForge-Desktop/3.8.0");
+        if let Some(timeout) = total_request_timeout(NetworkClientPurpose::AiStreaming) {
+            ai_client_builder = ai_client_builder.timeout(timeout);
+        }
+        let ai_client = ai_client_builder.build().map_err(|_| {
+            RuntimeError::new(
+                RuntimeErrorCode::Unavailable,
+                "无法初始化 AI 流式网络客户端",
+                "runtime.initialize",
+            )
+        })?;
+        let mut loopback_client_builder = reqwest::Client::builder()
             .no_proxy()
             .redirect(Policy::none())
             .connect_timeout(Duration::from_secs(15))
-            .timeout(Duration::from_secs(120))
-            .user_agent("StoryForge-Desktop/3.8.0")
-            .build()
-            .map_err(|_| {
-                RuntimeError::new(
-                    RuntimeErrorCode::Unavailable,
-                    "无法初始化本机模型客户端",
-                    "runtime.initialize",
-                )
-            })?;
+            .user_agent("StoryForge-Desktop/3.8.0");
+        if let Some(timeout) = total_request_timeout(NetworkClientPurpose::AiStreaming) {
+            loopback_client_builder = loopback_client_builder.timeout(timeout);
+        }
+        let loopback_client = loopback_client_builder.build().map_err(|_| {
+            RuntimeError::new(
+                RuntimeErrorCode::Unavailable,
+                "无法初始化本机模型客户端",
+                "runtime.initialize",
+            )
+        })?;
 
         Ok(Self {
             client,
+            ai_client,
             loopback_client,
             network_slots: Semaphore::new(4),
             cancellations: Mutex::new(HashMap::new()),
@@ -572,7 +604,19 @@ pub fn validate_binding_id(binding_id: &str) -> RuntimeResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{credential_target, validate_ai_secret_key, validate_binding_id};
+    use super::{
+        credential_target, total_request_timeout, validate_ai_secret_key, validate_binding_id,
+        NetworkClientPurpose,
+    };
+
+    #[test]
+    fn streaming_ai_requests_have_no_fixed_total_timeout() {
+        assert_eq!(
+            total_request_timeout(NetworkClientPurpose::AiStreaming),
+            None
+        );
+        assert!(total_request_timeout(NetworkClientPurpose::General).is_some());
+    }
 
     #[test]
     fn ai_secret_reveal_rejects_non_ai_credentials() {

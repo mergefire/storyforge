@@ -3,6 +3,7 @@ import type { OutlineNode, Chapter } from '../types'
 import { isHtml, htmlToPlainText } from '../utils/html'
 import { buildBestChapterByOutlineMap } from '../chapters/selectors'
 import { getRuntime } from '../../runtime'
+import type { SaveFilePurpose } from '../../runtime/contract'
 import { runtimeSafeSuggestedName } from '../runtime-file'
 
 /** HTML → Markdown（简化规则，覆盖 TipTap StarterKit 产出的常见结构） */
@@ -183,9 +184,10 @@ export function downloadTextFile(
   content: string,
   filename: string,
   mimeType: string = 'text/plain',
+  purpose?: SaveFilePurpose,
 ) {
   return getRuntime().files.save({
-    purpose: mimeType === 'text/markdown' ? 'project-markdown' : 'project-text',
+    purpose: purpose ?? (mimeType === 'text/markdown' ? 'project-markdown' : 'project-text'),
     suggestedName: runtimeSafeSuggestedName(filename),
     content: { kind: 'text', text: content },
   })

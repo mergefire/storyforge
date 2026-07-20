@@ -34,6 +34,7 @@ interface CategoryMeta { label: string; color: string }
 /** moduleKey 前缀 → 类型标签。未命中归「其他」。 */
 const CATEGORY_RULES: Array<{ test: (k: string) => boolean; meta: CategoryMeta }> = [
   { test: k => k.startsWith('chapter.content') || k.startsWith('chapter.continue'), meta: { label: '正文生成', color: '#6E8BdE' } },
+  { test: k => k.startsWith('chapter.assistant'), meta: { label: '正文 AI 协作', color: '#7A8FD0' } },
   { test: k => k.startsWith('chapter.'), meta: { label: '正文润色', color: '#7BA0C8' } },
   { test: k => k.startsWith('outline.'), meta: { label: '大纲生成', color: '#C8956E' } },
   { test: k => k.startsWith('detail.'), meta: { label: '细纲生成', color: '#C8A86E' } },

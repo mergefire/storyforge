@@ -13,8 +13,7 @@ import { db } from '../db/schema'
 import type { TemporalFact } from '../types/temporal-fact'
 import type { ExtractedFactCandidate } from '../ai/adapters/fact-extract-adapter'
 import { getFactPredicate } from '../registry/fact-predicate-registry'
-
-const now = () => Date.now()
+import { adopt } from '../registry/adopt'
 
 /** 按名字解析角色 FK（同项目精确匹配）。无主表实体返回 null，仅留 subjectName。 */
 async function resolveCharacterId(projectId: number, name: string): Promise<number | null> {
@@ -25,6 +24,7 @@ async function resolveCharacterId(projectId: number, name: string): Promise<numb
 
 export interface AdoptFactsResult {
   written: number
+  writtenIds: number[]
   skippedDuplicate: number
   skippedUnknownPredicate: number
 }
@@ -39,7 +39,7 @@ export async function adoptFactCandidates(args: {
   worldGroupId?: number | null
   candidates: ExtractedFactCandidate[]
 }): Promise<AdoptFactsResult> {
-  const result: AdoptFactsResult = { written: 0, skippedDuplicate: 0, skippedUnknownPredicate: 0 }
+  const result: AdoptFactsResult = { written: 0, writtenIds: [], skippedDuplicate: 0, skippedUnknownPredicate: 0 }
 
   // 本项目当前所有未关闭候选，用于去重（一次性取，避免逐条查库）
   const existing = await db.temporalFacts
@@ -59,9 +59,7 @@ export async function adoptFactCandidates(args: {
     const characterId = await resolveCharacterId(args.projectId, c.subjectName)
     const objectCharacterId = c.objectName ? await resolveCharacterId(args.projectId, c.objectName) : null
 
-    const fact: TemporalFact = {
-      projectId: args.projectId,
-      worldGroupId: args.worldGroupId ?? null,
+    const fact: Omit<TemporalFact, 'id' | 'projectId' | 'worldGroupId' | 'createdAt' | 'updatedAt'> = {
       characterId,
       subjectName: c.subjectName,
       objectCharacterId: spec.objectEntityTypes?.includes('character') ? objectCharacterId : null,
@@ -75,23 +73,81 @@ export async function adoptFactCandidates(args: {
       validToChapterId: null,
       status: 'candidate',
       locked: false,
-      createdAt: now(),
-      updatedAt: now(),
     }
-    await db.temporalFacts.add(fact)
-    result.written++
+    const write = await adopt({
+      projectId: args.projectId,
+      worldGroupId: args.worldGroupId ?? null,
+      target: 'temporalFacts',
+      mode: 'add',
+      data: fact,
+    })
+    if (write.written[0]) {
+      result.written++
+      result.writtenIds.push(write.written[0].id)
+    } else {
+      result.skippedDuplicate++
+    }
   }
   return result
+}
+
+export interface FactCandidatePatch {
+  subjectName: string
+  predicate: string
+  value: string
+  sourceQuote: string
+}
+
+/** 编辑章节候选；证据必须在保存瞬间逐字存在于当前编辑器正文。 */
+export async function updateFactCandidate(args: {
+  projectId: number
+  factId: number
+  sourceChapterId: number
+  chapterContent: string
+  patch: FactCandidatePatch
+}): Promise<void> {
+  const fact = await db.temporalFacts.get(args.factId)
+  if (!fact || fact.projectId !== args.projectId || fact.sourceChapterId !== args.sourceChapterId) {
+    throw new Error('事实候选不存在或不属于当前章节')
+  }
+  if (fact.status !== 'candidate') throw new Error('只有待确认候选可以编辑')
+  const subjectName = args.patch.subjectName.trim()
+  const value = args.patch.value.trim()
+  const sourceQuote = args.patch.sourceQuote.trim()
+  const spec = getFactPredicate(args.patch.predicate)
+  if (!subjectName || !value || !spec) throw new Error('主体、事实类型和事实值不能为空')
+  if (!sourceQuote || !args.chapterContent.includes(sourceQuote)) {
+    throw new Error('证据引文必须逐字存在于当前章节正文')
+  }
+  const characterId = await resolveCharacterId(args.projectId, subjectName)
+  const write = await adopt({
+    projectId: args.projectId,
+    target: 'temporalFacts',
+    recordId: args.factId,
+    mode: 'replace',
+    data: {
+      subjectName,
+      characterId,
+      predicate: spec.key,
+      factKind: spec.factKind,
+      value,
+      sourceQuote,
+    },
+  })
+  if (write.written.length === 0) throw new Error(write.skipped[0]?.reason || '事实候选保存失败')
 }
 
 /**
  * 作者确认候选/异常事实 → 升为 Canon（confirmed）。§14.4：state 单值谓词在此【关闭被它取代的旧有效事实】，
  * 不按字符串相似度自动覆盖、不动 locked、event 不可被 supersede。
  */
-export async function confirmFactCandidate(factId: number): Promise<void> {
+export async function confirmFactCandidate(factId: number, chapterContent?: string): Promise<void> {
   const fact = await db.temporalFacts.get(factId)
   if (!fact || fact.id == null) return
   if (!['candidate', 'stale', 'source-missing', 'invalid-range'].includes(fact.status)) return
+  if (chapterContent != null && fact.sourceQuote && !chapterContent.includes(fact.sourceQuote)) {
+    throw new Error('证据引文已不在当前章节正文中，请重新选择证据后再确认')
+  }
   const spec = getFactPredicate(fact.predicate)
 
   // 单值 state 谓词：关闭同主体+谓词、当前仍有效、非锁定的旧事实（明确取代）。
@@ -109,22 +165,41 @@ export async function confirmFactCandidate(factId: number): Promise<void> {
       .toArray()
     for (const p of priors) {
       if (p.id != null) {
-        await db.temporalFacts.update(p.id, {
-          validToChapterId: fact.validFromChapterId ?? null,
-          status: 'superseded',
-          updatedAt: now(),
+        await adopt({
+          projectId: p.projectId,
+          target: 'temporalFacts',
+          recordId: p.id,
+          mode: 'replace',
+          data: {
+            validToChapterId: fact.validFromChapterId ?? null,
+            status: 'superseded',
+          },
         })
       }
     }
   }
-  await db.temporalFacts.update(fact.id, { status: 'confirmed', supersedesFactId: fact.supersedesFactId ?? null, updatedAt: now() })
+  const write = await adopt({
+    projectId: fact.projectId,
+    target: 'temporalFacts',
+    recordId: fact.id,
+    mode: 'replace',
+    data: { status: 'confirmed', supersedesFactId: fact.supersedesFactId ?? null },
+  })
+  if (write.written.length === 0) throw new Error(write.skipped[0]?.reason || '事实确认失败')
 }
 
 /** 作者否决候选/异常事实（不入 Canon、不再注入生成）。不动已确认/已锁定事实。 */
 export async function rejectFactCandidate(factId: number): Promise<void> {
   const fact = await db.temporalFacts.get(factId)
   if (!fact || fact.id == null || fact.status === 'confirmed' || fact.locked) return
-  await db.temporalFacts.update(fact.id, { status: 'rejected', updatedAt: now() })
+  const write = await adopt({
+    projectId: fact.projectId,
+    target: 'temporalFacts',
+    recordId: fact.id,
+    mode: 'replace',
+    data: { status: 'rejected' },
+  })
+  if (write.written.length === 0) throw new Error(write.skipped[0]?.reason || '事实候选放弃失败')
 }
 
 /** 读某项目的事实（按状态可选过滤），供事实库 UI 与投影使用。 */

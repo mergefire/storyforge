@@ -22,19 +22,36 @@ const legacyFixturePath = path.resolve(__dirname, '../fixtures/legacy-export-v3.
  */
 function normalizeNonPortablePayload(data: any) {
   const normalized = JSON.parse(JSON.stringify(data))
+  const portableV4 = normalized.version === 4 && normalized.nestedRefEncoding === 'export-index-v1'
+  if (portableV4) {
+    const restoreLegacyIds = (value: unknown) => {
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value
+      return Array.isArray(parsed) ? parsed.map(index => Number(index) + 1) : parsed
+    }
+    for (const row of normalized.detailedOutlines ?? []) {
+      if (row.appearingCharacterIds != null) row.appearingCharacterIds = restoreLegacyIds(row.appearingCharacterIds)
+      if (row.foreshadowIds != null) row.foreshadowIds = restoreLegacyIds(row.foreshadowIds)
+      for (const scene of row.scenes ?? []) {
+        if (scene.characterIds != null) scene.characterIds = restoreLegacyIds(scene.characterIds)
+      }
+    }
+    for (const row of normalized.creativeRules ?? []) {
+      if (row.citedReferenceIds != null) row.citedReferenceIds = restoreLegacyIds(row.citedReferenceIds)
+    }
+  }
   normalized.version = 3
   delete normalized.nestedRefEncoding
   normalized.exportedAt = 0
   for (const t of ['outlineNodes', 'worldNodes']) {
     for (const row of normalized[t] ?? []) delete row.parentId
   }
-  for (const row of data.detailedOutlines ?? []) {
+  for (const row of normalized.detailedOutlines ?? []) {
     delete row._appearingCharacterIndexes
     delete row._foreshadowIndexes
     delete row._sceneCharacterIndexes
   }
-  for (const row of data.creativeRules ?? []) delete row._citedReferenceIndexes
-  return data
+  for (const row of normalized.creativeRules ?? []) delete row._citedReferenceIndexes
+  return normalized
 }
 
 describe('R-export-derive-equivalence · 派生导出 ≡ 真实旧格式 fixture', () => {

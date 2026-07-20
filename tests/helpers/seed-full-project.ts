@@ -201,9 +201,7 @@ export async function seedFullProject(options: SeedFullProjectOptions = {}) {
   await addRow('referenceChunkAnalysis', { referenceId: ref1, chunkIndex: 0, openingTechnique: '天才陨落钩子', createdAt: now, updatedAt: now } as any)
   await addRow('creativeRules', {
     projectId,
-    citedReferenceIds: options.useDeterministicPrimaryKeys
-      ? JSON.stringify([ref1])
-      : [ref1],
+    citedReferenceIds: JSON.stringify([ref1]),
     content: '多爽点',
     createdAt: now,
     updatedAt: now,

@@ -47,6 +47,8 @@ export default function OutlineGenerationBasis({
 
   const storyCore = contextExcerpt(context, 'storyCore')
   const existingVolumes = contextExcerpt(context, 'existingVolumeOutlines')
+  const storyCoreTrimmed = context.trimmed.includes('storyCore')
+  const compressed = context.compressed ?? []
 
   return (
     <div className="space-y-2 text-xs" data-testid="outline-generation-basis">
@@ -64,11 +66,19 @@ export default function OutlineGenerationBasis({
             {contextSourceLabel(key)}
           </span>
         ))}
-        {context.included.length === 0 && <span className="text-warning">没有读取到已登记的作品资料</span>}
+        {context.included.length === 0 && (
+          <span className="text-warning">
+            {context.trimmed.length > 0
+              ? '已读取作品资料，但因模型上下文预算未发送'
+              : '没有读取到已登记的作品资料'}
+          </span>
+        )}
       </div>
 
       {storyCore ? (
         <p className="leading-5 text-text-secondary"><span className="text-text-muted">故事核心：</span>{storyCore}</p>
+      ) : storyCoreTrimmed ? (
+        <p className="leading-5 text-warning">故事核心已读取，但因模型上下文预算未发送；这不代表故事主线未填写。</p>
       ) : (
         <p className="leading-5 text-warning">未填写故事主线，AI 将主要依据世界观、角色、已有大纲与额外要求生成。</p>
       )}
@@ -84,6 +94,16 @@ export default function OutlineGenerationBasis({
       {context.trimmed.length > 0 && (
         <p className="text-warning">
           因模型上下文预算未发送：{context.trimmed.map(contextSourceLabel).join('、')}
+        </p>
+      )}
+      {compressed.length > 0 && (
+        <p className="text-accent">
+          已通过 AI 语义摘要且逐条校验完整性：{compressed.map(contextSourceLabel).join('、')}
+        </p>
+      )}
+      {context.overBudgetAfterTrim && (
+        <p className="text-warning" role="status">
+          完整词条详情超过当前模型窗口；确认生成后会先调用 AI 分批做语义摘要，全部词条通过编号校验后才会生成大纲。
         </p>
       )}
       <p className="text-text-muted">未采纳的灵感草稿不会进入生成上下文。</p>

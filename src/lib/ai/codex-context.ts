@@ -11,7 +11,7 @@
  */
 import { db } from '../db/schema'
 import {
-  parseEntryFields, parseFieldSchema,
+  parseEntryFields, parseEntryRefs, parseFieldSchema,
   type CodexCategory, type CodexEntry,
 } from '../types/codex'
 
@@ -22,6 +22,54 @@ interface BuildOptions {
   maxPerCategory?: number
   /** 每条词条最多内联的专属字段数，默认 3 */
   maxFieldsPerEntry?: number
+  /** 大纲等强一致性链路：所有可见词条及完整详情必须出现，供确认后 AI 语义压缩。 */
+  complete?: boolean
+}
+
+interface CompleteCodexEntry {
+  ordinal: number
+  prefix: string
+  details: string
+}
+
+interface CompleteCodexCategory {
+  heading: string
+  entries: CompleteCodexEntry[]
+}
+
+function compactWhitespace(value: string): string {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
+function parseTags(raw?: string): string[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === 'string' && Boolean(value.trim()))
+      : []
+  } catch {
+    return []
+  }
+}
+
+function renderCompleteCodex(
+  categories: CompleteCodexCategory[],
+  entryCount: number,
+): string {
+  const blocks = [
+    `【设定词条 · 全量 ${entryCount}/${entryCount} 条】（作者设定，写作时须遵守，勿自创冲突设定）`,
+  ]
+  for (const category of categories) {
+    const lines = [category.heading]
+    for (const entry of category.entries) {
+      lines.push(`- [词条#${entry.ordinal}] ${entry.prefix}`)
+      lines.push(`  详情：${entry.details || '（未填写）'}`)
+    }
+    blocks.push(lines.join('\n'))
+  }
+  blocks.push(`【词条完整性】${entryCount}/${entryCount} 条及其原始详情均已完整载入。`)
+  return blocks.join('\n')
 }
 
 /**
@@ -66,6 +114,54 @@ export async function buildCodexContext(
     entriesByCat.set(e.categoryId, list)
   }
   if (entriesByCat.size === 0) return ''
+
+  if (opts.complete) {
+    const visibleEntries = Array.from(entriesByCat.values()).flat()
+    const entryById = new Map(visibleEntries.map(entry => [entry.id!, entry]))
+    const completeCategories: CompleteCodexCategory[] = []
+    let entryCount = 0
+    let ordinal = 0
+
+    for (const cat of cats) {
+      const list = (entriesByCat.get(cat.id!) || [])
+        .sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0) || a.order - b.order)
+      if (!list.length) continue
+      const schema = parseFieldSchema(cat.fieldSchema)
+      const entries = list.map(entry => {
+        ordinal += 1
+        const fields = parseEntryFields(entry.fields)
+        const refs = parseEntryRefs(entry.refs)
+        const tags = parseTags(entry.tags)
+        const details = [
+          entry.summary.trim() ? `简介=${compactWhitespace(entry.summary)}` : '',
+          entry.description.trim() ? `详情=${compactWhitespace(entry.description)}` : '',
+          ...schema.map(definition => {
+            if (definition.type === 'ref') {
+              const names = (refs[definition.key] || [])
+                .map(id => entryById.get(id)?.name.trim())
+                .filter((name): name is string => Boolean(name))
+              return names.length ? `${definition.label}=${names.join('、')}` : ''
+            }
+            const value = compactWhitespace(fields[definition.key] || '')
+            return value ? `${definition.label}=${value}` : ''
+          }),
+          tags.length ? `标签=${tags.join('、')}` : '',
+        ].filter(Boolean).join('；')
+        const stars = (entry.importance ?? 0) > 0
+          ? `${'★'.repeat(Math.min(5, entry.importance!))} `
+          : ''
+        return {
+          ordinal,
+          prefix: `${stars}${compactWhitespace(entry.name)}`,
+          details,
+        }
+      })
+      entryCount += entries.length
+      completeCategories.push({ heading: `[${cat.icon || ''} ${cat.name}]`, entries })
+    }
+
+    return renderCompleteCodex(completeCategories, entryCount)
+  }
 
   const blocks: string[] = ['【设定词条】（作者设定，写作时须遵守，勿自创冲突设定）']
 

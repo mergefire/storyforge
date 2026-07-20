@@ -4,7 +4,9 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { db } from '../../src/lib/db/schema'
-import { adoptFactCandidates, confirmFactCandidate, rejectFactCandidate } from '../../src/lib/fact-ledger/fact-ledger'
+import { adoptFactCandidates, confirmFactCandidate, rejectFactCandidate, updateFactCandidate } from '../../src/lib/fact-ledger/fact-ledger'
+import { FIELD_BY_TARGET } from '../../src/lib/registry/field-registry'
+import { ADOPTION_BY_TARGET } from '../../src/lib/registry/adoption-schema'
 import type { ExtractedFactCandidate } from '../../src/lib/ai/adapters/fact-extract-adapter'
 
 const now = Date.now()
@@ -29,6 +31,40 @@ describe('NS-4 · fact-ledger', () => {
     expect(f.characterId).toBe(charId)        // 主体名 → FK 解析
     expect(f.status).toBe('candidate')        // 落 observation
     expect(f.validFromChapterId).toBe(c1)
+    expect(r.writtenIds).toEqual([f.id])
+    expect(FIELD_BY_TARGET.get('temporalFacts')?.map(field => field.field)).toEqual(expect.arrayContaining([
+      'subjectName', 'predicate', 'factKind', 'value', 'sourceQuote', 'status',
+    ]))
+    expect(ADOPTION_BY_TARGET.get('temporalFacts')?.duplicatePolicy).toBe('skip')
+  })
+
+  it('章节候选可编辑，但证据保存与确认都必须逐字回查当前正文', async () => {
+    const { pid, c1 } = await seed()
+    const result = await adoptFactCandidates({ projectId: pid, sourceChapterId: c1, candidates: [cand({ sourceQuote: '林飞走进洛阳城。' })] })
+    const factId = result.writtenIds[0]
+
+    await expect(updateFactCandidate({
+      projectId: pid,
+      factId,
+      sourceChapterId: c1,
+      chapterContent: '林飞走进洛阳城。',
+      patch: { subjectName: '林飞', predicate: 'goal', value: '找到师父', sourceQuote: '正文中不存在的引文' },
+    })).rejects.toThrow('逐字存在')
+    expect((await db.temporalFacts.get(factId))?.predicate).toBe('location')
+
+    await updateFactCandidate({
+      projectId: pid,
+      factId,
+      sourceChapterId: c1,
+      chapterContent: '林飞走进洛阳城。他要找到师父。',
+      patch: { subjectName: '林飞', predicate: 'goal', value: '找到师父', sourceQuote: '他要找到师父。' },
+    })
+    expect(await db.temporalFacts.get(factId)).toMatchObject({ predicate: 'goal', factKind: 'state', value: '找到师父' })
+
+    await expect(confirmFactCandidate(factId, '林飞后来删掉了那句话。')).rejects.toThrow('证据引文已不在')
+    expect((await db.temporalFacts.get(factId))?.status).toBe('candidate')
+    await confirmFactCandidate(factId, '他要找到师父。')
+    expect((await db.temporalFacts.get(factId))?.status).toBe('confirmed')
   })
 
   it('去重:同主体+谓词+值的未关闭候选不重复写', async () => {

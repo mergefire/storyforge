@@ -10,6 +10,9 @@ import {
   confirmFactCandidate,
   rejectFactCandidate,
   listFacts,
+  updateFactCandidate,
+  type AdoptFactsResult,
+  type FactCandidatePatch,
 } from '../lib/fact-ledger/fact-ledger'
 import { importFactCandidateDiff, type ImportFactCandidateDiffResult } from '../lib/fact-ledger/human-readable-io'
 
@@ -17,9 +20,12 @@ interface FactLedgerStore {
   facts: TemporalFact[]
   loading: boolean
   load: (projectId: number) => Promise<void>
-  adopt: (args: { projectId: number; sourceChapterId: number; worldGroupId?: number | null; candidates: ExtractedFactCandidate[] }) => Promise<number>
+  adopt: (args: { projectId: number; sourceChapterId: number; worldGroupId?: number | null; candidates: ExtractedFactCandidate[] }) => Promise<AdoptFactsResult>
+  updateCandidate: (args: { projectId: number; factId: number; sourceChapterId: number; chapterContent: string; patch: FactCandidatePatch }) => Promise<void>
   confirmFact: (projectId: number, factId: number) => Promise<void>
+  confirmFacts: (projectId: number, factIds: number[], chapterContent: string) => Promise<void>
   rejectFact: (projectId: number, factId: number) => Promise<void>
+  rejectFacts: (projectId: number, factIds: number[]) => Promise<void>
   importCandidateDiff: (projectId: number, raw: unknown) => Promise<ImportFactCandidateDiffResult>
 }
 
@@ -39,7 +45,12 @@ export const useFactLedgerStore = create<FactLedgerStore>((set, get) => ({
   adopt: async ({ projectId, sourceChapterId, worldGroupId, candidates }) => {
     const result = await adoptFactCandidates({ projectId, sourceChapterId, worldGroupId, candidates })
     await get().load(projectId)
-    return result.written
+    return result
+  },
+
+  updateCandidate: async (args) => {
+    await updateFactCandidate(args)
+    await get().load(args.projectId)
   },
 
   confirmFact: async (projectId, factId) => {
@@ -47,8 +58,18 @@ export const useFactLedgerStore = create<FactLedgerStore>((set, get) => ({
     await get().load(projectId)
   },
 
+  confirmFacts: async (projectId, factIds, chapterContent) => {
+    for (const factId of factIds) await confirmFactCandidate(factId, chapterContent)
+    await get().load(projectId)
+  },
+
   rejectFact: async (projectId, factId) => {
     await rejectFactCandidate(factId)
+    await get().load(projectId)
+  },
+
+  rejectFacts: async (projectId, factIds) => {
+    for (const factId of factIds) await rejectFactCandidate(factId)
     await get().load(projectId)
   },
 

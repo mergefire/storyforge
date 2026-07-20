@@ -27,6 +27,7 @@ export default function OutlineGenerationRequestPanel({
   onCancel,
   onConfirm,
 }: Props) {
+  const contextOverBudget = Boolean(preparedContext?.assembled.overBudgetAfterTrim)
   return (
     <div className="space-y-3 rounded-lg border border-accent/30 bg-accent/5 px-3 py-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -58,7 +59,7 @@ export default function OutlineGenerationRequestPanel({
             disabled={loading || Boolean(error) || !preparedContext}
             className="px-2.5 py-1 text-xs text-white bg-accent rounded hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
-            确认生成
+            {contextOverBudget ? '确认并压缩生成' : '确认生成'}
           </button>
         </div>
       </div>

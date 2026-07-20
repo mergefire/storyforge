@@ -3,6 +3,7 @@ import { Check, GripVertical, Layers, Loader2, Plus, Sparkles, X } from 'lucide-
 import type { ParsedChapter } from '../../lib/ai/parse-outline-output'
 import type { BatchOutlineProgress } from '../../lib/ai/batch-outline-runner'
 import type { OutlineNode, WorldGroup } from '../../lib/types'
+import { getVolumeChapterNodes } from '../../lib/outline/selectors'
 import { useDragReorder } from './useDragReorder'
 import {
   chapterDropProps,
@@ -144,15 +145,7 @@ export default function OutlineVolumeSidebar({
 
       <div className="flex-1 overflow-y-auto px-1">
         {volumes.map(volume => {
-          const storyBlockIds = new Set(
-            nodes
-              .filter(node => node.parentId === volume.id && node.type === 'storyBlock')
-              .map(node => node.id),
-          )
-          const childCount = nodes.filter(node => (
-            node.type === 'chapter'
-            && (node.parentId === volume.id || storyBlockIds.has(node.parentId ?? undefined))
-          )).length
+          const childCount = volume.id == null ? 0 : getVolumeChapterNodes(nodes, volume.id).length
           const active = selectedVolumeId === volume.id
           const dnd = volumeDnD.itemDnD(volume.id)
           const dropToVolume = chapterDropProps({

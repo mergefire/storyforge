@@ -148,7 +148,7 @@ export const WEB_SAVE_FILE_FORMATS: Readonly<Record<SaveFilePurpose, { mediaType
   'prompt-template-json': { mediaType: 'application/json;charset=utf-8', extensions: ['.json'] },
   'prompt-library-json': { mediaType: 'application/json;charset=utf-8', extensions: ['.json'] },
   'prompt-workflow-json': { mediaType: 'application/json;charset=utf-8', extensions: ['.json'] },
-  'diagnostic-bundle': { mediaType: 'application/zip', extensions: ['.zip'] },
+  'diagnostic-bundle': { mediaType: 'application/json;charset=utf-8', extensions: ['.json'] },
   'full-migration-archive': {
     mediaType: 'application/vnd.storyforge.profile-migration+zip',
     extensions: ['.storyforge-migrate'],

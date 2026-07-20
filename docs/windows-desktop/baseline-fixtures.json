@@ -47,8 +47,8 @@
       "artifactBytes": 1244,
       "artifactSha256": "dcdd05d02618562e54baa7fa3874634f3008299f0dd842442c8728af23b034be",
       "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
-      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
-      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401",
+      "dataSourceCommit": "6fbc7a6240e8efe50f1c389fb92133f4a28da089",
       "purpose": "First launch, empty database, empty project list and import boundary.",
       "expected": {
         "projects": 0,
@@ -66,8 +66,8 @@
       "artifactBytes": 39843,
       "artifactSha256": "92f33232ffc977e06ee59d3f92d21f1ed341584f2f5a83235d5ae3d970a5249d",
       "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
-      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
-      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401",
+      "dataSourceCommit": "6fbc7a6240e8efe50f1c389fb92133f4a28da089",
       "purpose": "Representative daily editing, save, restart, export and import.",
       "expected": {
         "projects": 1,
@@ -114,8 +114,8 @@
       "artifactBytes": 9256819,
       "artifactSha256": "212e37e5ebcf939e00845d74384c1d2fde80b9bcd033dab355317e8951382141",
       "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
-      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
-      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401",
+      "dataSourceCommit": "6fbc7a6240e8efe50f1c389fb92133f4a28da089",
       "purpose": "Deterministic worst-normal project for opening, editor, graph/canvas and 30-minute memory workloads.",
       "expected": {
         "projects": 1,
@@ -146,8 +146,8 @@
       "artifactBytes": 1077,
       "artifactSha256": "b8fa2ae11a5db9c1d7a4e9874be27ec02775d7876904138a977d88f43a4286ee",
       "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
-      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
-      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401",
+      "dataSourceCommit": "6fbc7a6240e8efe50f1c389fb92133f4a28da089",
       "purpose": "Binary persistence, memory pressure and byte-exact import/export.",
       "expected": {
         "sizesBytes": [
@@ -176,8 +176,8 @@
       "artifactBytes": 11320,
       "artifactSha256": "5f59b9bbaab0553c37ab418d1f6265404f3c223e676513725d906b597fb211c0",
       "manifestPath": "tests/fixtures/windows-desktop/d0.4-v1/fixture-manifest.json",
-      "manifestSha256": "83b331dc8c42aca73e515216724b35884ab1d3093d0aa531ef2ea6da2a7b6edd",
-      "dataSourceCommit": "4a2c0185876866647d3c28f5cabeb5de57125efa",
+      "manifestSha256": "8b94093ed8eebd4c25bf94c1192f08811e88d69f123bfece4ec4fc35ac92e401",
+      "dataSourceCommit": "6fbc7a6240e8efe50f1c389fb92133f4a28da089",
       "purpose": "Upgrade and import compatibility across every schema version still declared by the current database implementation.",
       "expected": {
         "versionSource": "src/lib/db/schema.ts: every this.version(n) declaration",

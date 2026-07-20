@@ -9,7 +9,13 @@ export function isHtml(s: string): boolean {
   return /<\/?[a-z][\s\S]*>/i.test(s)
 }
 
-/** 纯文本 → HTML：每行包装为 <p>，空行生成空段落，保留原意 */
+/**
+ * 纯文本 → HTML。
+ *
+ * AI 正文通常用两个换行符分隔普通段落；编辑器的 <p> 已自带段间距，
+ * 因此不能再把其中那一条空白行转换成额外的空段落。只有连续两条及以上
+ * 空白行才视为作者明确保留的场景分隔，并收敛为一个空段落。
+ */
 export function plainTextToHtml(text: string): string {
   if (!text) return ''
   const escape = (s: string) =>
@@ -17,11 +23,35 @@ export function plainTextToHtml(text: string): string {
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-  // 兼容 CRLF
-  const lines = text.replace(/\r\n/g, '\n').split('\n')
-  return lines
-    .map(l => (l.trim().length === 0 ? '<p></p>' : `<p>${escape(l)}</p>`))
-    .join('')
+  const lines = text.replace(/\r\n?/g, '\n').split('\n')
+  const paragraphs: string[] = []
+  let blankLineCount = 0
+
+  for (const line of lines) {
+    if (line.trim().length === 0) {
+      blankLineCount += 1
+      continue
+    }
+
+    if (paragraphs.length > 0 && blankLineCount >= 2) {
+      paragraphs.push('<p></p>')
+    }
+    paragraphs.push(`<p>${escape(line)}</p>`)
+    blankLineCount = 0
+  }
+
+  return paragraphs.join('')
+}
+
+/** 纯文本 → 行内 HTML：用于单段选区替换，避免把新的 <p> 节点嵌入原段落。 */
+export function plainTextToInlineHtml(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\r\n?/g, '\n')
+    .replace(/\n/g, '<br>')
 }
 
 /** 将任意内容（可能是 HTML 或纯文本）标准化为 HTML */
