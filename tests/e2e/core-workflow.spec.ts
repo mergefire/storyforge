@@ -227,6 +227,7 @@ test('本地 OpenAI 兼容服务可刷新并保存模型列表', async ({ page }
 
   const provider = page.locator('label:has-text("提供商") + select')
   await provider.selectOption('ollama')
+  await expect(provider).toHaveValue('ollama')
   const baseUrl = page.locator('label:has-text("Base URL") + input')
   await baseUrl.fill('http://localhost:1234/v1/models')
   await page.getByRole('button', { name: '刷新模型', exact: true }).click()

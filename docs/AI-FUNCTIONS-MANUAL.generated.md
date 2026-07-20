@@ -8,7 +8,7 @@
 
 ## 一、Prompt 模板清单（PromptModuleKey 事实源）
 
-共 41 个 moduleKey。
+共 68 个 moduleKey。
 
 | moduleKey | 名称 | 说明 | 读取变量 |
 |---|---|---|---|
@@ -28,9 +28,30 @@
 | `geography.concept-map` | — | — | — |
 | `geography.image-map-prompt` | — | — | — |
 | `worldview.generate` | — | — | — |
+| `worldview.worldbuilding` | — | — | — |
 | `story.generate` | — | — | — |
+| `story.brief` | — | — | — |
+| `story.ideation` | — | — | — |
+| `story.positioning` | — | — | — |
+| `story.core` | — | — | — |
+| `story.packaging` | — | — | — |
 | `rules.generate` | — | — | — |
+| `research.method` | — | — | — |
+| `prompt.operations` | — | — | — |
 | `detail.scene` | — | — | — |
+| `detail.chapter-planning` | — | — | — |
+| `character.design` | — | — | — |
+| `outline.plot` | — | — | — |
+| `outline.structure` | — | — | — |
+| `outline.long-form` | — | — | — |
+| `outline.short-story` | — | — | — |
+| `outline.serialization` | — | — | — |
+| `chapter.drafting` | — | — | — |
+| `chapter.continuity` | — | — | — |
+| `chapter.line-editing` | — | — | — |
+| `review.developmental` | — | — | — |
+| `review.line-editing` | — | — | — |
+| `review.reader-validation` | — | — | — |
 | `import.parse-character` | — | — | — |
 | `import.parse-worldview` | — | — | — |
 | `import.parse-outline` | — | — | — |
@@ -53,6 +74,12 @@
 | `history.consult` | — | — | — |
 | `history.storm` | — | — | — |
 | `style.learn` | — | — | — |
+| `name` | — | — | — |
+| `genres` | — | — | — |
+| `description` | — | — | — |
+| `targetWordCount` | — | — | — |
+| `lengthMode` | — | — | — |
+| `serializationMode` | — | — | — |
 
 ## 二、上下文源清单（CONTEXT_SOURCES · AI 读什么）
 
@@ -166,16 +193,16 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `style.learn` | `src/components/style/StyleLearningPanel.tsx:79` |
 | `world-group.expand` | `src/components/world-group/WorldGroupDetail.tsx:98` |
 | `world-group.suggest` | `src/components/world-group/WorldGroupOverview.tsx:57` |
-| `worldview.dimension` | `src/components/worldview/WorldviewHumanityPanel.tsx:236`<br/>`src/components/worldview/WorldviewNaturalPanel.tsx:304`<br/>`src/components/worldview/WorldviewOriginPanel.tsx:287` |
-| `worldview.divine` | `src/components/worldview/WorldviewOriginPanel.tsx:386` |
-| `worldview.divine.split` | `src/components/worldview/WorldviewOriginPanel.tsx:410` |
+| `worldview.dimension` | `src/components/worldview/WorldviewHumanityPanel.tsx:236`<br/>`src/components/worldview/WorldviewNaturalPanel.tsx:304`<br/>`src/components/worldview/WorldviewOriginPanel.tsx:257` |
+| `worldview.divine` | `src/components/worldview/WorldviewOriginPanel.tsx:356` |
+| `worldview.divine.split` | `src/components/worldview/WorldviewOriginPanel.tsx:380` |
 
 ### 动态 category 调用
 
 - `src/components/editor/ReviewPanel.tsx:130 · ai.start`
 - `src/components/settings/NS0EvalPanel.tsx:50 · chat`
-- `src/components/settings/prompt/WorkflowRunner.tsx:270 · ai.start`
+- `src/components/settings/prompt/WorkflowRunner.tsx:294 · ai.start`
 
 ---
 
-生成时间基准:commit `6fbc7a6`
+生成时间基准:commit `e6db879`

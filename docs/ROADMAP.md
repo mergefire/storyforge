@@ -5,7 +5,7 @@
 > 🤝 **双 Agent 协作契约**: [`docs/COLLAB-WORKFLOW.md`](COLLAB-WORKFLOW.md) — Codex 开发 / Claude 审查的分工·分支·合并纪律；Codex 已于 2026-07-14 在 §7 确认
 > 🪟 **Windows Desktop 专项**: [`docs/WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md`](WINDOWS-DESKTOP-IMPLEMENTATION-PLAN.md) — M0～M3 当前施工步骤；授权、状态和闸门只看 MASTER-BLUEPRINT §17
 >
-> **最后更新**: 2026-07-19（EDITOR-6 正文 AI 安全协作闭环完成实现与自动回归；Windows Desktop 真实交互签字受 WebView2 CDP 自动化通道阻塞，状态与证据见本条及设计文档 §15）
+> **最后更新**: 2026-07-20（整合 upstream Prompt 主线化与 Phase 36 内容流类型标记；EDITOR-6 正文 AI 安全协作闭环保持不变；Windows Desktop 真实交互签字受 WebView2 CDP 自动化通道阻塞，状态与证据见本条及设计文档 §15）
 > **说明**: 本文档是唯一的功能规划文档。旧文档已迁移到 WPS 云文档 `storyforge故事熔炉 / 仓库文档迁移_20260708`，仓库内只保留当前施工所需文档。
 > **结构**: 上半部分「已完成」，下半部分「待开发」按优先级排列。完成后从待办挪到已完成区。
 > **重要**: 任何"加功能 / 修 bug"前，先过 CLAUDE.md 的「四问」。**头疼医头 = 永远拒绝**。
@@ -2237,6 +2237,7 @@ for each character:
 - **2026-07-14 第十六批完成**：将历史时间线事件卡与历史关键词卡拆到 `HistoryTimelineEventCard` / `HistoryKeywordCard`，字段编辑、章节关联和双 Agent 工作区均通过 patch/命令回调转发；父面板继续独占多世界过滤、store、AI controller、删除确认和当前展开/生成目标。`HistoryPanel` 从 883 行降到 482 行，达到该主要 panel `<500` 的单文件目标。新增 6 条组件回归，锁定纪年原点/世界徽标、史实/虚构、事件与关键词字段、章节关联和 Agent 命令；刷新恢复实测通过。
 - **2026-07-14 第十七批完成**：将章节摘要、章节记忆生成状态、计划—正文对账分类/证据/失效提示及两种确认命令拆到纯视图 `ChapterMemoryPanel`；父级继续负责正文/章纲 hash 校验、AI 抽取、store 与章纲写回。`ChapterEditor` 从 1313 行降到 1248 行。新增 3 条组件回归，锁定空摘要/忙碌态、失效对账和当前待确认对账的命令转发。
 - **2026-07-14 第十八批完成**：将世界观/角色/章纲上下文预览与状态卡注入计数/调整列表拆到纯视图 `ChapterContextPreview`；父级继续独占选择性状态匹配和手动额外 ID 规则。状态分类文案复用 `STATE_CATEGORY_LABELS`，移除旧内联五分支；`ChapterEditor` 从 1248 行降到 1206 行。新增 3 条回归锁定截断边界、注入计数、自动/手动/未选标签和卡片命令。
+- **2026-07-20 选择性同步进度**：从 upstream 的第十九批中只移植与 optimize 当前编辑器主链无冲突的两组边界：`AIConfigPanel` 抽出预设、任务路由、连接日志、连接测试、主题选择，并将代理/直连端点元数据下沉到 `lib/ai`；`WorldviewOriginPanel` 抽出受控三页签侧栏。父级继续独占 Zustand 持久化、运行时凭据刷新、网络请求、AI、store/DB 写入和上下游上下文。上游旧版 `ChapterEditor` / `RichEditor` 拆分未合入，避免覆盖 optimize 已完成的正文 AI 协作闭环；`AUDIT-6` 仍未完成，其余大型面板继续按当前代码边界单独治理。
 - **位置**：`prompt-seeds.ts`、`json-export.ts`（800+ 行）、大型 panel（多个 600-1500 行混 prompt/UI/业务）。
 - **改法**：按领域拆 prompt pack / service / hook / view；大 panel 先拆状态逻辑与纯 UI；形成 use-case/service 层（`importProjectUseCase()` / `generateChapterUseCase()`）。
 - **验收**：主要 panel 单文件尽量 <500 行；业务逻辑下沉；测试不退化。
@@ -2591,7 +2592,7 @@ for each character:
 
 ## 🟡 HEALTH-4（P2 · 持续补网）— UI 层测试覆盖率补强
 
-> **2026-07-13 进度**：新增工作流步骤卡 DOM 回归，锁住“生成前用户输入确实传给运行器”和“编辑 AI 输出后保存使用编辑值”；同时把输入与 `step.userHint` 的合并收口到 `assembleWorkflowStepVars()` 并补纯逻辑反例。已有角色维度草稿、长文本内滚动两组组件测试。本轮补齐 CF-3 生成依据的加载/失败/空态，以及数据管理诊断下载的 Blob/MIME/内容/隐私/成功反馈组件测试；另建立 8 条 Chromium E2E，覆盖创建、正文保存刷新、Markdown/诊断下载、JSON 往返、快照恢复、删除确认/取消、AI 设置持久化和本地模型刷新。剩余按世界观生成等高风险面板逐批补，不追求低价值全局覆盖率数字。
+> **2026-07-20 进度**：新增工作流步骤卡 DOM 回归，锁住“生成前用户输入确实传给运行器”和“编辑 AI 输出后保存使用编辑值”；同时把输入与 `step.userHint` 的合并收口到 `assembleWorkflowStepVars()` 并补纯逻辑反例。已有角色维度草稿、长文本内滚动两组组件测试。本轮补齐 CF-3 生成依据的加载/失败/空态，以及数据管理诊断下载的 Blob/MIME/内容/隐私/成功反馈组件测试；另建立 8 条 Chromium E2E，覆盖创建、正文保存刷新、Markdown/诊断下载、JSON 往返、快照恢复、删除确认/取消、AI 设置持久化和本地模型刷新。选择性同步再补 AI 设置子区、世界来源页签和内容类型标记回归；剩余按世界观生成等高风险面板逐批补，不追求低价值全局覆盖率数字。
 
 **问题**：整体覆盖率偏低,UI 层很薄(核心逻辑层~86%,UI 接近裸奔)。盲目追全局百分比性价比低。
 
@@ -2600,7 +2601,6 @@ for each character:
 ## 🟡 HEALTH-5（P2 · 低优先 · 穿插做）— 死代码清理 + i18n 渐进迁移 + 包体积
 
 > **2026-07-13 确定性清理进度**：全仓按生产 / 测试引用复核后，删除五个真实孤儿：未挂载到任何面板的 `EventTimeline.tsx`、从未接入 UI / prompt / store 的 `methodology.ts`，以及已被 `world-map/engine/*` 取代的旧 Canvas 地图 `interaction/perlin/renderer.ts`。保留旧 `Project.methodologyId` 可选字段，避免把代码清理误做成用户数据迁移。新增 `check:source-reachability`，从生产入口沿静态 / 动态 import 检查源码文件可达性并接入 CI；i18n 脚手架作为产品明确保留的未来入口单独声明。构建产物复核显示首屏应用块约 **200 KB gzip**，已低于本条 `<300 KB gzip` 目标；另一个约 131 KB gzip 的大块是 `react-force-graph-2d`，只随关系面板动态加载，章节编辑器、导入、地图等重面板也均为 lazy chunk，因此不为数字继续制造碎片化分包。新增 `check:bundle-size` 并接入本地 `npm run ci` 与 GitHub Actions：从构建后的 `index.html` 识别真实入口，分别限制入口、普通 JS chunk、CSS 和 PDF worker 的 raw/gzip 体积，超限时报告具体文件，防止依赖意外回灌首屏。当前入口约 616 KiB / 196 KiB gzip，最大普通异步块约 491 KiB / 128 KiB gzip，均在预算内。WorldMap 的 `3D Labs` 是已明确标识且禁用的实验入口，不当死代码误删。**本条剩余仅为 i18n 产品里程碑**，需等是否做英文版的产品决策；当前中文版本不盲目迁 100+ 组件。
-
 **问题**：可能存在死代码(WorldMap3DCanvas)、108 组件硬编码中文未 i18n、主包仍偏大(gzip 415KB)。
 
 **方案**：①死代码扫描工具(如 knip/ts-prune)跑一遍,移除确认无用的;②i18n 按 `docs/refactor/I18N-GUIDE.md` 逐面板渐进迁移(优先 common/nav/设置/导出);③包体积继续拆(章节编辑器懒加载,目标主包 gzip <300KB)。**排期**：低优先,穿插在其它任务间。
@@ -3033,9 +3033,11 @@ for each character:
 
 ---
 
-### Phase 36 — 页面"上游/下游"内容标记（信息架构标识）
+### ✅ Phase 36 — 页面"上游/下游"内容标记（完成 2026-07-14）
 
-> 来源：用户构想（2026-06-03） | 状态：未开始 | 价值：降低工具理解门槛
+> 来源：用户构想（2026-06-03） | 状态：已完成 | 价值：降低工具理解门槛
+
+**完成状态**：新增 `SidebarModule → contentType` 完整映射，显式覆盖当前导航叶子与 legacy 路由；工作区固定标题栏按当前页面显示「设定 / 创作 / 产物 / AI 工具 / 系统」及说明，侧栏叶子同步显示紧凑标记，折叠态通过中文 tooltip 保留解释。实现只读模块元数据，不改 DB、AI 上下文、写回或表生命周期。`R-PHASE36-content-types` 锁定完整映射、legacy 路由、徽标语义和导航回调；预览浏览器实测五类切换、章节沉浸布局、侧栏截断和横向溢出，控制台无 error/warning。
 
 **问题**：工具面板越来越多，新用户点开一个侧边栏标签，分不清这个页面是"我来填、AI 写作时读它"（上游设定），还是"AI 从我写好的正文里提取出来的"（下游产物）。需要在页面上做**明确标记**，让用户一眼理解每个页面的性质。
 
