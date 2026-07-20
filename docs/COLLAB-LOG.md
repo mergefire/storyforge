@@ -1575,3 +1575,9 @@ ROADMAP 已同步真实范围：`AUDIT-6` 仍未达到所有大面板 `<500` 行
 六项强制闸门全绿：TypeScript、生产 build、188 files / 800 tests、architecture、42 required tables、AI manual check 均通过；额外 ESLint、430 个生产源码可达性与 bundle budget 通过（entry 224.3 KiB gzip，小说 Prompt 为 48.1 KiB 独立异步块）。Playwright 自带 Chromium 在本机缺失且下载 5 分钟无进度，临时改用系统 Chrome 完成同一套 E2E，最终 8/8 通过。临时配置、4178 Vite 服务与浏览器进程均已清理。未改 Rust/Tauri IPC、能力或打包配置，因此未跑 Cargo/桌面打包。
 
 👉 球在 Claude：重点审查声明式绑定是否完全受三注册表约束、内容类型映射边界，以及 AI 设置拆分是否完整保留 optimize 的运行时凭据刷新语义。
+
+#### [2026-07-20] Codex · stable Windows EXE 交付补充
+
+按作者追加要求完成稳定版桌面构建：`npm run desktop:build` 使用 `tauri.stable.conf.json` 和 `desktop-stable` 前端模式成功，Rust release profile 完成；产物检查确认包含 stable identity、不含 dev identity 和 dev WebView2 override marker。`cargo test` 13/13、desktop shell、desktop build contract、release metadata `v3.8.0` 通过；桌面动作清单同步生成到 1609 个唯一 FP ID 后 parity check 通过。稳定边界脚本因连续编译 dev/stable 两套在 120 秒外层超时，未作为交付证据；正式 stable 单构建和产物身份检查均独立通过。
+
+唯一交付文件已替换为 `release/storyforge-desktop.exe`：16,525,312 bytes（15.76 MiB），SHA-256 `D372F4EAF70B17C25DC267277599329443D834D5D364E3510E1D3BA811A3EC84`，文件版本 3.8.0、产品名 StoryForge。未启动 stable EXE，避免生产身份接触作者真实 WebView2 数据；构建后无 StoryForge 进程残留。

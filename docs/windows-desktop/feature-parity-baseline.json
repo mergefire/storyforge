@@ -24,7 +24,7 @@
       "kind": "dispatch",
       "signature": "dispatch:characters-extra",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 214,
+      "line": 216,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -37,7 +37,7 @@
       "kind": "dispatch",
       "signature": "dispatch:characters",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 206,
+      "line": 208,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -50,7 +50,7 @@
       "kind": "dispatch",
       "signature": "dispatch:characters-main",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 208,
+      "line": 210,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -63,7 +63,7 @@
       "kind": "dispatch",
       "signature": "dispatch:character-driven-plot",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 224,
+      "line": 226,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -76,7 +76,7 @@
       "kind": "dispatch",
       "signature": "dispatch:chapters-list",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 228,
+      "line": 230,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -89,7 +89,7 @@
       "kind": "dispatch",
       "signature": "dispatch:locations",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 236,
+      "line": 238,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -102,7 +102,7 @@
       "kind": "dispatch",
       "signature": "dispatch:detailed-outline",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 226,
+      "line": 228,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -115,7 +115,7 @@
       "kind": "dispatch",
       "signature": "dispatch:state-table",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 240,
+      "line": 242,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -128,7 +128,7 @@
       "kind": "dispatch",
       "signature": "dispatch:worldview-natural",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 187,
+      "line": 189,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -141,7 +141,7 @@
       "kind": "dispatch",
       "signature": "dispatch:relations",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 216,
+      "line": 218,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -154,7 +154,7 @@
       "kind": "dispatch",
       "signature": "dispatch:backup",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 275,
+      "line": 277,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -167,7 +167,7 @@
       "kind": "dispatch",
       "signature": "dispatch:version-history",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 266,
+      "line": 268,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -180,7 +180,7 @@
       "kind": "dispatch",
       "signature": "dispatch:master-studies",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 258,
+      "line": 260,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -193,7 +193,7 @@
       "kind": "dispatch",
       "signature": "dispatch:scene-verify",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 254,
+      "line": 256,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -206,7 +206,7 @@
       "kind": "dispatch",
       "signature": "dispatch:inventory",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 242,
+      "line": 244,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -219,7 +219,7 @@
       "kind": "dispatch",
       "signature": "dispatch:export",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 276,
+      "line": 278,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -232,7 +232,7 @@
       "kind": "dispatch",
       "signature": "dispatch:characters-npc",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 212,
+      "line": 214,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -245,7 +245,7 @@
       "kind": "dispatch",
       "signature": "dispatch:power-system",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 197,
+      "line": 199,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -258,7 +258,7 @@
       "kind": "dispatch",
       "signature": "dispatch:rules",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 220,
+      "line": 222,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -271,7 +271,7 @@
       "kind": "dispatch",
       "signature": "dispatch:world-overview",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 179,
+      "line": 181,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -284,7 +284,7 @@
       "kind": "dispatch",
       "signature": "dispatch:info",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 171,
+      "line": 173,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -297,7 +297,7 @@
       "kind": "dispatch",
       "signature": "dispatch:story-core",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 202,
+      "line": 204,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -310,7 +310,7 @@
       "kind": "dispatch",
       "signature": "dispatch:characters-minor",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 210,
+      "line": 212,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -323,7 +323,7 @@
       "kind": "dispatch",
       "signature": "dispatch:worldview-humanity",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 189,
+      "line": 191,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -336,7 +336,7 @@
       "kind": "dispatch",
       "signature": "dispatch:settings",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 270,
+      "line": 272,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -349,7 +349,7 @@
       "kind": "dispatch",
       "signature": "dispatch:fact-library",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 244,
+      "line": 246,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -362,7 +362,7 @@
       "kind": "dispatch",
       "signature": "dispatch:editor",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 230,
+      "line": 232,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -375,7 +375,7 @@
       "kind": "dispatch",
       "signature": "dispatch:import-doc",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 268,
+      "line": 270,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -388,7 +388,7 @@
       "kind": "dispatch",
       "signature": "dispatch:geography",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 191,
+      "line": 193,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -401,7 +401,7 @@
       "kind": "dispatch",
       "signature": "dispatch:story-arc",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 238,
+      "line": 240,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -414,7 +414,7 @@
       "kind": "dispatch",
       "signature": "dispatch:usage-stats",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 272,
+      "line": 274,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -427,7 +427,7 @@
       "kind": "dispatch",
       "signature": "dispatch:outline",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 222,
+      "line": 224,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -440,7 +440,7 @@
       "kind": "dispatch",
       "signature": "dispatch:foreshadow",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 232,
+      "line": 234,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -453,7 +453,7 @@
       "kind": "dispatch",
       "signature": "dispatch:prompts",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 262,
+      "line": 264,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -466,7 +466,7 @@
       "kind": "dispatch",
       "signature": "dispatch:history",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 195,
+      "line": 197,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -479,7 +479,7 @@
       "kind": "dispatch",
       "signature": "dispatch:world-rules",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 183,
+      "line": 185,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -492,7 +492,7 @@
       "kind": "dispatch",
       "signature": "dispatch:story-timeline",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 246,
+      "line": 248,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -505,7 +505,7 @@
       "kind": "dispatch",
       "signature": "dispatch:inspiration",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 175,
+      "line": 177,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -518,7 +518,7 @@
       "kind": "dispatch",
       "signature": "dispatch:worldview-origin",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 185,
+      "line": 187,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -531,7 +531,7 @@
       "kind": "dispatch",
       "signature": "dispatch:references",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 173,
+      "line": 175,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -544,7 +544,7 @@
       "kind": "dispatch",
       "signature": "dispatch:data-management",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 274,
+      "line": 276,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -557,7 +557,7 @@
       "kind": "dispatch",
       "signature": "dispatch:world-map",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 193,
+      "line": 195,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -570,7 +570,7 @@
       "kind": "dispatch",
       "signature": "dispatch:story-design",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 201,
+      "line": 203,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -583,7 +583,7 @@
       "kind": "dispatch",
       "signature": "dispatch:style-learning",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 234,
+      "line": 236,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -596,8 +596,8 @@
       "kind": "route",
       "signature": "route:/migration-export",
       "source": "src/App.tsx",
-      "line": 34,
-      "column": 7,
+      "line": 38,
+      "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
       "route": "/migration-export"
@@ -608,8 +608,8 @@
       "kind": "route",
       "signature": "route:/settings",
       "source": "src/App.tsx",
-      "line": 33,
-      "column": 7,
+      "line": 37,
+      "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
       "route": "/settings"
@@ -620,8 +620,8 @@
       "kind": "route",
       "signature": "route:/workspace/:projectId",
       "source": "src/App.tsx",
-      "line": 35,
-      "column": 7,
+      "line": 39,
+      "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
       "route": "/workspace/:projectId"
@@ -632,8 +632,8 @@
       "kind": "route",
       "signature": "route:/",
       "source": "src/App.tsx",
-      "line": 32,
-      "column": 7,
+      "line": 36,
+      "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
       "route": "/"
@@ -886,7 +886,7 @@
       "kind": "runtime",
       "signature": "getRuntime().clipboard.writeText('workflow-output', outText).then|() => { setCopied(true) setTimeout(() => setCopied(false), 1500) }",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 439,
+      "line": 463,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1095,7 +1095,7 @@
       "kind": "runtime",
       "signature": "bindAiCredential|{ key: credentialTarget.key, apiKey: config.apiKey, provider: config.provider, profileId: credentialTarget.profileId, operation: 'chat-completions', configuredBaseUrl: normalized.baseUrl, persistence: rememberApiKey ? 'device' : 'session', }",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 166,
+      "line": 164,
       "column": 34,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1150,7 +1150,7 @@
       "kind": "runtime",
       "signature": "editor.view.dom.addEventListener|'keydown',handleKeyDown,true",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 575,
+      "line": 577,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1183,7 +1183,7 @@
       "kind": "runtime",
       "signature": "window.setTimeout|() => { apiKeySaveTimerRef.current = null void enqueueApiKeySave(value) },250",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 122,
+      "line": 120,
       "column": 34,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1304,7 +1304,7 @@
       "kind": "runtime",
       "signature": "window.addEventListener|'pointermove',handlePointerMove",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 265,
+      "line": 273,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1370,7 +1370,7 @@
       "kind": "runtime",
       "signature": "getRuntime().clipboard.writeText|'workflow-output',outText",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 439,
+      "line": 463,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1447,7 +1447,7 @@
       "kind": "runtime",
       "signature": "getRuntime().clipboard.writeText|'chapter-ai-output',guardedOutput",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 635,
+      "line": 678,
       "column": 65,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1458,7 +1458,7 @@
       "kind": "runtime",
       "signature": "window.addEventListener|'themechange',rerenderForTheme",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 597,
+      "line": 599,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1524,7 +1524,7 @@
       "kind": "runtime",
       "signature": "window.addEventListener|'pointerup',stopResizing,{ once: true }",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 266,
+      "line": 274,
       "column": 5,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1689,7 +1689,7 @@
       "kind": "runtime",
       "signature": "setTimeout|() => setCopied(false),1500",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 441,
+      "line": 465,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
@@ -1779,6 +1779,17 @@
       "source": "src/lib/export/gist-export.ts",
       "line": 118,
       "column": 10,
+      "status": "REGISTERED_M1",
+      "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
+    },
+    {
+      "actionId": "runtime:bcfddb7250c42dbc",
+      "fpId": "FP-RUNTIME-5BD87DD04A21",
+      "kind": "runtime",
+      "signature": "window.setInterval|persistPartialOutput,1_000",
+      "source": "src/components/editor/ChapterEditor.tsx",
+      "line": 220,
+      "column": 22,
       "status": "REGISTERED_M1",
       "evidence": "tests/desktop-contract/tauri-runtime.test.ts"
     },
@@ -2030,7 +2041,7 @@
       "kind": "sidebar",
       "signature": "sidebar:version-history",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 199,
+      "line": 285,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2042,7 +2053,7 @@
       "kind": "sidebar",
       "signature": "sidebar:relations",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 164,
+      "line": 250,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2054,7 +2065,7 @@
       "kind": "sidebar",
       "signature": "sidebar:fact-library",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 183,
+      "line": 269,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2066,7 +2077,7 @@
       "kind": "sidebar",
       "signature": "sidebar:scene-verify",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 185,
+      "line": 271,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2078,7 +2089,7 @@
       "kind": "sidebar",
       "signature": "sidebar:worldview-natural",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 146,
+      "line": 232,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2090,7 +2101,7 @@
       "kind": "sidebar",
       "signature": "sidebar:characters-main",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 160,
+      "line": 246,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2102,7 +2113,7 @@
       "kind": "sidebar",
       "signature": "sidebar:characters-minor",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 161,
+      "line": 247,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2114,7 +2125,7 @@
       "kind": "sidebar",
       "signature": "sidebar:prompts",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 193,
+      "line": 279,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2126,7 +2137,7 @@
       "kind": "sidebar",
       "signature": "sidebar:rules",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 173,
+      "line": 259,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2138,7 +2149,7 @@
       "kind": "sidebar",
       "signature": "sidebar:state-table",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 181,
+      "line": 267,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2150,7 +2161,7 @@
       "kind": "sidebar",
       "signature": "sidebar:worldview-origin",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 145,
+      "line": 231,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2162,7 +2173,7 @@
       "kind": "sidebar",
       "signature": "sidebar:worldview-humanity",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 147,
+      "line": 233,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2174,7 +2185,7 @@
       "kind": "sidebar",
       "signature": "sidebar:usage-stats",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 202,
+      "line": 288,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2186,7 +2197,7 @@
       "kind": "sidebar",
       "signature": "sidebar:inventory",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 182,
+      "line": 268,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2198,7 +2209,7 @@
       "kind": "sidebar",
       "signature": "sidebar:references",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 130,
+      "line": 216,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2210,7 +2221,7 @@
       "kind": "sidebar",
       "signature": "sidebar:export",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 201,
+      "line": 287,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2222,7 +2233,7 @@
       "kind": "sidebar",
       "signature": "sidebar:inspiration",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 129,
+      "line": 215,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2234,7 +2245,7 @@
       "kind": "sidebar",
       "signature": "sidebar:locations",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 180,
+      "line": 266,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2246,7 +2257,7 @@
       "kind": "sidebar",
       "signature": "sidebar:foreshadow",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 178,
+      "line": 264,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2258,7 +2269,7 @@
       "kind": "sidebar",
       "signature": "sidebar:history",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 148,
+      "line": 234,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2270,7 +2281,7 @@
       "kind": "sidebar",
       "signature": "sidebar:style-learning",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 179,
+      "line": 265,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2282,7 +2293,7 @@
       "kind": "sidebar",
       "signature": "sidebar:character-driven-plot",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 175,
+      "line": 261,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2294,7 +2305,7 @@
       "kind": "sidebar",
       "signature": "sidebar:info",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 128,
+      "line": 214,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2306,7 +2317,7 @@
       "kind": "sidebar",
       "signature": "sidebar:settings",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 203,
+      "line": 289,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2318,7 +2329,7 @@
       "kind": "sidebar",
       "signature": "sidebar:world-map",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 149,
+      "line": 235,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2330,7 +2341,7 @@
       "kind": "sidebar",
       "signature": "sidebar:story-timeline",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 184,
+      "line": 270,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2342,7 +2353,7 @@
       "kind": "sidebar",
       "signature": "sidebar:chapters-list",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 177,
+      "line": 263,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2354,7 +2365,7 @@
       "kind": "sidebar",
       "signature": "sidebar:outline",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 174,
+      "line": 260,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2366,7 +2377,7 @@
       "kind": "sidebar",
       "signature": "sidebar:characters-npc",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 162,
+      "line": 248,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2378,7 +2389,7 @@
       "kind": "sidebar",
       "signature": "sidebar:characters",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 159,
+      "line": 245,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2390,7 +2401,7 @@
       "kind": "sidebar",
       "signature": "sidebar:characters-extra",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 163,
+      "line": 249,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2402,7 +2413,7 @@
       "kind": "sidebar",
       "signature": "sidebar:story-arc",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 176,
+      "line": 262,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2414,7 +2425,7 @@
       "kind": "sidebar",
       "signature": "sidebar:world-rules",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 144,
+      "line": 230,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2426,7 +2437,7 @@
       "kind": "sidebar",
       "signature": "sidebar:world-overview",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 137,
+      "line": 223,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2438,7 +2449,7 @@
       "kind": "sidebar",
       "signature": "sidebar:import-doc",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 200,
+      "line": 286,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2450,7 +2461,7 @@
       "kind": "sidebar",
       "signature": "sidebar:story-design",
       "source": "src/components/layout/sidebar-tree.ts",
-      "line": 152,
+      "line": 238,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm run check:desktop-routes",
@@ -2506,19 +2517,19 @@
       "kind": "ui",
       "signature": "onOpenChapter|OutlinePanel|{handleOpenChapter}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 223,
+      "line": 225,
       "column": 48,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:01304013eeb82e56",
-      "fpId": "FP-UI-26EBEC72AD9A",
+      "actionId": "ui:00e973746a592854",
+      "fpId": "FP-UI-51E656D04740",
       "kind": "ui",
-      "signature": "onClick|button|{() => runSettingsChange(flushApiKeyDraft().then(() => applyPreset(p.id)))}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 335,
-      "column": 21,
+      "signature": "onClick|button|{onStartSaving}|occurrence:2",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 64,
+      "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -2605,7 +2616,7 @@
       "kind": "ui",
       "signature": "onChange|InlineTextarea|{onChange}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 300,
+      "line": 270,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -2721,6 +2732,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:048da45ff4680b8f",
+      "fpId": "FP-UI-9D767F4070A5",
+      "kind": "ui",
+      "signature": "onClick|button|{onStartSaving}|occurrence:1",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 46,
+      "column": 21,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:055198b9bf989609",
       "fpId": "FP-UI-B7169FF2B866",
       "kind": "ui",
@@ -2794,6 +2816,17 @@
       "source": "src/components/worldview/WorldviewHumanityPanel.tsx",
       "line": 256,
       "column": 39,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:06bd9b5a1c91a543",
+      "fpId": "FP-UI-0987B07854EF",
+      "kind": "ui",
+      "signature": "onCancelSaving|AIConfigPresetSection|{() => setSavingPreset(false)}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 282,
+      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -2924,7 +2957,7 @@
       "kind": "ui",
       "signature": "onUserInputChange|StepCard|{(v) => userInputsRef.current.set(step.stepId, v)}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 388,
+      "line": 412,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -2968,7 +3001,7 @@
       "kind": "ui",
       "signature": "onChange|select|{e => update({ moduleKey: e.target.value as PromptModuleKey })}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 247,
+      "line": 274,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3089,7 +3122,7 @@
       "kind": "ui",
       "signature": "onRetry|AIStreamOutput|{handleGenerate}|occurrence:1",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 325,
+      "line": 295,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3100,7 +3133,7 @@
       "kind": "ui",
       "signature": "onChange|PromptExamplesEditor|{(examples) => { void handleExamplesChange(examples) }}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 360,
+      "line": 387,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3210,7 +3243,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => editor.chain().focus().undo().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 995,
+      "line": 1018,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3287,7 +3320,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => setResultView('candidate')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 661,
+      "line": 709,
       "column": 41,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3397,7 +3430,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{submit}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 771,
+      "line": 819,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3463,7 +3496,7 @@
       "kind": "ui",
       "signature": "onChange|select|{e => updateStep(idx, { saveTarget: valueToSaveTarget(e.target.value) })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 197,
+      "line": 199,
       "column": 23,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3507,7 +3540,7 @@
       "kind": "ui",
       "signature": "onChange|aria-label=字色|{(event) => applyTextColor(event.target.value)}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 862,
+      "line": 885,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3639,7 +3672,7 @@
       "kind": "ui",
       "signature": "onChange|select|{e => update({ continuityMode: e.target.value as PromptTemplate['continuityMode'], })}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 262,
+      "line": 289,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3793,7 +3826,7 @@
       "kind": "ui",
       "signature": "onSystemOverrideChange|PromptRunPanel|{setSystemOverride}|occurrence:2",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 511,
+      "line": 481,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3832,12 +3865,23 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:17f7d18c13765c75",
+      "fpId": "FP-UI-30A989FA982E",
+      "kind": "ui",
+      "signature": "onSetRoute|AITaskRoutingSection|{setTaskRoute}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 290,
+      "column": 69,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:1824ea7b77030239",
       "fpId": "FP-UI-32AAD819002C",
       "kind": "ui",
       "signature": "onClick|button|{() => updateConfig({ baseUrl: pm.direct })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 527,
+      "line": 401,
       "column": 25,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3848,19 +3892,19 @@
       "kind": "ui",
       "signature": "onChange|aria-label=给 AI 的本章指令|{event => setInstruction(event.target.value)}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 746,
+      "line": 794,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:1856643e921e3db1",
-      "fpId": "FP-UI-503DD7404C18",
+      "actionId": "ui:18617f5a77f6e068",
+      "fpId": "FP-UI-987067ADD13B",
       "kind": "ui",
-      "signature": "onClick|button|{() => setSavingPreset(true)}|occurrence:2",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 313,
-      "column": 17,
+      "signature": "onClick|title=重命名|{() => onRenamePreset(preset.id, preset.name)}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 86,
+      "column": 23,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -3892,7 +3936,7 @@
       "kind": "ui",
       "signature": "onChange|type=text|{(e) => updateConfig({ baseUrl: e.target.value })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 476,
+      "line": 362,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3925,7 +3969,7 @@
       "kind": "ui",
       "signature": "onImported|DataManagementPanel|{(newId) => navigate(`/workspace/${newId}`)}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 277,
+      "line": 279,
       "column": 55,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -3964,17 +4008,6 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:1a6b907d9dca8272",
-      "fpId": "FP-UI-89BC1DAEC6D4",
-      "kind": "ui",
-      "signature": "onClick|button|{() => setSavingPreset(false)}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 309,
-      "column": 25,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:1aa122a413b3dd32",
       "fpId": "FP-UI-CFD293E30392",
       "kind": "ui",
@@ -3991,7 +4024,7 @@
       "kind": "ui",
       "signature": "onOutputChange|StepCard|{(output) => { stepOutputsRef.current.set(step.stepId, output) updateResult(step.stepId, { output }) }}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 389,
+      "line": 413,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4002,7 +4035,7 @@
       "kind": "ui",
       "signature": "onStreamingChange|DivineFieldEditor|{streaming => handleStreamingChange('divine', streaming)}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 217,
+      "line": 187,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4013,7 +4046,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => setExpanded(v => !v)}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 461,
+      "line": 485,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4035,8 +4068,8 @@
       "kind": "ui",
       "signature": "onClick|button|{() => setShowProperties(v => !v)}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 306,
-      "column": 11,
+      "line": 309,
+      "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -4068,7 +4101,7 @@
       "kind": "ui",
       "signature": "onClick|button|{onRetry}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 524,
+      "line": 548,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4101,7 +4134,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onRegenerate}",
       "source": "src/components/editor/ChapterCandidateReview.tsx",
-      "line": 143,
+      "line": 183,
       "column": 33,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4112,7 +4145,7 @@
       "kind": "ui",
       "signature": "onSave|StepCard|{(output, target) => handleSaveTarget(step.stepId, output, target)}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 387,
+      "line": 411,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4222,7 +4255,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onClick}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 168,
+      "line": 171,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4288,7 +4321,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleCopy}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 533,
+      "line": 557,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4398,7 +4431,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{scrollToBottom}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 647,
+      "line": 695,
       "column": 37,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4409,7 +4442,7 @@
       "kind": "ui",
       "signature": "onChange|type=checkbox|{(e) => updateConfig({ maxTokens: e.target.checked ? 0 : 8192 })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 635,
+      "line": 509,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4508,19 +4541,8 @@
       "kind": "ui",
       "signature": "onNavigate|ImportDocPanel|{(m) => { setActiveModule(m); setEditorNodeId(null) }}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 269,
+      "line": 271,
       "column": 50,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:24c85f4b5be8b47f",
-      "fpId": "FP-UI-3D8B53F9E353",
-      "kind": "ui",
-      "signature": "onClick|button|{() => setShowLogs(!showLogs)}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 724,
-      "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -4530,7 +4552,7 @@
       "kind": "ui",
       "signature": "onClick|TemplateRow|{() => onSelect(t.id!)}",
       "source": "src/components/settings/prompt/PromptTemplateList.tsx",
-      "line": 109,
+      "line": 132,
       "column": 23,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4574,7 +4596,7 @@
       "kind": "ui",
       "signature": "onClear|ChapterAIAssistantPanel|{() => { void handleClearAssistantSession() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1817,
+      "line": 1907,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4596,7 +4618,7 @@
       "kind": "ui",
       "signature": "onSelect|Sidebar|{(m) => { setActiveModule(m); if (m !== 'editor') setEditorNodeId(null) }}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 288,
+      "line": 290,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4609,6 +4631,17 @@
       "source": "src/components/geography/GeographyPanel.tsx",
       "line": 163,
       "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:26bdbb42da9aece3",
+      "fpId": "FP-UI-9D1CB5705488",
+      "kind": "ui",
+      "signature": "onClick|button|{onToggleLogs}",
+      "source": "src/components/settings/AIConnectionTestSection.tsx",
+      "line": 47,
+      "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -4651,7 +4684,7 @@
       "kind": "ui",
       "signature": "onChange|type=checkbox|{e => runSettingsChange( setRememberApiKey(e.target.checked).then(() => flushApiKeyDraft()), )}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 457,
+      "line": 343,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4772,7 +4805,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => editor.chain().focus().redo().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 1004,
+      "line": 1027,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -4827,19 +4860,8 @@
       "kind": "ui",
       "signature": "onClick|button|{() => removeStep(idx)}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 176,
+      "line": 178,
       "column": 27,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:2b48b2d5b8a874f2",
-      "fpId": "FP-UI-475F5D82D443",
-      "kind": "ui",
-      "signature": "onClick|title=重命名|{() => { void handleRenamePreset(p.id, p.name) }}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 350,
-      "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -4910,6 +4932,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:2c84dd7eb63785e1",
+      "fpId": "FP-UI-1BD830A35CBC",
+      "kind": "ui",
+      "signature": "onDeletePreset|AIConfigPresetSection|{(id, name) => { void handleDeletePreset(id, name) }}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 287,
+      "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:2c978d4ac04ef966",
       "fpId": "FP-UI-4042FEB8AF6F",
       "kind": "ui",
@@ -4948,8 +4981,19 @@
       "kind": "ui",
       "signature": "onReady|FirstRunMigration|{async (receipt?: MigrationReceipt) => { await initializeSeeds() setMigrationState({ status: 'ready', ...(receipt ? { receipt } : {}) }) }}",
       "source": "src/App.tsx",
-      "line": 22,
-      "column": 9,
+      "line": 24,
+      "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:2d42b9e3c46c065f",
+      "fpId": "FP-UI-B22F4EF004FA",
+      "kind": "ui",
+      "signature": "onClick|button|{() => onSelect(field.key)}",
+      "source": "src/components/worldview/WorldviewOriginSidebar.tsx",
+      "line": 27,
+      "column": 35,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -4981,7 +5025,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => insertEntityReference(reference)}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 1030,
+      "line": 1053,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5058,7 +5102,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => runDefaultQuickAction('generate')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 438,
+      "line": 459,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5071,6 +5115,17 @@
       "source": "src/components/editor/EmotionBeatCard.tsx",
       "line": 195,
       "column": 42,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:2f5b08192983b23c",
+      "fpId": "FP-UI-7CE185940DDE",
+      "kind": "ui",
+      "signature": "onChange|input|{event => onPresetNameChange(event.target.value)}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 53,
+      "column": 49,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -5388,7 +5443,7 @@
       "kind": "ui",
       "signature": "onJump|CodexSearchBar|{(catKey) => setActive(catKey === 'originDeity' ? 'divine' : 'power')}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 137,
+      "line": 131,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5421,7 +5476,7 @@
       "kind": "ui",
       "signature": "onClick|WorkspaceButton|{linked.onOpenOutline}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 830,
+      "line": 878,
       "column": 106,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5432,7 +5487,7 @@
       "kind": "ui",
       "signature": "onChange|aria-label=文字背景色|{(event) => setTextBackgroundColor(event.target.value)}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 891,
+      "line": 914,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5487,7 +5542,7 @@
       "kind": "ui",
       "signature": "onClose|PropertiesPanel|{() => setShowProperties(false)}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 322,
+      "line": 328,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5498,7 +5553,7 @@
       "kind": "ui",
       "signature": "onSave|ChapterEditorHeader|{() => { void handleManualSave() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1563,
+      "line": 1653,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5625,6 +5680,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:3abe41fd923fb446",
+      "fpId": "FP-UI-3CD310E5337E",
+      "kind": "ui",
+      "signature": "onSend|ChapterAIAssistantPanel|{(instruction, mode, runOptions) => handleSendAssistant(instruction, mode, runOptions)}",
+      "source": "src/components/editor/ChapterEditor.tsx",
+      "line": 1913,
+      "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:3ad0aec8e4e48192",
       "fpId": "FP-UI-BBCB9A72C3E8",
       "kind": "ui",
@@ -5652,7 +5718,7 @@
       "kind": "ui",
       "signature": "onClick|title=返回首页|{onBack}",
       "source": "src/components/layout/Sidebar.tsx",
-      "line": 67,
+      "line": 68,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5663,7 +5729,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => runDefaultQuickAction('deai')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 467,
+      "line": 488,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5674,7 +5740,7 @@
       "kind": "ui",
       "signature": "onDiscard|ChapterAIAssistantPanel|{handleDiscardAssistant}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1826,
+      "line": 1917,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5729,7 +5795,7 @@
       "kind": "ui",
       "signature": "onToggleContext|ChapterEditorHeader|{() => setShowContext(!showContext)}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1561,
+      "line": 1651,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5762,7 +5828,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleGenerate}|occurrence:2",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 503,
+      "line": 473,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5773,7 +5839,7 @@
       "kind": "ui",
       "signature": "onChange|aria-label=API Key|{(e) => scheduleApiKeySave(e.target.value)}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 437,
+      "line": 323,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5839,7 +5905,7 @@
       "kind": "ui",
       "signature": "onClose|NotePanel|{() => setShowNotePanel(false)}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1655,
+      "line": 1745,
       "column": 77,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5872,7 +5938,7 @@
       "kind": "ui",
       "signature": "onClose|ComparePolishPanel|{() => setCompareSourceHtml(null)}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1703,
+      "line": 1793,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5938,7 +6004,7 @@
       "kind": "ui",
       "signature": "onConfirm|ChapterFactCandidateWorkspace|{linked.onConfirmFactCandidates}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 809,
+      "line": 857,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -5971,7 +6037,7 @@
       "kind": "ui",
       "signature": "onChange|aria-label=行距|{(event) => setTypo({ lineHeight: event.target.value })}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 837,
+      "line": 860,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6015,7 +6081,7 @@
       "kind": "ui",
       "signature": "onChange|textarea|{e => update({ description: e.target.value })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 142,
+      "line": 144,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6037,7 +6103,7 @@
       "kind": "ui",
       "signature": "onClick|button|{onClick}",
       "source": "src/components/settings/prompt/PromptTemplateList.tsx",
-      "line": 129,
+      "line": 152,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6048,7 +6114,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().toggleStrike().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 931,
+      "line": 954,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6081,7 +6147,7 @@
       "kind": "ui",
       "signature": "onReviseByReport|ReviewPanel|{handleReviseByReport}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1647,
+      "line": 1737,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6125,7 +6191,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => updateConfig({ provider: 'custom', baseUrl: 'http://localhost:1234/v1', apiKey: '', model: 'qwen3-14b' })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 482,
+      "line": 368,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6159,17 +6225,6 @@
       "signature": "onClick|button|{handleAISuggest}",
       "source": "src/components/world-group/WorldGroupOverview.tsx",
       "line": 178,
-      "column": 21,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:44bfc2c08b32a098",
-      "fpId": "FP-UI-4318889C51B7",
-      "kind": "ui",
-      "signature": "onClick|title=删除|{() => { void handleDeletePreset(p.id, p.name) }}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 356,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6224,7 +6279,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onApply}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 704,
+      "line": 752,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6237,6 +6292,17 @@
       "source": "src/components/project/InspirationPanel.tsx",
       "line": 406,
       "column": 13,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:45b60b985c97ea80",
+      "fpId": "FP-UI-FF3248B278F6",
+      "kind": "ui",
+      "signature": "onResumePartial|ChapterAIAssistantPanel|{runOptions => handleResumePartialAssistant(runOptions)}",
+      "source": "src/components/editor/ChapterEditor.tsx",
+      "line": 1916,
+      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -6279,7 +6345,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => onSelect(leaf.id)}",
       "source": "src/components/layout/Sidebar.tsx",
-      "line": 222,
+      "line": 224,
       "column": 7,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6356,7 +6422,7 @@
       "kind": "ui",
       "signature": "onContinue|ChapterCandidateReview|{() => { setAssistantOpen(true); setAssistantTab('assistant') }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1711,
+      "line": 1801,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6389,7 +6455,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleSave}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 113,
+      "line": 115,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6400,7 +6466,7 @@
       "kind": "ui",
       "signature": "onOpenChapter|StoryTimelinePanel|{(chapterId) => { const chapter = useChapterStore.getState().chapters.find(item => item.id === chapterId) if (chapter) handleOpenChapter(chapter.outlineNodeId) }}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 249,
+      "line": 251,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6411,7 +6477,7 @@
       "kind": "ui",
       "signature": "onUserOverrideChange|PromptRunPanel|{setUserOverride}|occurrence:1",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 319,
+      "line": 289,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6422,7 +6488,7 @@
       "kind": "ui",
       "signature": "onChange|type=checkbox|{e => updateStep(idx, { userConfirmRequired: e.target.checked })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 221,
+      "line": 252,
       "column": 23,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6609,7 +6675,7 @@
       "kind": "ui",
       "signature": "onChange|textarea|{e => { setEditedOutput(e.target.value) onOutputChange(e.target.value) }}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 508,
+      "line": 532,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6741,7 +6807,7 @@
       "kind": "ui",
       "signature": "onClose|ChapterAIAssistantPanel|{() => setAssistantOpen(false)}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1816,
+      "line": 1906,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6802,6 +6868,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:4dd2fbabf8cb588b",
+      "fpId": "FP-UI-60CC6632D6EB",
+      "kind": "ui",
+      "signature": "onStartSaving|AIConfigPresetSection|{() => setSavingPreset(true)}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 281,
+      "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:4df232e67b6b35ec",
       "fpId": "FP-UI-2E3333ED6984",
       "kind": "ui",
@@ -6820,6 +6897,17 @@
       "source": "src/components/character/CharacterPanel.tsx",
       "line": 552,
       "column": 19,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:4e0ffea69342bd67",
+      "fpId": "FP-UI-5BB4D90199FF",
+      "kind": "ui",
+      "signature": "onClick|button|{onClear}",
+      "source": "src/components/settings/AIConnectionLogPanel.tsx",
+      "line": 14,
+      "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -6862,7 +6950,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onClear}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 395,
+      "line": 416,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6884,7 +6972,7 @@
       "kind": "ui",
       "signature": "onChange|aria-label=字号|{(event) => setTypo({ fontSize: event.target.value })}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 825,
+      "line": 848,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6917,7 +7005,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => updateConfig({ baseUrl: pm.proxy })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 520,
+      "line": 394,
       "column": 25,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -6983,8 +7071,19 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onClose}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 404,
+      "line": 425,
       "column": 33,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:50b76595d2095be4",
+      "fpId": "FP-UI-ACD493955386",
+      "kind": "ui",
+      "signature": "onRevealSelection|ChapterAIAssistantPanel|{() => { const snapshot = assistantSession.activeTask?.selection if (!snapshot) return const revealed = editorRef.current?.revealSelectionSnapshot(snapshot) ?? false if (!revealed) setAssistantSelectionValid(false) }}",
+      "source": "src/components/editor/ChapterEditor.tsx",
+      "line": 1919,
+      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -7016,7 +7115,7 @@
       "kind": "ui",
       "signature": "onClick|button|{onToggleCollapse}",
       "source": "src/components/layout/Sidebar.tsx",
-      "line": 141,
+      "line": 142,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7038,7 +7137,7 @@
       "kind": "ui",
       "signature": "onChange|InlineTextarea|{v => onDivineChange({ ...divineDesign, divineRules: v })}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 487,
+      "line": 457,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7126,7 +7225,7 @@
       "kind": "ui",
       "signature": "onChange|textarea|{e => { setUserInput(e.target.value); onUserInputChange(e.target.value) }}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 486,
+      "line": 510,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7280,7 +7379,7 @@
       "kind": "ui",
       "signature": "onChange|type=range|{(e) => updateConfig({ maxTokens: Number(e.target.value) })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 647,
+      "line": 521,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7291,7 +7390,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => prepareQuickAction('generate')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 448,
+      "line": 469,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7304,6 +7403,17 @@
       "source": "src/components/data/DataManagementPanel.tsx",
       "line": 66,
       "column": 69,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:55ff7fea6fcf496a",
+      "fpId": "FP-UI-6180E698ACBF",
+      "kind": "ui",
+      "signature": "onClick|button|{() => onUpdatePreset(editingPreset.id)}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 41,
+      "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -7335,7 +7445,7 @@
       "kind": "ui",
       "signature": "onSaved|ComparePolishPanel|{result => { setContent(result.html) setPlainText(result.plainText) setSavedContent(result.html) }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1698,
+      "line": 1788,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7346,7 +7456,7 @@
       "kind": "ui",
       "signature": "onToggleCollapse|Sidebar|{() => setSidebarCollapsed(v => !v)}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 292,
+      "line": 294,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7467,7 +7577,7 @@
       "kind": "ui",
       "signature": "onDivineChange|DivineFieldEditor|{async (next) => { setDivineDesign(next) await save({ divineDesign: next }) }}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 211,
+      "line": 181,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7566,7 +7676,7 @@
       "kind": "ui",
       "signature": "onScroll|div|{event => { const viewport = event.currentTarget nearBottomRef.current = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 72 if (nearBottomRef.current) setHasUnreadOutput(false) }}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 549,
+      "line": 581,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7583,12 +7693,23 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:5a1faa559078f098",
+      "fpId": "FP-UI-99DC15FE7BC6",
+      "kind": "ui",
+      "signature": "onChange|ThemeSelector|{handleThemeChange}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 600,
+      "column": 43,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:5a2b445341f085c6",
       "fpId": "FP-UI-56DF48AD5AE9",
       "kind": "ui",
       "signature": "onCancel|StateDiffModal|{() => { setPendingDiffs(null); stateAI.reset() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1837,
+      "line": 1934,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7687,7 +7808,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => setShowKey(value => !value)}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 444,
+      "line": 330,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7698,7 +7819,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => { void handleDelete() }}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 257,
+      "line": 288,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7753,18 +7874,7 @@
       "kind": "ui",
       "signature": "onChange|TextFieldEditor|{v => { setWorldOrigin(v); save({ worldOrigin: v }) }}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 177,
-      "column": 15,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:5d25f77b7c28f6ff",
-      "fpId": "FP-UI-5315C130E6B2",
-      "kind": "ui",
-      "signature": "onClick|button|{clearLogs}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 762,
+      "line": 147,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7819,7 +7929,7 @@
       "kind": "ui",
       "signature": "onSelect|NavLeafButton|{onSelect}|occurrence:2",
       "source": "src/components/layout/Sidebar.tsx",
-      "line": 176,
+      "line": 177,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7885,7 +7995,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => applyTextColor(color.value)}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 871,
+      "line": 894,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -7940,7 +8050,7 @@
       "kind": "ui",
       "signature": "onOpenInventory|StatePanel|{() => setActiveModule('inventory')}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 241,
+      "line": 243,
       "column": 46,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8050,7 +8160,7 @@
       "kind": "ui",
       "signature": "onChange|input|{e => setHint(e.target.value)}|occurrence:1",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 306,
+      "line": 276,
       "column": 24,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8193,7 +8303,7 @@
       "kind": "ui",
       "signature": "onApply|ChapterAIAssistantPanel|{() => { void handleApplyAssistant() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1824,
+      "line": 1914,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8204,7 +8314,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onUseWholeChapterScope}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 486,
+      "line": 518,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8215,7 +8325,7 @@
       "kind": "ui",
       "signature": "onChange|aria-label=服务返回的模型列表|{(e) => { if (e.target.value) setConfig({ model: e.target.value }) }}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 556,
+      "line": 430,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8347,7 +8457,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => { void getRuntime().clipboard.writeText('chapter-ai-output', guardedOutput) }}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 635,
+      "line": 678,
       "column": 43,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8402,7 +8512,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleGenerate}|occurrence:1",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 310,
+      "line": 280,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8415,6 +8525,17 @@
       "source": "src/pages/HomePage.tsx",
       "line": 359,
       "column": 23,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:687c2b071195b19b",
+      "fpId": "FP-UI-145260DC9B18",
+      "kind": "ui",
+      "signature": "onPresetNameChange|AIConfigPresetSection|{setPresetName}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 280,
+      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -8441,17 +8562,6 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:68e30b8146cbc5a2",
-      "fpId": "FP-UI-101BCB2AB1F7",
-      "kind": "ui",
-      "signature": "onClick|button|{() => setActive(f.key)}",
-      "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 151,
-      "column": 17,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:68e57ba483898926",
       "fpId": "FP-UI-4675310AD9BD",
       "kind": "ui",
@@ -8468,7 +8578,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => selectChapter(ch.id!)}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1523,
+      "line": 1613,
       "column": 33,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8507,6 +8617,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:6a219ceb197307e7",
+      "fpId": "FP-UI-AA6AEFDCAAA2",
+      "kind": "ui",
+      "signature": "onQuickAction|ChapterAIAssistantPanel|{(action, instruction, runOptions) => { if (action === 'generate') return handleGenerate(instruction, runOptions) if (action === 'continue') return handleContinue(instruction, runOptions) return handleDeAI(instruction, runOptions) }}",
+      "source": "src/components/editor/ChapterEditor.tsx",
+      "line": 1908,
+      "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:6a2957cb5c3317bc",
       "fpId": "FP-UI-2F6711AE503A",
       "kind": "ui",
@@ -8534,7 +8655,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().setHorizontalRule().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 981,
+      "line": 1004,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8558,6 +8679,17 @@
       "source": "src/components/editor/ChapterMemoryPanel.tsx",
       "line": 88,
       "column": 17,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:6a6420a66f54b674",
+      "fpId": "FP-UI-215C0EA779CC",
+      "kind": "ui",
+      "signature": "onSavePreset|AIConfigPresetSection|{handleSavePreset}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 283,
+      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -8743,7 +8875,7 @@
       "kind": "ui",
       "signature": "onClick|WorkspaceButton|{() => onTabChange('assistant')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 833,
+      "line": 881,
       "column": 157,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8765,7 +8897,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => onTabChange('assistant')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 415,
+      "line": 436,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8822,6 +8954,17 @@
       "source": "src/components/rules/CreativeRulesPanel.tsx",
       "line": 227,
       "column": 15,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:6eb8cd3448131350",
+      "fpId": "FP-UI-F7C564EA94C0",
+      "kind": "ui",
+      "signature": "onClick|button|{onSavePreset}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 60,
+      "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -8919,7 +9062,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => onToggle(node.branchId)}",
       "source": "src/components/layout/Sidebar.tsx",
-      "line": 186,
+      "line": 187,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -8941,7 +9084,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onDiscard}|occurrence:2",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 707,
+      "line": 755,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9062,7 +9205,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => { setInteractionMode('edit'); instructionRef.current?.focus() }}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 708,
+      "line": 756,
       "column": 58,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9084,7 +9227,7 @@
       "kind": "ui",
       "signature": "onReject|ChapterFactCandidateWorkspace|{linked.onRejectFactCandidates}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 810,
+      "line": 858,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9134,6 +9277,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:73799bfb1df314d2",
+      "fpId": "FP-UI-62CB06EC8077",
+      "kind": "ui",
+      "signature": "onClick|button|{() => onApplyPreset(preset.id)}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 82,
+      "column": 23,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:737d3250d618a9b5",
       "fpId": "FP-UI-C4CCB81DB7D1",
       "kind": "ui",
@@ -9150,8 +9304,8 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => setView(key)}",
       "source": "src/components/editor/ChapterCandidateReview.tsx",
-      "line": 85,
-      "column": 47,
+      "line": 114,
+      "column": 75,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -9172,7 +9326,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => { void handleClose() }}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 120,
+      "line": 122,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9183,7 +9337,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => { void handleRefreshModels() }}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 543,
+      "line": 417,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9271,7 +9425,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().toggleBlockquote().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 973,
+      "line": 996,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9348,7 +9502,7 @@
       "kind": "ui",
       "signature": "onKeyDown|aria-label=调整 AI 面板宽度|{event => { if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return event.preventDefault() const delta = event.key === 'ArrowLeft' ? 20 : -20 const maxWidth = Math.max(MIN_ASSISTANT_WIDTH, window.innerWidth * 0.7) setPanelWidth(width => Math.min(maxWidth, Math.max(MIN_ASSISTANT_WIDTH, width + delta))) }}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 373,
+      "line": 394,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9381,7 +9535,7 @@
       "kind": "ui",
       "signature": "onRegenerate|ChapterCandidateReview|{() => { void handleRetryAssistant() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1712,
+      "line": 1802,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9403,7 +9557,7 @@
       "kind": "ui",
       "signature": "onApply|ChapterCandidateReview|{() => { void handleApplyAssistant() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1710,
+      "line": 1800,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9585,6 +9739,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:7b7b03ad52f3fa51",
+      "fpId": "FP-UI-7AE06F94B894",
+      "kind": "ui",
+      "signature": "onClick|type=button|{onRevealSelection}",
+      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
+      "line": 509,
+      "column": 19,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:7bdedb5ab48a1240",
       "fpId": "FP-UI-0A004E20F47E",
       "kind": "ui",
@@ -9689,7 +9854,7 @@
       "kind": "ui",
       "signature": "onSkip|StepCard|{() => handleSkip(step.stepId)}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 385,
+      "line": 409,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9711,7 +9876,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().toggleItalic().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 923,
+      "line": 946,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9816,17 +9981,6 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:7e3ec51db7eae929",
-      "fpId": "FP-UI-723D0250B727",
-      "kind": "ui",
-      "signature": "onClick|button|{handleTest}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 708,
-      "column": 17,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:7e6b1b7cccdff4f7",
       "fpId": "FP-UI-0D0179524121",
       "kind": "ui",
@@ -9854,7 +10008,7 @@
       "kind": "ui",
       "signature": "onOpenLibrary|ChapterFactCandidateWorkspace|{linked.onOpenFactLibrary}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 811,
+      "line": 859,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -9876,7 +10030,7 @@
       "kind": "ui",
       "signature": "onApplyOutlineCandidate|ChapterMemoryPanel|{linked.onApplyOutlineCandidate}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 796,
+      "line": 844,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10096,7 +10250,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{stream.stop}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 600,
+      "line": 639,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10107,7 +10261,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{linked.onOpenOutline}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 478,
+      "line": 499,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10140,7 +10294,7 @@
       "kind": "ui",
       "signature": "onMouseDownCapture|div|{rememberSelection}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 807,
+      "line": 830,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10153,17 +10307,6 @@
       "source": "src/components/character/CharacterExtraPanel.tsx",
       "line": 144,
       "column": 29,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:855425b4a4ae9fb9",
-      "fpId": "FP-UI-3A690A759868",
-      "kind": "ui",
-      "signature": "onClick|type=button|{() => onRetry(runOptions)}|occurrence:1",
-      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 610,
-      "column": 41,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -10228,7 +10371,7 @@
       "kind": "ui",
       "signature": "onClick|div|{() => editor.commands.focus()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 1019,
+      "line": 1042,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10294,7 +10437,7 @@
       "kind": "ui",
       "signature": "onChange|type=text|{(e) => updateConfig({ model: e.target.value })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 586,
+      "line": 460,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10366,6 +10509,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:88bb837d9b806ffe",
+      "fpId": "FP-UI-739340B00F75",
+      "kind": "ui",
+      "signature": "onChange|textarea|{e => updateStep(idx, { inputValues: { ...(s.inputValues || {}), [binding.variable]: e.target.value }, })}",
+      "source": "src/components/settings/prompt/WorkflowEditor.tsx",
+      "line": 235,
+      "column": 29,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:88fda6ec854a5dd7",
       "fpId": "FP-UI-46E6432929A9",
       "kind": "ui",
@@ -10432,17 +10586,6 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:8986e68219ac29cc",
-      "fpId": "FP-UI-66D8FB4741EE",
-      "kind": "ui",
-      "signature": "onClick|type=button|{() => onRetry(runOptions)}|occurrence:2",
-      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 639,
-      "column": 41,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:8993ac3a3eb0bbce",
       "fpId": "FP-UI-0D5E7188430D",
       "kind": "ui",
@@ -10481,7 +10624,7 @@
       "kind": "ui",
       "signature": "onClick|WorkspaceButton|{linked.onOpenReview}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 823,
+      "line": 871,
       "column": 131,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10492,7 +10635,7 @@
       "kind": "ui",
       "signature": "onAccept|AIStreamOutput|{(text: string) => { onChange(text); ai.reset() }}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 324,
+      "line": 294,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10580,7 +10723,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleSave}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 279,
+      "line": 306,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10591,7 +10734,7 @@
       "kind": "ui",
       "signature": "onClick|button|{addVariable}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 370,
+      "line": 397,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10679,8 +10822,8 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => navigate(-1)}",
       "source": "src/components/editor/ChapterCandidateReview.tsx",
-      "line": 94,
-      "column": 35,
+      "line": 131,
+      "column": 37,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -10729,6 +10872,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:8e60b99a57ad0ae1",
+      "fpId": "FP-UI-A70DDCD6167D",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => { void runExclusiveSubmission(() => onSend(followup, 'edit')) }}",
+      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
+      "line": 614,
+      "column": 57,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:8e6ac5009c3c628d",
       "fpId": "FP-UI-BEFBD1ED055B",
       "kind": "ui",
@@ -10745,7 +10899,7 @@
       "kind": "ui",
       "signature": "onParamChange|PromptRunPanel|{setParameterValues}|occurrence:2",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 510,
+      "line": 480,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10811,7 +10965,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().toggleBold().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 915,
+      "line": 938,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -10833,8 +10987,19 @@
       "kind": "ui",
       "signature": "onChange|AIFieldModeTabs|{setMode}|occurrence:1",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 304,
+      "line": 274,
       "column": 39,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:91052d1b216b738f",
+      "fpId": "FP-UI-2CD213910285",
+      "kind": "ui",
+      "signature": "onTest|AIConnectionTestSection|{() => { void handleTest() }}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 587,
+      "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -10866,19 +11031,8 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => setInteractionMode('auto')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 724,
+      "line": 772,
       "column": 39,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:918aa1883a8a9dd5",
-      "fpId": "FP-UI-A1EFB9E4BA00",
-      "kind": "ui",
-      "signature": "onChange|select|{event => setTaskRoute(taskKind, event.target.value || null)}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 387,
-      "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -10965,7 +11119,7 @@
       "kind": "ui",
       "signature": "onUseWholeChapterScope|ChapterAIAssistantPanel|{() => { void handleUseWholeChapterScope() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1827,
+      "line": 1918,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11053,7 +11207,7 @@
       "kind": "ui",
       "signature": "onAISelectionValidityChange|RichEditor|{setAssistantSelectionValid}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1736,
+      "line": 1826,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11108,7 +11262,7 @@
       "kind": "ui",
       "signature": "onConfirmActualProgress|ChapterMemoryPanel|{linked.onConfirmProgress}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 795,
+      "line": 843,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11185,7 +11339,7 @@
       "kind": "ui",
       "signature": "onChange|type=checkbox|{e => updateStep(idx, { inputMapping: e.target.checked ? { previousOutput: 'previousOutput' } : undefined, })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 231,
+      "line": 262,
       "column": 25,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11240,7 +11394,7 @@
       "kind": "ui",
       "signature": "onMouseDown|type=button|{event => event.preventDefault()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 1029,
+      "line": 1052,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11251,7 +11405,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => setTextBackgroundColor(color.value)}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 900,
+      "line": 923,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11328,7 +11482,7 @@
       "kind": "ui",
       "signature": "onToggleStateCard|ChapterContextPreview|{cardId => { const isExtra = extraStateIds.includes(cardId) const isMatched = selectiveState.matchedIds.includes(cardId) if (isExtra) { setExtraStateIds(extraStateIds.filter(id => id !== cardId)) } else if (!isMatched) { setExtraStateIds([...extraStateIds, cardId]) } }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1577,
+      "line": 1667,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11383,7 +11537,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => onSave(outText, step.saveTarget!)}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 543,
+      "line": 567,
       "column": 25,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11471,7 +11625,7 @@
       "kind": "ui",
       "signature": "onGenerateMemory|ChapterMemoryPanel|{linked.onGenerateMemory}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 794,
+      "line": 842,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11521,6 +11675,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:9b5b6b280a4d1b16",
+      "fpId": "FP-UI-FCE32E7BE1D0",
+      "kind": "ui",
+      "signature": "onApplyPreset|AIConfigPresetSection|{id => runSettingsChange(flushApiKeyDraft().then(() => applyPreset(id)))}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 284,
+      "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:9b7c6ac061a2ac02",
       "fpId": "FP-UI-0AFE989D8258",
       "kind": "ui",
@@ -11548,7 +11713,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => setInteractionMode('edit')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 725,
+      "line": 773,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11570,7 +11735,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{clearTextColor}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 879,
+      "line": 902,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11581,7 +11746,7 @@
       "kind": "ui",
       "signature": "onRetry|StepCard|{() => handleRetryStep(idx)}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 386,
+      "line": 410,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11603,7 +11768,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => handleContextWindowChange('')}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 680,
+      "line": 554,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11625,7 +11790,7 @@
       "kind": "ui",
       "signature": "onChange|select|{(e) => updateConfig({ model: e.target.value })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 567,
+      "line": 441,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11697,17 +11862,6 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:9e9790aa545fe0a2",
-      "fpId": "FP-UI-04DFA688B073",
-      "kind": "ui",
-      "signature": "onClick|type=button|{() => onRetry(runOptions)}|occurrence:3",
-      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 666,
-      "column": 39,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:9ef74f9151219183",
       "fpId": "FP-UI-11268EDDA4FF",
       "kind": "ui",
@@ -11746,8 +11900,19 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().toggleOrderedList().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 965,
+      "line": 988,
       "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:9fbb620532b72596",
+      "fpId": "FP-UI-C236CEB6818D",
+      "kind": "ui",
+      "signature": "onChange|select|{(e) => { const provider = e.target.value as AIProvider runSettingsChange(flushApiKeyDraft().then(() => switchProvider(provider))) }}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 297,
+      "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -11779,19 +11944,8 @@
       "kind": "ui",
       "signature": "onParamChange|PromptRunPanel|{setParameterValues}|occurrence:1",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 317,
+      "line": 287,
       "column": 9,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:a04e3b0ab1065dbd",
-      "fpId": "FP-UI-AABC50CB0B17",
-      "kind": "ui",
-      "signature": "onKeyDown|input|{e => { if (e.key === 'Enter') handleSavePreset(); if (e.key === 'Escape') setSavingPreset(false) }}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 304,
-      "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -11812,7 +11966,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onContinue}",
       "source": "src/components/editor/ChapterCandidateReview.tsx",
-      "line": 142,
+      "line": 182,
       "column": 33,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -11823,7 +11977,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => moveStep(idx, -1)}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 174,
+      "line": 176,
       "column": 27,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12054,7 +12208,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onDiscard}|occurrence:1",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 642,
+      "line": 690,
       "column": 41,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12164,7 +12318,7 @@
       "kind": "ui",
       "signature": "onClick|WorkspaceButton|{linked.onExtractState}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 820,
+      "line": 868,
       "column": 219,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12252,7 +12406,7 @@
       "kind": "ui",
       "signature": "onStop|AIStreamOutput|{ai.stop}|occurrence:2",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 523,
+      "line": 493,
       "column": 38,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12274,7 +12428,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleCreateFromOutline}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1511,
+      "line": 1601,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12307,7 +12461,7 @@
       "kind": "ui",
       "signature": "onClose|ReviewPanel|{() => setShowReviewPanel(false)}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1646,
+      "line": 1736,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12384,7 +12538,7 @@
       "kind": "ui",
       "signature": "onChange|TextFieldEditor|{v => { setPowerHierarchy(v); save({ powerHierarchy: v }) }}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 189,
+      "line": 159,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12461,7 +12615,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => updateConfig({ provider: 'ollama', baseUrl: 'http://localhost:11434/v1', apiKey: '', model: 'qwen2.5:7b' })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 488,
+      "line": 374,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12494,7 +12648,7 @@
       "kind": "ui",
       "signature": "onChange|type=text|{(e) => handleContextWindowChange(e.target.value)}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 673,
+      "line": 547,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12505,7 +12659,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => setInteractionMode('discuss')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 726,
+      "line": 774,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12538,7 +12692,7 @@
       "kind": "ui",
       "signature": "onChange|input|{e => update({ name: e.target.value })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 134,
+      "line": 136,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12593,7 +12747,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onDiscard}",
       "source": "src/components/editor/ChapterCandidateReview.tsx",
-      "line": 144,
+      "line": 184,
       "column": 33,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12615,7 +12769,7 @@
       "kind": "ui",
       "signature": "onChange|input|{e => updateStep(idx, { label: e.target.value })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 170,
+      "line": 172,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12637,7 +12791,7 @@
       "kind": "ui",
       "signature": "onClick|WorkspaceButton|{linked.onAnalyzeImpact}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 822,
+      "line": 870,
       "column": 180,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12802,7 +12956,7 @@
       "kind": "ui",
       "signature": "onChange|textarea|{e => update({ systemPrompt: e.target.value })}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 322,
+      "line": 349,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12890,7 +13044,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => void handleExport()}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 301,
+      "line": 328,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -12934,7 +13088,7 @@
       "kind": "ui",
       "signature": "onClick|button|{onClose}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 353,
+      "line": 377,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13132,7 +13286,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => runDefaultQuickAction('continue')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 459,
+      "line": 480,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13143,7 +13297,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{cancelQuickAction}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 720,
+      "line": 768,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13154,7 +13308,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => { setAssistantOpen(true); setAssistantTab('links') }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1606,
+      "line": 1696,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13292,6 +13446,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:b7673ba117446c9a",
+      "fpId": "FP-UI-3A3A36E9D6AC",
+      "kind": "ui",
+      "signature": "onClick|title=删除|{() => onDeletePreset(preset.id, preset.name)}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 90,
+      "column": 23,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:b779ed021d46c5a3",
       "fpId": "FP-UI-A80DB2A51560",
       "kind": "ui",
@@ -13385,7 +13550,7 @@
       "kind": "ui",
       "signature": "onChange|input|{e => setHint(e.target.value)}|occurrence:2",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 499,
+      "line": 469,
       "column": 24,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13473,7 +13638,7 @@
       "kind": "ui",
       "signature": "onChange|type=text|{(e) => setConfig({ model: e.target.value })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 595,
+      "line": 469,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13512,17 +13677,6 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:bb8d6704ee62c812",
-      "fpId": "FP-UI-D7DC70AF46E2",
-      "kind": "ui",
-      "signature": "onRetry|ChapterAIAssistantPanel|{runOptions => { void handleRetryAssistant(runOptions) }}",
-      "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1825,
-      "column": 11,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:bc59ee13c80e4453",
       "fpId": "FP-UI-0F20C3912231",
       "kind": "ui",
@@ -13539,7 +13693,7 @@
       "kind": "ui",
       "signature": "onClick|WorkspaceButton|{linked.onExtractFacts}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 821,
+      "line": 869,
       "column": 187,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13563,17 +13717,6 @@
       "source": "src/components/items/InventoryPanel.tsx",
       "line": 163,
       "column": 15,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:be4b0f17dc11fdad",
-      "fpId": "FP-UI-3C3ABFC70933",
-      "kind": "ui",
-      "signature": "onClick|button|{handleSavePreset}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 308,
-      "column": 25,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -13605,7 +13748,7 @@
       "kind": "ui",
       "signature": "onSelectionChange|RichEditor|{setFloatingSelection}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1729,
+      "line": 1819,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13627,7 +13770,7 @@
       "kind": "ui",
       "signature": "onOpenFactLibrary|ChaptersListPanel|{() => setActiveModule('fact-library')}|occurrence:2",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 231,
+      "line": 233,
       "column": 82,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13671,7 +13814,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleContinue}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 346,
+      "line": 370,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13682,7 +13825,7 @@
       "kind": "ui",
       "signature": "onStatusChange|ChapterEditorHeader|{status => { if (currentChapter.id) void updateChapter(currentChapter.id, { status }) }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1558,
+      "line": 1648,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13726,7 +13869,7 @@
       "kind": "ui",
       "signature": "onUseWholeChapterScope|FloatingToolbar|{() => { editorRef.current?.clearSelection() setFloatingSelection(null) setAssistantOpen(true) setAssistantTab('assistant') }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1757,
+      "line": 1847,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13759,7 +13902,7 @@
       "kind": "ui",
       "signature": "onUserOverrideChange|PromptRunPanel|{setUserOverride}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 737,
+      "line": 785,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13792,7 +13935,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => setResultView('compare')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 662,
+      "line": 710,
       "column": 41,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -13836,8 +13979,8 @@
       "kind": "ui",
       "signature": "onClick|type=button|{onApply}",
       "source": "src/components/editor/ChapterCandidateReview.tsx",
-      "line": 146,
-      "column": 31,
+      "line": 188,
+      "column": 33,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -13904,17 +14047,6 @@
       "source": "src/components/worldview/WorldRulesPanel.tsx",
       "line": 398,
       "column": 15,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:c5687365aaabc70d",
-      "fpId": "FP-UI-0C64A0574004",
-      "kind": "ui",
-      "signature": "onClick|button|{() => handleThemeChange(theme.value)}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 791,
-      "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -13990,7 +14122,7 @@
       "kind": "ui",
       "signature": "onChange|select|{e => updateStep(idx, { promptModuleKey: e.target.value as PromptWorkflowStep['promptModuleKey'] })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 185,
+      "line": 187,
       "column": 23,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14013,17 +14145,6 @@
       "signature": "onClick|button|{onClose}|occurrence:1",
       "source": "src/components/codex/CodexPanel.tsx",
       "line": 538,
-      "column": 19,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:c770fa07074479b6",
-      "fpId": "FP-UI-664BE0566F4E",
-      "kind": "ui",
-      "signature": "onChange|input|{e => setPresetName(e.target.value)}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 303,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14056,7 +14177,7 @@
       "kind": "ui",
       "signature": "onAction|FloatingToolbar|{(action, snapshot) => { void runSelectionAction(action, snapshot) }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1755,
+      "line": 1845,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14089,7 +14210,7 @@
       "kind": "ui",
       "signature": "onSystemOverrideChange|PromptRunPanel|{setSystemOverride}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 735,
+      "line": 783,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14150,23 +14271,12 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:c9333a6f35c838fc",
-      "fpId": "FP-UI-64432F24F4F3",
-      "kind": "ui",
-      "signature": "onClick|button|{() => setSavingPreset(true)}|occurrence:1",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 292,
-      "column": 19,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:c94a7e714f500a22",
       "fpId": "FP-UI-DC38F469B6AE",
       "kind": "ui",
       "signature": "onOpenCompare|ChapterEditorHeader|{() => { void handleOpenComparePolish() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1562,
+      "line": 1652,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14221,7 +14331,7 @@
       "kind": "ui",
       "signature": "onConfirm|StateDiffModal|{handleAcceptDiffs}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1836,
+      "line": 1933,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14234,6 +14344,17 @@
       "source": "src/components/history/HistoryKeywordCard.tsx",
       "line": 151,
       "column": 15,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:c9ca0b8af4c23595",
+      "fpId": "FP-UI-258F1A88B591",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => { void runExclusiveSubmission(() => onRetry(runOptions)) }}|occurrence:1",
+      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
+      "line": 649,
+      "column": 43,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -14298,7 +14419,7 @@
       "kind": "ui",
       "signature": "onChange|InlineTextarea|{v => onDivineChange({ ...divineDesign, divineRank: v })}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 467,
+      "line": 437,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14333,17 +14454,6 @@
       "source": "src/components/system/import/ImportConfirmModal.tsx",
       "line": 257,
       "column": 90,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:cb8d65f549c5728b",
-      "fpId": "FP-UI-CCBF5FE8CC0B",
-      "kind": "ui",
-      "signature": "onSend|ChapterAIAssistantPanel|{(instruction, mode, runOptions) => { void handleSendAssistant(instruction, mode, runOptions) }}",
-      "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1823,
-      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -14447,23 +14557,23 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:cd6643d773f6fca5",
-      "fpId": "FP-UI-44AA3963CC2C",
-      "kind": "ui",
-      "signature": "onClick|title=用当前配置覆盖此预设|{() => runSettingsChange( flushApiKeyDraft().then(() => updatePresetFromCurrent(p.id)), )}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 342,
-      "column": 23,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:cd73b36bedefeefa",
       "fpId": "FP-UI-EA31BEBC399E",
       "kind": "ui",
       "signature": "onClick|button|{handleAbort}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 338,
+      "line": 362,
+      "column": 15,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:cd87e21a8f9a4dd2",
+      "fpId": "FP-UI-77F389FCDA1E",
+      "kind": "ui",
+      "signature": "onKeyDown|input|{event => { if (event.key === 'Enter') onSavePreset() if (event.key === 'Escape') onCancelSaving() }}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 54,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14529,7 +14639,7 @@
       "kind": "ui",
       "signature": "onChange|AIFieldModeTabs|{setMode}|occurrence:2",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 497,
+      "line": 467,
       "column": 39,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14623,12 +14733,23 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:d07efadba8163881",
+      "fpId": "FP-UI-748B2E79E99B",
+      "kind": "ui",
+      "signature": "onClear|AIConnectionLogPanel|{clearLogs}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 597,
+      "column": 54,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:d0fb6af62fae6957",
       "fpId": "FP-UI-04A233E51EB7",
       "kind": "ui",
       "signature": "onChange|textarea|{e => updateStep(idx, { userHint: e.target.value })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 210,
+      "line": 212,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14683,7 +14804,7 @@
       "kind": "ui",
       "signature": "onSelect|NavLeafButton|{onSelect}|occurrence:1",
       "source": "src/components/layout/Sidebar.tsx",
-      "line": 103,
+      "line": 104,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14694,7 +14815,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().toggleHeading({ level: 3 }).run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 948,
+      "line": 971,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14755,17 +14876,6 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:d327615f45163e70",
-      "fpId": "FP-UI-1C13967F3C89",
-      "kind": "ui",
-      "signature": "onClick|button|{() => runSettingsChange( flushApiKeyDraft().then(() => updatePresetFromCurrent(editingPreset.id)), )}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 283,
-      "column": 19,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:d32fc9b5f3dca04e",
       "fpId": "FP-UI-6D4392AF8025",
       "kind": "ui",
@@ -14815,7 +14925,7 @@
       "kind": "ui",
       "signature": "onOpenChange|PromptRunPanel|{setPromptPanelOpen}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 739,
+      "line": 787,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14826,7 +14936,7 @@
       "kind": "ui",
       "signature": "onStreamingChange|TextFieldEditor|{streaming => handleStreamingChange('origin', streaming)}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 180,
+      "line": 150,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14848,7 +14958,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().toggleHeading({ level: 2 }).run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 940,
+      "line": 963,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14892,8 +15002,8 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => navigate(1)}",
       "source": "src/components/editor/ChapterCandidateReview.tsx",
-      "line": 95,
-      "column": 35,
+      "line": 132,
+      "column": 37,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -14980,7 +15090,7 @@
       "kind": "ui",
       "signature": "onChange|type=text|{e => update({ name: e.target.value })}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 216,
+      "line": 243,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -14991,8 +15101,19 @@
       "kind": "ui",
       "signature": "onChange|textarea|{e => update({ userPromptTemplate: e.target.value })}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 341,
+      "line": 368,
       "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:d8459b7d872bf0a7",
+      "fpId": "FP-UI-AE8618A4133F",
+      "kind": "ui",
+      "signature": "onToggleLogs|AIConnectionTestSection|{() => setShowLogs(!showLogs)}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 588,
+      "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -15013,7 +15134,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => toggle(groupKey)}",
       "source": "src/components/settings/prompt/PromptTemplateList.tsx",
-      "line": 88,
+      "line": 111,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15046,7 +15167,7 @@
       "kind": "ui",
       "signature": "onParamChange|PromptRunPanel|{setParameterValues}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 733,
+      "line": 781,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15079,7 +15200,7 @@
       "kind": "ui",
       "signature": "onChange|aria-label=字体|{(event) => setTypo({ fontFamily: event.target.value })}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 812,
+      "line": 835,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15118,6 +15239,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:d9e38867e0eee017",
+      "fpId": "FP-UI-B0481416A97D",
+      "kind": "ui",
+      "signature": "onSelect|WorldviewOriginSidebar|{setActive}",
+      "source": "src/components/worldview/WorldviewOriginPanel.tsx",
+      "line": 138,
+      "column": 79,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:d9e86b6e421c231c",
       "fpId": "FP-UI-F45487672F9B",
       "kind": "ui",
@@ -15145,7 +15277,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleSetActive}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 288,
+      "line": 315,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15167,7 +15299,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => startInlineCommand().toggleBulletList().run()}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 957,
+      "line": 980,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15178,7 +15310,7 @@
       "kind": "ui",
       "signature": "onRetry|AIStreamOutput|{handleGenerate}|occurrence:2",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 525,
+      "line": 495,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15266,7 +15398,7 @@
       "kind": "ui",
       "signature": "onClick|WorkspaceButton|{linked.onOpenNotes}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 832,
+      "line": 880,
       "column": 107,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15393,6 +15525,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:dcb74df98aac5bff",
+      "fpId": "FP-UI-CD457FB4A152",
+      "kind": "ui",
+      "signature": "onClick|title=用当前配置覆盖此预设|{() => onUpdatePreset(preset.id)}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 84,
+      "column": 25,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:dd2c1299d3ab4ae8",
       "fpId": "FP-UI-E9CBD861D7DD",
       "kind": "ui",
@@ -15422,6 +15565,17 @@
       "source": "src/components/rules/CreativeRulesPanel.tsx",
       "line": 268,
       "column": 15,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:dd58a898fca8c33a",
+      "fpId": "FP-UI-BCBF52CCE9E7",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => { void runExclusiveSubmission(() => onResumePartial(runOptions)) }}",
+      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
+      "line": 683,
+      "column": 43,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -15464,7 +15618,7 @@
       "kind": "ui",
       "signature": "onBack|Sidebar|{() => navigate('/')}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 289,
+      "line": 291,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15477,6 +15631,17 @@
       "source": "src/components/state/StatePanel.tsx",
       "line": 135,
       "column": 17,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:ddeadeb5e00400cc",
+      "fpId": "FP-UI-BBF30B4E28B5",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => { void runExclusiveSubmission(() => onRetry(runOptions)) }}|occurrence:2",
+      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
+      "line": 687,
+      "column": 41,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -15499,6 +15664,17 @@
       "source": "src/components/outline/OutlineChapterTree.tsx",
       "line": 276,
       "column": 17,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:deb57eb47b45a8cf",
+      "fpId": "FP-UI-C720AD6F459A",
+      "kind": "ui",
+      "signature": "onRetry|ChapterAIAssistantPanel|{runOptions => handleRetryAssistant(runOptions)}",
+      "source": "src/components/editor/ChapterEditor.tsx",
+      "line": 1915,
+      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -15530,7 +15706,7 @@
       "kind": "ui",
       "signature": "onDiscard|ChapterCandidateReview|{handleDiscardAssistant}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1713,
+      "line": 1803,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15552,8 +15728,19 @@
       "kind": "ui",
       "signature": "onClick|title=设置|{() => onSelect('settings')}",
       "source": "src/components/layout/Sidebar.tsx",
-      "line": 125,
+      "line": 126,
       "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:df61f357eceaa314",
+      "fpId": "FP-UI-9A19E2AA8030",
+      "kind": "ui",
+      "signature": "onClick|button|{onCancelSaving}",
+      "source": "src/components/settings/AIConfigPresetSection.tsx",
+      "line": 61,
+      "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -15580,12 +15767,23 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:dfc31643599e0a8b",
+      "fpId": "FP-UI-75A54EBBE7D1",
+      "kind": "ui",
+      "signature": "onClick|button|{() => onChange(theme.value)}",
+      "source": "src/components/settings/ThemeSelector.tsx",
+      "line": 16,
+      "column": 39,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:dfd0100370e26437",
       "fpId": "FP-UI-5317DCA00CA3",
       "kind": "ui",
       "signature": "onChange|type=text|{e => update({ description: e.target.value })}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 230,
+      "line": 257,
       "column": 19,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15662,7 +15860,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => moveStep(idx, 1)}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 175,
+      "line": 177,
       "column": 27,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15706,7 +15904,7 @@
       "kind": "ui",
       "signature": "onStreamingChange|TextFieldEditor|{streaming => handleStreamingChange('power', streaming)}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 192,
+      "line": 162,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15717,7 +15915,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleClone}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 295,
+      "line": 322,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -15882,7 +16080,7 @@
       "kind": "ui",
       "signature": "onToggleStateList|ChapterContextPreview|{() => setShowStatePreview(!showStatePreview)}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1576,
+      "line": 1666,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16025,7 +16223,7 @@
       "kind": "ui",
       "signature": "onChange|input|{e => updateStep(idx, { inputMapping: { previousOutput: e.target.value } })}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 243,
+      "line": 274,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16047,7 +16245,7 @@
       "kind": "ui",
       "signature": "onClick|button|{onSkip}|occurrence:2",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 576,
+      "line": 600,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16069,7 +16267,7 @@
       "kind": "ui",
       "signature": "onChange|PromptParametersEditor|{(params: PromptParameter[]) => update({ parameters: params })}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 353,
+      "line": 380,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16102,7 +16300,7 @@
       "kind": "ui",
       "signature": "onKeyDown|aria-label=给 AI 的本章指令|{event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault() submit() } }}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 747,
+      "line": 795,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16135,7 +16333,7 @@
       "kind": "ui",
       "signature": "onClick|button|{() => removeVariable(v)}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 388,
+      "line": 415,
       "column": 25,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16168,7 +16366,7 @@
       "kind": "ui",
       "signature": "onStop|AIStreamOutput|{ai.stop}|occurrence:1",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 323,
+      "line": 293,
       "column": 38,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16333,7 +16531,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => { setAssistantOpen(true); setAssistantTab('assistant') }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1599,
+      "line": 1689,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16377,7 +16575,7 @@
       "kind": "ui",
       "signature": "onAccept|AIStreamOutput|{handleAccept}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 524,
+      "line": 494,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16443,7 +16641,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleStart}",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 330,
+      "line": 354,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16487,7 +16685,7 @@
       "kind": "ui",
       "signature": "onChange|RichEditor|{(html, plain) => { setContent(html) setPlainText(plain) setManualSaveError('') }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1720,
+      "line": 1810,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16542,8 +16740,19 @@
       "kind": "ui",
       "signature": "onChange|textarea|{event => linked.onNotesChange(event.target.value)}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 841,
+      "line": 889,
       "column": 15,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:ef5958e714828642",
+      "fpId": "FP-UI-79D301085FFA",
+      "kind": "ui",
+      "signature": "onRenamePreset|AIConfigPresetSection|{(id, name) => { void handleRenamePreset(id, name) }}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 286,
+      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -16586,7 +16795,7 @@
       "kind": "ui",
       "signature": "onClick|button|{handleDelete}",
       "source": "src/components/settings/prompt/PromptTemplateEditor.tsx",
-      "line": 308,
+      "line": 335,
       "column": 15,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16658,6 +16867,17 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:f1573178165f9423",
+      "fpId": "FP-UI-EAE2F170EC42",
+      "kind": "ui",
+      "signature": "onUpdatePreset|AIConfigPresetSection|{id => runSettingsChange(flushApiKeyDraft().then(() => updatePresetFromCurrent(id)))}",
+      "source": "src/components/settings/AIConfigPanel.tsx",
+      "line": 285,
+      "column": 11,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:f1666aef7e144849",
       "fpId": "FP-UI-1CCD786A066C",
       "kind": "ui",
@@ -16669,12 +16889,23 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:f1a13a2f8a60f5e2",
+      "fpId": "FP-UI-B6F098335CE9",
+      "kind": "ui",
+      "signature": "onClick|button|{onTest}",
+      "source": "src/components/settings/AIConnectionTestSection.tsx",
+      "line": 34,
+      "column": 17,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:f1d9a7931a1c74a2",
       "fpId": "FP-UI-0465AF8E0732",
       "kind": "ui",
       "signature": "onChange|type=range|{(e) => updateConfig({ temperature: Number(e.target.value) })}",
       "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 618,
+      "line": 492,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16795,7 +17026,7 @@
       "kind": "ui",
       "signature": "onSystemOverrideChange|PromptRunPanel|{setSystemOverride}|occurrence:1",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 318,
+      "line": 288,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16927,7 +17158,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => onTabChange('links')}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 424,
+      "line": 445,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -16938,7 +17169,7 @@
       "kind": "ui",
       "signature": "onPointerDown|aria-label=调整 AI 面板宽度|{event => { event.preventDefault(); setResizing(true) }}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 371,
+      "line": 392,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17026,7 +17257,7 @@
       "kind": "ui",
       "signature": "onChange|aria-label=段距|{(event) => setTypo({ paragraphSpacing: event.target.value })}",
       "source": "src/components/editor/RichEditor.tsx",
-      "line": 848,
+      "line": 871,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17054,17 +17285,6 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
-      "actionId": "ui:f7a5ecd2c3bb528b",
-      "fpId": "FP-UI-217F5139592C",
-      "kind": "ui",
-      "signature": "onChange|select|{(e) => runSettingsChange( flushApiKeyDraft().then(() => switchProvider(e.target.value as AIProvider)), )}",
-      "source": "src/components/settings/AIConfigPanel.tsx",
-      "line": 412,
-      "column": 15,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
       "actionId": "ui:f7fdcc725ef9ed3d",
       "fpId": "FP-UI-68652D6AA142",
       "kind": "ui",
@@ -17081,7 +17301,7 @@
       "kind": "ui",
       "signature": "onClick|type=button|{() => { void handleUndoAssistantAdoption() }}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1681,
+      "line": 1771,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17092,7 +17312,7 @@
       "kind": "ui",
       "signature": "onChange|InlineTextarea|{v => onDivineChange({ ...divineDesign, divineNames: v })}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 477,
+      "line": 447,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17114,7 +17334,7 @@
       "kind": "ui",
       "signature": "onUpdate|ProjectInfoPanel|{() => useProjectStore.getState().loadProjects()}",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 172,
+      "line": 174,
       "column": 52,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17147,19 +17367,8 @@
       "kind": "ui",
       "signature": "onUpdate|ChapterFactCandidateWorkspace|{linked.onUpdateFactCandidate}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 808,
+      "line": 856,
       "column": 19,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:f9599c288bd532c3",
-      "fpId": "FP-UI-304586F8E1B6",
-      "kind": "ui",
-      "signature": "onQuickAction|ChapterAIAssistantPanel|{(action, instruction, runOptions) => { if (action === 'generate') void handleGenerate(instruction, runOptions) else if (action === 'continue') void handleContinue(instruction, runOptions) else void handleDeAI(instruction, runOptions) }}",
-      "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1818,
-      "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -17191,19 +17400,8 @@
       "kind": "ui",
       "signature": "onChange|type=checkbox|{e => { onDivineChange({ ...divineDesign, hasDivinity: e.target.checked }) }}",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 452,
+      "line": 422,
       "column": 11,
-      "status": "REGISTERED_M1",
-      "evidence": "npm test + M1 synthetic desktop contract"
-    },
-    {
-      "actionId": "ui:fa4e947376265049",
-      "fpId": "FP-UI-B2F9F2141279",
-      "kind": "ui",
-      "signature": "onClick|type=button|{() => onSend(followup, 'edit')}",
-      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 582,
-      "column": 57,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
     },
@@ -17246,7 +17444,7 @@
       "kind": "ui",
       "signature": "onClick|button|{onSkip}|occurrence:1",
       "source": "src/components/settings/prompt/WorkflowRunner.tsx",
-      "line": 565,
+      "line": 589,
       "column": 21,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17290,7 +17488,7 @@
       "kind": "ui",
       "signature": "onClick|button|{addStep}",
       "source": "src/components/settings/prompt/WorkflowEditor.tsx",
-      "line": 154,
+      "line": 156,
       "column": 13,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17334,7 +17532,7 @@
       "kind": "ui",
       "signature": "onTabChange|ChapterAIAssistantPanel|{setAssistantTab}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1777,
+      "line": 1867,
       "column": 11,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17367,7 +17565,7 @@
       "kind": "ui",
       "signature": "onOpenFactLibrary|ChaptersListPanel|{() => setActiveModule('fact-library')}|occurrence:1",
       "source": "src/pages/WorkspacePage.tsx",
-      "line": 229,
+      "line": 231,
       "column": 82,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17411,7 +17609,7 @@
       "kind": "ui",
       "signature": "onDoubleClick|aria-label=调整 AI 面板宽度|{() => setPanelWidth(DEFAULT_ASSISTANT_WIDTH)}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 372,
+      "line": 393,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17444,7 +17642,7 @@
       "kind": "ui",
       "signature": "onClose|OutlinePreview|{() => setShowOutlinePreview(false)}",
       "source": "src/components/editor/ChapterEditor.tsx",
-      "line": 1620,
+      "line": 1710,
       "column": 72,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17499,7 +17697,7 @@
       "kind": "ui",
       "signature": "onUserOverrideChange|PromptRunPanel|{setUserOverride}|occurrence:2",
       "source": "src/components/worldview/WorldviewOriginPanel.tsx",
-      "line": 512,
+      "line": 482,
       "column": 9,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17538,12 +17736,34 @@
       "evidence": "npm test + M1 synthetic desktop contract"
     },
     {
+      "actionId": "ui:fd971e60cced0bbe",
+      "fpId": "FP-UI-09A8D4CB217A",
+      "kind": "ui",
+      "signature": "onClick|type=button|{() => { void runExclusiveSubmission(() => onRetry(runOptions)) }}|occurrence:3",
+      "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
+      "line": 714,
+      "column": 39,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
       "actionId": "ui:fdc8226cbce30cb1",
       "fpId": "FP-UI-95BBF051A7D4",
       "kind": "ui",
       "signature": "onSave|CharacterStateCard|{async fields => { if (card?.id) { await updateCard(card.id, { fields: stringifyFields(fields) }) } else { await addCard({ projectId, category: 'character', entityName: character.name, fields: stringifyFields(fields), }) } setEditingCharacter(null) }}",
       "source": "src/components/state/StatePanel.tsx",
       "line": 139,
+      "column": 17,
+      "status": "REGISTERED_M1",
+      "evidence": "npm test + M1 synthetic desktop contract"
+    },
+    {
+      "actionId": "ui:fe04f5ceea3aa501",
+      "fpId": "FP-UI-1FDAE8DB0908",
+      "kind": "ui",
+      "signature": "onChange|select|{event => onSetRoute(taskKind, event.target.value || null)}",
+      "source": "src/components/settings/AITaskRoutingSection.tsx",
+      "line": 35,
       "column": 17,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
@@ -17587,7 +17807,7 @@
       "kind": "ui",
       "signature": "onClick|WorkspaceButton|{linked.onOpenEmotion}",
       "source": "src/components/editor/ChapterAIAssistantPanel.tsx",
-      "line": 831,
+      "line": 879,
       "column": 103,
       "status": "REGISTERED_M1",
       "evidence": "npm test + M1 synthetic desktop contract"
